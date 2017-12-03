@@ -15,6 +15,264 @@ library(deSolve)
 library(ggplot2)
 library(RColorBrewer)
 
+theta <- c(
+  ## Variable model parameters:
+  epsilon0 = 5/365, # Mean EIR for adults (per day)
+  fT = 0.4, # Proportion of clinical disease cases successfully treated
+
+  ## Model parameters taken from Griffin et al. (2014):
+  ## Human infection durations:
+  dE = 12, # Duration of latent period (days)
+  dT = 5, # Duration of treated clinical disease (days)
+  dD = 5, # Duration of untreated clinical disease (days)
+  dA = 200, # Duration of patent infection (days)
+  dU = 110, # Duration of sub-patent infection (days) (fitted)
+  dP = 25, # Duration of prophylactic protection following treatment (days)
+
+  ## Infectiousness of humans to mosquitoes:
+  cD = 0.068, # Infectiousness with untreated disease & no immunity (fitted)
+  cT = 0.32 * 0.068, # Infectiousness after treatment
+  cU = 0.0062, # Infectiousness with sub-patent infection (fitted)
+  gammaI = 1.82, # Relates infectiousness to probability of detection (fitted)
+
+  ## Age and heterogeneity parameters:
+  rho = 0.85, # Age-dependent biting parameter
+  a0 = 8, # Age-dependent biting parameter (years)
+  sigma2 = 1.67, # Variance of log of heterogeneity in biting rates
+
+  ## Effect of immunity on reducing probability of detection:
+  d1 = 0.161, # Probability of detection with maximum immunity (fitted)
+  dID = 10*365, # Inverse of decay rate (days)
+  ID0 = 1.58, # Immunity scale parameter (fitted)
+  kappaD = 0.477, # Immunity shape parameter (fitted)
+  uD = 9.45, # Duration in which immunity is not boosted (days) (fitted)
+  aD = 21.9, # Scale parameter relating age to immunity (years) (fitted)
+  fD0 = 0.0071, # Parameter relating age to immunity (fitted)
+  gammaD = 4.81, # Shape parameter relating age to immunity (fitted)
+  alphaA = 0.757, # PCR prevalence parameter (fitted)
+  alphaU = 0.186, # PCR prevalence parameter (fitted)
+
+  ## Immunity reducing probability of infection:
+  b0 = 0.590, # Probabiliy with no immunity (fitted)
+  b1 = 0.5, # Maximum relative reduction
+  dB = 10*365, # Inverse of decay rate (days)
+  IB0 = 43.9, # Scale parameter (fitted)
+  kappaB = 2.16, # Shape parameter (fitted)
+  uB = 7.20, # Duration in which immunity is not boosted (days) (fitted)
+
+  ## Immunity reducing probability of clinical disease:
+  phi0 = 0.792, # Probability with no immunity
+  phi1 = 0.00074, # Maximum relative reduction
+  dC = 30*365, # Inverse decay rate (days)
+  IC0 = 18.0, # Scale parameter
+  kappaC = 2.37, # Shape parameter
+  uC = 6.06, # Duration in which immunity is not boosted (days)
+  PM = 0.774, # New-born immunity relative to mother's immunity
+  dM = 67.7, # Inverse decay rate of maternal immunity (days)
+
+  ## Case detection (recorded incidence relative to daily active case
+  ## detection):
+  rW = 0.723, # Weekly active case detection
+  rP = 0.342, # Weekly passive case detection
+
+  ## Demographic parameters:
+  meanAge = 17.4, # Mean age in Tanzania (males and females, years)
+  N = 200, # Village population size
+
+  ## Geographic parameters:
+  meanNumPeoplePerHouse = 6.5, # Mean number of people per house (from Misungu data set)
+  numHousesPerBreedingSite = 5) # Number of houses per breeding site
+
+##############################################################################
+## Functions for calculating levels of immunity when the simulation starts: ##
+##############################################################################
+
+## Differential equations for:
+## 1. Pre-erythrocytic immunity (IB, reduces the probability of infection
+##    following an infectious challenge).
+## 2. Detection immunity (ID, a.k.a. blood-stage immunity, reduces the
+##    probability of detection and reduces infectiousness to mosquitoes).
+## 3. Acquired clinical immunity (ICA, reduces the probability of clinical
+##    disease, acquired from previous exposure).
+
+I_ode <- function(time, state, theta) {
+  ## States:
+  IB <- state["IB"]
+  ID <- state["ID"]
+  ICA <- state["ICA"]
+
+  ## Parameters:
+  a0 <- theta[["a0"]]
+  rho <- theta[["rho"]]
+  durB <- theta[["dB"]] / 365 # Inverse decay rate (years)
+  uB <- theta[["uB"]] / 365 # Duration in which immunity is not boosted (years)
+  durD <- theta[["dID"]] / 365 # Inverse decay rate (years)
+  uD <- theta[["uD"]] / 365 # Duration in which immunity is not boosted (years)
+  durC <- theta[["dC"]] / 365 # Inverse decay rate (years)
+  uC <- theta[["uC"]] / 365 # Duration in which immunity is not boosted (years)
+  zita <- theta[["zita"]]
+  psi <- theta[["psi"]]
+  b0 <- theta[["b0"]]
+  b1 <- theta[["b1"]]
+  IB0 <- theta[["IB0"]]
+  kappaB <- theta[["kappaB"]]
+  epsilon0 <- theta[["epsilon0"]] * 365 # Entomological innoculation rate (annual)
+  epsilon <- epsilon0*zita*(1 - rho*exp(-time/a0))*psi
+  b <- b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
+  lambda <- epsilon*b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
+  
+  cat("time: ",time," epsilon: ",epsilon," b: ",b," lambda: ",lambda,"\n")
+
+  ## ODEs:
+  dIB <- epsilon/(epsilon*uB + 1) - IB/durB
+  dID <- lambda/(lambda*uD + 1) - ID/durD
+  dICA <- lambda/(lambda*uC + 1) - ICA/durC
+
+  return(list(c(dIB, dID, dICA)))
+}
+
+## Wrapper function to calculate pre-erythrocytic immunity at age a for
+## given EIR heterogeneities (biting rate & geographic location):
+initialI <- function(a, zita, psi, theta) {
+  initState <- c(IB=0, ID=0, ICA=0)
+  thetaI <- c(a0=theta[["a0"]], rho=theta[["rho"]], dB=theta[["dB"]],
+              uB=theta[["uB"]], epsilon0=theta[["epsilon0"]],
+              dID=theta[["dID"]], uD=theta[["uD"]], dC=theta[["dC"]],
+              uC=theta[["uC"]], b0=theta[["b0"]], b1=theta[["b1"]],
+              IB0=theta[["IB0"]], kappaB=theta[["kappaB"]], psi=psi, zita=zita)
+  IvsAge <- data.frame(ode(y=initState, times=seq(0, a, by=a/1000), func=I_ode,
+                           parms=thetaI, method="ode45"))
+  c(IB=IvsAge$IB[length(IvsAge$IB)], ID=IvsAge$ID[length(IvsAge$ID)],
+    ICA=IvsAge$ICA[length(IvsAge$ICA)])
+}
+
+a=20
+zita=1
+psi=1
+thetaODE = c(a0=theta[["a0"]], rho=theta[["rho"]], dB=theta[["dB"]],
+             uB=theta[["uB"]], epsilon0=theta[["epsilon0"]],
+             dID=theta[["dID"]], uD=theta[["uD"]], dC=theta[["dC"]],
+             uC=theta[["uC"]], b0=theta[["b0"]], b1=theta[["b1"]],
+             IB0=theta[["IB0"]], kappaB=theta[["kappaB"]], psi=psi, zita=zita)
+testOut = ode(y=c(IB=0, ID=0, ICA=0), times=seq(0, 1, by=0.1), func=I_ode,
+              parms=thetaODE, method="ode45")
+
+
+thetaC = c(a0=0,rho=0.85,zeta=1,psi=1,
+           durB=(3650/365),uB=(7.2/365),b0=0.59,b1=0.5,IB0=43.9,kappaB=2.16,
+           durD=(3650/365),uD=(9.45/365),
+           durC=(10950/365),uC=(6.06/365),epsilon0=(0.01369863*365))
+testC = RACD::immune_ode(time = seq(0.0000000000001,1,by=0.1),theta = thetaC,state = c(IB=0, ID=0, ICA=0))
+
+
+##############################################################################
+## Functions for calculating distribution of states when simulation starts: ##
+##############################################################################
+
+## Differential equations for calculating the probability that an individual
+## is in each state given their age and EIR heterogeneity attributes:
+
+malaria_ode <- function(time, state, theta) {
+  ## States:
+  prS <- state["prS"]
+  prT <- state["prT"]
+  prD <- state["prD"]
+  prA <- state["prA"]
+  prU <- state["prU"]
+  prP <- state["prP"]
+  IB <- state["IB"]
+  ICA <- state["ICA"]
+
+  # Parameters:
+  ## Variable model parameters:
+  epsilon0 <- theta[["epsilon0"]] * 365 # Mean EIR for adults (per year)
+  fT <- theta[["fT"]] # Proportion of clinical disease cases successfully treated
+
+  ## Model parameters taken from Griffin et al. (2014):
+  ## Human infection durations:
+  dE <- theta[["dE"]] / 365 # Duration of latent period (years)
+  dT <- theta[["dT"]] / 365 # Duration of treated clinical disease (years)
+  dD <- theta[["dD"]] / 365 # Duration of untreated clinical disease (years)
+  dA <- theta[["dA"]] / 365 # Duration of patent infection (years)
+  dU <- theta[["dU"]] / 365 # Duration of sub-patent infection (years) (fitted)
+  dP <- theta[["dP"]] / 365 # Duration of prophylactic protection following treatment (years)
+
+  ## Age parameters:
+  rho <- theta[["rho"]] # Age-dependent biting parameter
+  a0 <- theta[["a0"]] # Age-dependent biting parameter (years)
+
+  ## Immunity reducing probability of infection:
+  b0 <- theta[["b0"]] # Probabiliy with no immunity (fitted)
+  b1 <- theta[["b1"]] # Maximum relative reduction
+  dB <- theta[["dB"]] / 365 # Inverse of decay rate (years)
+  IB0 <- theta[["IB0"]] # Scale parameter (fitted)
+  kappaB <- theta[["kappaB"]] # Shape parameter (fitted)
+  uB <- theta[["uB"]] / 365 # Duration in which immunity is not boosted (years) (fitted)
+
+  ## Immunity reducing probability of clinical disease:
+  phi0 <- theta[["phi0"]] # Probability with no immunity
+  phi1 <- theta[["phi1"]] # Maximum relative reduction
+  dC <- theta[["dC"]] / 365 # Inverse decay rate (years)
+  IC0 <- theta[["IC0"]] # Scale parameter
+  kappaC <- theta[["kappaC"]] # Shape parameter
+  uC <- theta[["uC"]] / 365 # Duration in which immunity is not boosted (years)
+  PM <- theta[["PM"]] # New-born immunity relative to mother's immunity
+  dM <- theta[["dM"]] / 365 # Inverse decay rate of maternal immunity (years)
+  initICA20 <- theta["initICA20"]
+  ICM <- initICA20*exp(-time/dM)
+
+  ## Individual heterogeneity parameters:
+  zita <- theta[["zita"]]
+  psi <- theta[["psi"]]
+  epsilon <- epsilon0*zita*(1 - rho*exp(-time/a0))*psi
+  b <- b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
+  lambda <- epsilon*b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
+  phi <- phi0*(phi1 + ((1 - phi1)/(1 + ((ICA + ICM)/IC0)^kappaC)))
+
+  ## ODEs:
+  dprS <- - lambda*prS + prP/dP + prU/dU
+  dprT <- phi*fT*lambda*(prS + prA + prU) - prT/dT
+  dprD <- phi*(1 - fT)*lambda*(prS + prA + prU) - prD/dD
+  dprA <- (1 - phi)*lambda*(prS + prA + prU) + prD/dD - lambda*prA - prA/dA
+  dprU <- prA/dA - prU/dU - lambda*prU
+  dprP <- prT/dT - prP/dP
+  dIB <- epsilon/(epsilon*uB + 1) - IB/dB
+  dICA <- lambda/(lambda*uC + 1) - ICA/dC
+
+  return(list(c(dprS, dprT, dprD, dprA, dprU, dprP, dIB, dICA)))
+}
+
+## Wrapper function for proportion belonging to each state for each age
+## at the beginning of the simulation:
+initialStates <- function(a, zita, psi, theta) {
+  ## All individuals begin as susceptible when born:
+  initState <- c(prS=1, prT=0, prD=0, prA=0, prU=0, prP=0,
+                 IB=0, ICA=0)
+
+  ## The vector of parameters, with additional heterogeneity parameters:
+  thetaI <- theta
+  thetaI["zita"] <- zita
+  thetaI["psi"] <- psi
+  initI20 <- initialI(a=20, zita=1, psi=1, theta=theta)
+  thetaI["initICA20"] <- initI20[["ICA"]]
+
+  ## Running the system of ODEs:
+  prStates <- data.frame(ode(y=initState, times=seq(0, a, by=a/1000),
+                             func=malaria_ode, parms=thetaI, method="ode45"))
+
+  c(prS=prStates$prS[length(prStates$prS)],
+    prT=prStates$prT[length(prStates$prT)],
+    prD=prStates$prD[length(prStates$prD)],
+    prA=prStates$prA[length(prStates$prA)],
+    prU=prStates$prU[length(prStates$prU)],
+    prP=prStates$prP[length(prStates$prP)])
+}
+
+
+
+
+numIter <- 10*365 # Simulation over 10 years
+
 #########################################################################
 ## Coding the Imperial College model as an IBM:                        ##
 ## Part 1. Setting up the IBM framework                                ##
@@ -904,243 +1162,13 @@ malaria_ibm <- function(theta, numIter) {
 	return(simResults)
 }
 
-##############################################################################
-## Functions for calculating levels of immunity when the simulation starts: ##
-##############################################################################
 
-## Differential equations for:
-## 1. Pre-erythrocytic immunity (IB, reduces the probability of infection
-##    following an infectious challenge).
-## 2. Detection immunity (ID, a.k.a. blood-stage immunity, reduces the
-##    probability of detection and reduces infectiousness to mosquitoes).
-## 3. Acquired clinical immunity (ICA, reduces the probability of clinical
-##    disease, acquired from previous exposure).
-
-I_ode <- function(time, state, theta) {
-	## States:
-	IB <- state["IB"]
-	ID <- state["ID"]
-	ICA <- state["ICA"]
-
-	## Parameters:
-	a0 <- theta[["a0"]]
-	rho <- theta[["rho"]]
-	durB <- theta[["dB"]] / 365 # Inverse decay rate (years)
-	uB <- theta[["uB"]] / 365 # Duration in which immunity is not boosted (years)
-	durD <- theta[["dID"]] / 365 # Inverse decay rate (years)
-	uD <- theta[["uD"]] / 365 # Duration in which immunity is not boosted (years)
-	durC <- theta[["dC"]] / 365 # Inverse decay rate (years)
-	uC <- theta[["uC"]] / 365 # Duration in which immunity is not boosted (years)
-	zita <- theta[["zita"]]
-	psi <- theta[["psi"]]
-	b0 <- theta[["b0"]]
-	b1 <- theta[["b1"]]
-	IB0 <- theta[["IB0"]]
-	kappaB <- theta[["kappaB"]]
-	epsilon0 <- theta[["epsilon0"]] * 365 # Entomological innoculation rate (annual)
-	epsilon <- epsilon0*zita*(1 - rho*exp(-time/a0))*psi
-	b <- b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
-	lambda <- epsilon*b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
-
-	## ODEs:
-	dIB <- epsilon/(epsilon*uB + 1) - IB/durB
-	dID <- lambda/(lambda*uD + 1) - ID/durD
-	dICA <- lambda/(lambda*uC + 1) - ICA/durC
-
-	return(list(c(dIB, dID, dICA)))
-}
-
-## Wrapper function to calculate pre-erythrocytic immunity at age a for
-## given EIR heterogeneities (biting rate & geographic location):
-initialI <- function(a, zita, psi, theta) {
-	initState <- c(IB=0, ID=0, ICA=0)
-	thetaI <- c(a0=theta[["a0"]], rho=theta[["rho"]], dB=theta[["dB"]],
-		     uB=theta[["uB"]], epsilon0=theta[["epsilon0"]],
-		     dID=theta[["dID"]], uD=theta[["uD"]], dC=theta[["dC"]],
-		     uC=theta[["uC"]], b0=theta[["b0"]], b1=theta[["b1"]],
-		     IB0=theta[["IB0"]], kappaB=theta[["kappaB"]], psi=psi, zita=zita)
-	IvsAge <- data.frame(ode(y=initState, times=seq(0, a, by=a/1000), func=I_ode,
-                         parms=thetaI, method="ode45"))
-	c(IB=IvsAge$IB[length(IvsAge$IB)], ID=IvsAge$ID[length(IvsAge$ID)],
-         ICA=IvsAge$ICA[length(IvsAge$ICA)])
-}
-
-##############################################################################
-## Functions for calculating distribution of states when simulation starts: ##
-##############################################################################
-
-## Differential equations for calculating the probability that an individual
-## is in each state given their age and EIR heterogeneity attributes:
-
-malaria_ode <- function(time, state, theta) {
-	## States:
-	prS <- state["prS"]
-	prT <- state["prT"]
-	prD <- state["prD"]
-	prA <- state["prA"]
-	prU <- state["prU"]
-	prP <- state["prP"]
-	IB <- state["IB"]
-	ICA <- state["ICA"]
-
-	# Parameters:
-	## Variable model parameters:
-	epsilon0 <- theta[["epsilon0"]] * 365 # Mean EIR for adults (per year)
-	fT <- theta[["fT"]] # Proportion of clinical disease cases successfully treated
-
-	## Model parameters taken from Griffin et al. (2014):
-	## Human infection durations:
-	dE <- theta[["dE"]] / 365 # Duration of latent period (years)
-	dT <- theta[["dT"]] / 365 # Duration of treated clinical disease (years)
-	dD <- theta[["dD"]] / 365 # Duration of untreated clinical disease (years)
-	dA <- theta[["dA"]] / 365 # Duration of patent infection (years)
-	dU <- theta[["dU"]] / 365 # Duration of sub-patent infection (years) (fitted)
-	dP <- theta[["dP"]] / 365 # Duration of prophylactic protection following treatment (years)
-
-	## Age parameters:
-	rho <- theta[["rho"]] # Age-dependent biting parameter
-	a0 <- theta[["a0"]] # Age-dependent biting parameter (years)
-
-	## Immunity reducing probability of infection:
-	b0 <- theta[["b0"]] # Probabiliy with no immunity (fitted)
-	b1 <- theta[["b1"]] # Maximum relative reduction
-	dB <- theta[["dB"]] / 365 # Inverse of decay rate (years)
-	IB0 <- theta[["IB0"]] # Scale parameter (fitted)
-	kappaB <- theta[["kappaB"]] # Shape parameter (fitted)
-	uB <- theta[["uB"]] / 365 # Duration in which immunity is not boosted (years) (fitted)
-
-	## Immunity reducing probability of clinical disease:
-	phi0 <- theta[["phi0"]] # Probability with no immunity
-	phi1 <- theta[["phi1"]] # Maximum relative reduction
-	dC <- theta[["dC"]] / 365 # Inverse decay rate (years)
-	IC0 <- theta[["IC0"]] # Scale parameter
-	kappaC <- theta[["kappaC"]] # Shape parameter
-	uC <- theta[["uC"]] / 365 # Duration in which immunity is not boosted (years)
-	PM <- theta[["PM"]] # New-born immunity relative to mother's immunity
-	dM <- theta[["dM"]] / 365 # Inverse decay rate of maternal immunity (years)
-	initICA20 <- theta["initICA20"]
-	ICM <- initICA20*exp(-time/dM)
-
-	## Individual heterogeneity parameters:
-	zita <- theta[["zita"]]
-	psi <- theta[["psi"]]
-	epsilon <- epsilon0*zita*(1 - rho*exp(-time/a0))*psi
-	b <- b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
-	lambda <- epsilon*b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
-	phi <- phi0*(phi1 + ((1 - phi1)/(1 + ((ICA + ICM)/IC0)^kappaC)))
-
-	## ODEs:
-	dprS <- - lambda*prS + prP/dP + prU/dU
-	dprT <- phi*fT*lambda*(prS + prA + prU) - prT/dT
-	dprD <- phi*(1 - fT)*lambda*(prS + prA + prU) - prD/dD
-	dprA <- (1 - phi)*lambda*(prS + prA + prU) + prD/dD - lambda*prA - prA/dA
-	dprU <- prA/dA - prU/dU - lambda*prU
-	dprP <- prT/dT - prP/dP
-	dIB <- epsilon/(epsilon*uB + 1) - IB/dB
-	dICA <- lambda/(lambda*uC + 1) - ICA/dC
-
-	return(list(c(dprS, dprT, dprD, dprA, dprU, dprP, dIB, dICA)))
-}
-
-## Wrapper function for proportion belonging to each state for each age
-## at the beginning of the simulation:
-initialStates <- function(a, zita, psi, theta) {
-	## All individuals begin as susceptible when born:
-	initState <- c(prS=1, prT=0, prD=0, prA=0, prU=0, prP=0,
-			   IB=0, ICA=0)
-
-	## The vector of parameters, with additional heterogeneity parameters:
-	thetaI <- theta
-	thetaI["zita"] <- zita
-	thetaI["psi"] <- psi
-	initI20 <- initialI(a=20, zita=1, psi=1, theta=theta)
-	thetaI["initICA20"] <- initI20[["ICA"]]
-
-	## Running the system of ODEs:
-	prStates <- data.frame(ode(y=initState, times=seq(0, a, by=a/1000),
-				func=malaria_ode, parms=thetaI, method="ode45"))
-
-	c(prS=prStates$prS[length(prStates$prS)],
-	  prT=prStates$prT[length(prStates$prT)],
-	  prD=prStates$prD[length(prStates$prD)],
-	  prA=prStates$prA[length(prStates$prA)],
-	  prU=prStates$prU[length(prStates$prU)],
-	  prP=prStates$prP[length(prStates$prP)])
-}
 
 #########################
 ## Run the simulation: ##
 #########################
 
-theta <- c(
-	## Variable model parameters:
-	epsilon0 = 5/365, # Mean EIR for adults (per day)
-	fT = 0.4, # Proportion of clinical disease cases successfully treated
 
-	## Model parameters taken from Griffin et al. (2014):
-	## Human infection durations:
-	dE = 12, # Duration of latent period (days)
-	dT = 5, # Duration of treated clinical disease (days)
-	dD = 5, # Duration of untreated clinical disease (days)
-	dA = 200, # Duration of patent infection (days)
-	dU = 110, # Duration of sub-patent infection (days) (fitted)
-	dP = 25, # Duration of prophylactic protection following treatment (days)
-
-	## Infectiousness of humans to mosquitoes:
-	cD = 0.068, # Infectiousness with untreated disease & no immunity (fitted)
-	cT = 0.32 * 0.068, # Infectiousness after treatment
-	cU = 0.0062, # Infectiousness with sub-patent infection (fitted)
-	gammaI = 1.82, # Relates infectiousness to probability of detection (fitted)
-
-	## Age and heterogeneity parameters:
-	rho = 0.85, # Age-dependent biting parameter
-	a0 = 8, # Age-dependent biting parameter (years)
-	sigma2 = 1.67, # Variance of log of heterogeneity in biting rates
-
-	## Effect of immunity on reducing probability of detection:
-	d1 = 0.161, # Probability of detection with maximum immunity (fitted)
-	dID = 10*365, # Inverse of decay rate (days)
-	ID0 = 1.58, # Immunity scale parameter (fitted)
-	kappaD = 0.477, # Immunity shape parameter (fitted)
-	uD = 9.45, # Duration in which immunity is not boosted (days) (fitted)
-	aD = 21.9, # Scale parameter relating age to immunity (years) (fitted)
-	fD0 = 0.0071, # Parameter relating age to immunity (fitted)
-	gammaD = 4.81, # Shape parameter relating age to immunity (fitted)
-	alphaA = 0.757, # PCR prevalence parameter (fitted)
-	alphaU = 0.186, # PCR prevalence parameter (fitted)
-
-	## Immunity reducing probability of infection:
-	b0 = 0.590, # Probabiliy with no immunity (fitted)
-	b1 = 0.5, # Maximum relative reduction
-	dB = 10*365, # Inverse of decay rate (days)
-	IB0 = 43.9, # Scale parameter (fitted)
-	kappaB = 2.16, # Shape parameter (fitted)
-	uB = 7.20, # Duration in which immunity is not boosted (days) (fitted)
-
-	## Immunity reducing probability of clinical disease:
-	phi0 = 0.792, # Probability with no immunity
-	phi1 = 0.00074, # Maximum relative reduction
-	dC = 30*365, # Inverse decay rate (days)
-	IC0 = 18.0, # Scale parameter
-	kappaC = 2.37, # Shape parameter
-	uC = 6.06, # Duration in which immunity is not boosted (days)
-	PM = 0.774, # New-born immunity relative to mother's immunity
-	dM = 67.7, # Inverse decay rate of maternal immunity (days)
-
-	## Case detection (recorded incidence relative to daily active case
-	## detection):
-	rW = 0.723, # Weekly active case detection
-	rP = 0.342, # Weekly passive case detection
-
-	## Demographic parameters:
-	meanAge = 17.4, # Mean age in Tanzania (males and females, years)
-	N = 200, # Village population size
-
-	## Geographic parameters:
-	meanNumPeoplePerHouse = 6.5, # Mean number of people per house (from Misungu data set)
-	numHousesPerBreedingSite = 5) # Number of houses per breeding site
-
-numIter <- 10*365 # Simulation over 10 years
 # numIter <- 365 # Simulation over 1 year
 sim1 <- malaria_ibm(theta=theta, numIter=numIter) # Runs the simulation
 
