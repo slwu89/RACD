@@ -76,8 +76,9 @@ void derivs_immune(int *neq, double *t, double *y, double *ydot, double *yout, i
 
   // if (ip[0] < 3) error("nout should be >= 3");
   // printf("time: %f\n", *t);
-
-  double epsilon = epsilon0*zeta*(1 - rho*exp(-1.0* *t/a0))*psi; /*EIR at age a*/
+  double time;
+  time = *t;
+  double epsilon = epsilon0*zeta*(1 - rho*exp(-time/a0))*psi; /*EIR at age a*/
   // printf("epsilon: %f\n", epsilon);
 
   double b = b0*(b1 + ((1-b1)/(1 + pow((y[0]/IB0),kappaB)))); /*mosquito to human transmission efficiency*/
@@ -85,14 +86,16 @@ void derivs_immune(int *neq, double *t, double *y, double *ydot, double *yout, i
 
   double lambda = epsilon*b0*(b1 + ((1.0-b1)/(1.0 + pow((y[0]/IB0),kappaB)))); /*force of infection at age a*/
   // printf("lambda: %f\n", lambda);
-
-  printf("time: %f, epsilon: %f, b: %f, lambda: %f \n", *t,epsilon,b,lambda);
+  printf("power in lambda: %f\n",pow((y[0]/IB0),kappaB));
+  printf("exp in epsilon: %f\n",exp(-time/a0));
+  printf("time: %f, epsilon: %f, b: %f, lambda: %f \n", time,epsilon,b,lambda);
 
   ydot[0] = epsilon/(epsilon*uB + 1.0) - y[0]/durB;
   ydot[1] = lambda/(lambda*uD + 1.0) - y[1]/durD;
-  ydot[2] = lambda/(lambda*uC + 1.0) - y[3]/durC;
+  ydot[2] = lambda/(lambda*uC + 1.0) - y[2]/durC;
 
 }
+// epsilon*b0*(b1 + ((1-b1)/(1 + pow((y[0]/IB0),kappaB) )))
 //
 //
 //

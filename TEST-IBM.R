@@ -120,7 +120,10 @@ I_ode <- function(time, state, theta) {
   epsilon <- epsilon0*zita*(1 - rho*exp(-time/a0))*psi
   b <- b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
   lambda <- epsilon*b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
-  
+
+  cat("power in lambda: ",(IB/IB0)^kappaB,"\n")
+  cat("exp in epsilon: ",exp(-time/a0),"\n")
+
   cat("time: ",time," epsilon: ",epsilon," b: ",b," lambda: ",lambda,"\n")
 
   ## ODEs:
@@ -158,11 +161,11 @@ testOut = ode(y=c(IB=0, ID=0, ICA=0), times=seq(0, 1, by=0.1), func=I_ode,
               parms=thetaODE, method="ode45")
 
 
-thetaC = c(a0=0,rho=0.85,zeta=1,psi=1,
+thetaC = c(a0=8,rho=0.85,zeta=1,psi=1,
            durB=(3650/365),uB=(7.2/365),b0=0.59,b1=0.5,IB0=43.9,kappaB=2.16,
            durD=(3650/365),uD=(9.45/365),
            durC=(10950/365),uC=(6.06/365),epsilon0=(0.01369863*365))
-testC = RACD::immune_ode(time = seq(0.0000000000001,1,by=0.1),theta = thetaC,state = c(IB=0, ID=0, ICA=0))
+testC = RACD::immune_ode(time = seq(0,1,by=0.1),theta = thetaC,state = c(IB=0, ID=0, ICA=0))
 
 
 ##############################################################################
