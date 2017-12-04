@@ -8,14 +8,18 @@
 
 #include <Rinternals.h>
 #include <stdlib.h> // for NULL
-#include <math.h>
 
 extern void init_immune(void (* odeparms)(int *, double *));
 extern void derivs_immune(int *neq, double *t, double *y, double *ydot, double *yout, int*ip);
 
+extern void init_infection(void (* odeparms)(int *, double *));
+extern void derivs_infection(int *neq, double *t, double *y, double *ydot, double *yout, int*ip);
+
 static const R_CMethodDef CEntries[] = {
     {"init_immune",     (DL_FUNC) &init_immune, 1},
     {"derivs_immune",   (DL_FUNC) &derivs_immune, 6},
+    {"init_infection",     (DL_FUNC) &init_infection, 1},
+    {"derivs_infection",   (DL_FUNC) &derivs_infection, 6}
     {NULL, NULL, 0}
 };
 
