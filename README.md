@@ -1,2 +1,2 @@
 # RACD
-stochastic simulation of reactive active case detection for p. falciparum
+stochastic simulation of reactive case detection for p. falciparum
