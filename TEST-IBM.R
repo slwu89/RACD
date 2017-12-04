@@ -118,13 +118,13 @@ I_ode <- function(time, state, theta) {
   kappaB <- theta[["kappaB"]]
   epsilon0 <- theta[["epsilon0"]] * 365 # Entomological innoculation rate (annual)
   epsilon <- epsilon0*zita*(1 - rho*exp(-time/a0))*psi
-  b <- b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
+  # b <- b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
   lambda <- epsilon*b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
 
-  cat("power in lambda: ",(IB/IB0)^kappaB,"\n")
-  cat("exp in epsilon: ",exp(-time/a0),"\n")
+  # cat("power in lambda: ",(IB/IB0)^kappaB,"\n")
+  # cat("exp in epsilon: ",exp(-time/a0),"\n")
 
-  cat("time: ",time," epsilon: ",epsilon," b: ",b," lambda: ",lambda,"\n")
+  # cat("time: ",time," epsilon: ",epsilon," b: ",b," lambda: ",lambda,"\n")
 
   ## ODEs:
   dIB <- epsilon/(epsilon*uB + 1) - IB/durB
@@ -169,6 +169,10 @@ thetaC = c(a0=8,rho=0.85,zeta=1,psi=1,
 testC = RACD::immune_ode(time = time,theta = thetaC,state = c(IB=0, ID=0, ICA=0))
 
 
+# microbenchmark::microbenchmark(
+#   {ode(y=c(IB=0, ID=0, ICA=0), times=time, func=I_ode,parms=thetaODE)},
+#   {RACD::immune_ode(time = time,theta = thetaC,state = c(IB=0, ID=0, ICA=0))}
+# )
 ##############################################################################
 ## Functions for calculating distribution of states when simulation starts: ##
 ##############################################################################

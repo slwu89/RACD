@@ -19,7 +19,7 @@ static const R_CMethodDef CEntries[] = {
     {"init_immune",     (DL_FUNC) &init_immune, 1},
     {"derivs_immune",   (DL_FUNC) &derivs_immune, 6},
     {"init_infection",     (DL_FUNC) &init_infection, 1},
-    {"derivs_infection",   (DL_FUNC) &derivs_infection, 6}
+    {"derivs_infection",   (DL_FUNC) &derivs_infection, 6},
     {NULL, NULL, 0}
 };
 
