@@ -152,12 +152,13 @@ initialI <- function(a, zita, psi, theta) {
 a=20
 zita=1
 psi=1
+time = seq(from=0,to=a,by=a/1e3)
 thetaODE = c(a0=theta[["a0"]], rho=theta[["rho"]], dB=theta[["dB"]],
              uB=theta[["uB"]], epsilon0=theta[["epsilon0"]],
              dID=theta[["dID"]], uD=theta[["uD"]], dC=theta[["dC"]],
              uC=theta[["uC"]], b0=theta[["b0"]], b1=theta[["b1"]],
              IB0=theta[["IB0"]], kappaB=theta[["kappaB"]], psi=psi, zita=zita)
-testOut = ode(y=c(IB=0, ID=0, ICA=0), times=seq(0, 1, by=0.1), func=I_ode,
+testOut = ode(y=c(IB=0, ID=0, ICA=0), times=time, func=I_ode,
               parms=thetaODE, method="ode45")
 
 
@@ -165,7 +166,7 @@ thetaC = c(a0=8,rho=0.85,zeta=1,psi=1,
            durB=(3650/365),uB=(7.2/365),b0=0.59,b1=0.5,IB0=43.9,kappaB=2.16,
            durD=(3650/365),uD=(9.45/365),
            durC=(10950/365),uC=(6.06/365),epsilon0=(0.01369863*365))
-testC = RACD::immune_ode(time = seq(0,1,by=0.1),theta = thetaC,state = c(IB=0, ID=0, ICA=0))
+testC = RACD::immune_ode(time = time,theta = thetaC,state = c(IB=0, ID=0, ICA=0))
 
 
 ##############################################################################

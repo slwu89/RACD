@@ -1,14 +1,14 @@
 /*
-      ____  ___   __________
-     / __ \/   | / ____/ __ \
-    / /_/ / /| |/ /   / / / /
-   / _, _/ ___ / /___/ /_/ /
-  /_/ |_/_/  |_\____/_____/
-
-  Sean Wu & John M. Marshall
-  December 2017
-
-  Pre-erythrocytic immunity model
+ #      ____  ___   __________
+ #     / __ \/   | / ____/ __ \
+ #    / /_/ / /| |/ /   / / / /
+ #   / _, _/ ___ / /___/ /_/ /
+ #  /_/ |_/_/  |_\____/_____/
+ #
+ #  Sean Wu & John M. Marshall
+ #  December 2017
+ #
+ #  Pre-erythrocytic immunity model
 */
 
 #include <R.h>
