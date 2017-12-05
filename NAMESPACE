@@ -2,6 +2,7 @@
 
 export(immune_initial)
 export(immune_ode)
+export(infection_initial)
 export(infection_ode)
 import(Rcpp)
 importFrom(deSolve,ode)

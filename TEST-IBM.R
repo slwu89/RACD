@@ -236,6 +236,8 @@ malaria_ode <- function(time, state, theta) {
   b <- b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
   lambda <- epsilon*b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
   phi <- phi0*(phi1 + ((1 - phi1)/(1 + ((ICA + ICM)/IC0)^kappaC)))
+  cat("epsilon0 ",epsilon0," zeta ",zita," rho ",rho," time ",time," a0 ",a0," psi ",psi,"\n")
+  cat("time: ",time," ICM: ",ICM," epsilon: ",epsilon," b: ",b," lambda: ",lambda," phi: ",phi,"\n")
 
   ## ODEs:
   dprS <- - lambda*prS + prP/dP + prU/dU
@@ -276,8 +278,21 @@ initialStates <- function(a, zita, psi, theta) {
     prP=prStates$prP[length(prStates$prP)])
 }
 
+a=1
+zita=1
+psi=1
+thetaI <- theta
+thetaI["zita"] <- zita
+thetaI["psi"] <- psi
+initI20 <- initialI(a=20, zita=1, psi=1, theta=theta)
+thetaI["initICA20"] <- initI20[["ICA"]]
 
+times = seq(0, a, by=a/4)
+rout = ode(y=c(prS=1, prT=0, prD=0, prA=0, prU=0, prP=0,IB=0, ICA=0), times=times,func=malaria_ode, parms=thetaI)
 
+thetaC = c(thetaI["epsilon0"],thetaI["fT"],thetaI["dE"],thetaI["dT"],thetaI["dD"],thetaI["dA"],thetaI["dU"],thetaI["dP"],thetaI["rho"],thetaI["a0"],thetaI["b0"],thetaI["b1"],thetaI["dB"],thetaI["IB0"],thetaI["kappaB"],thetaI["uB"],thetaI["phi0"],thetaI["phi1"],thetaI["dC"],thetaI["IC0"],thetaI["kappaC"],thetaI["uC"],thetaI["PM"],thetaI["dM"])
+thetaC = c(thetaC,initICA20=initI20[["ICA"]],zeta=1,psi=1)
+cout = infection_ode(time = times,theta = thetaC,state = c(prS=1, prT=0, prD=0, prA=0, prU=0, prP=0,IB=0, ICA=0))
 
 numIter <- 10*365 # Simulation over 10 years
 

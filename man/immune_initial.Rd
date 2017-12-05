@@ -41,6 +41,8 @@ immune_initial(a, zeta, psi, a0 = 8, rho = 0.85, durB = (3650/365),
 \item{uC}{duration in which immunity is not boosted}
 
 \item{epsilon0}{mean EIR}
+
+\item{...}{additional parameters passed to numerical integrator \code{\link[deSolve]{ode}}}
 }
 \description{
 Calculate an individual's pre-erythrocytic immunity at age a for given EIR heterogeneities (biting rate & geographic location).

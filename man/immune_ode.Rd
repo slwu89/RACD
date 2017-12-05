@@ -12,6 +12,8 @@ immune_ode(time, theta, state, ...)
 \item{theta}{named vector of parameters}
 
 \item{state}{initial states}
+
+\item{...}{additional parameters passed to numerical integrator \code{\link[deSolve]{ode}}}
 }
 \description{
 write me
