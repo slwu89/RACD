@@ -61,9 +61,8 @@ immune_initial <- function(a, zeta, psi,
   durC=(10950/365),uC=(6.06/365),
   epsilon0=(0.01369863*365), ...
 ){
-
   times = seq(from=0,to=a,by=a/1000)
-  theta = c(a0=a0,rho=rho,zeta=zeta,psi=psi,durB=durB,uB=uB,b0=b0,b1=b1,IB0=IB0,kappaB=kappaB,durD=durD,uD=uD,durC=durC,uC=uC,epsilon0=epsilon0)
+  theta =  c(a0=a0,rho=rho,zeta=zeta,psi=psi,durB=durB,uB=uB,b0=b0,b1=b1,IB0=IB0,kappaB=kappaB,durD=durD,uD=uD,durC=durC,uC=uC,epsilon0=epsilon0)
   immune = RACD::immune_ode(time = times,theta = theta,state = c(IB=0, ID=0, ICA=0),...)
   return(c(IB=unname(immune[nrow(immune),"IB"]),ID=unname(immune[nrow(immune),"ID"]),ICA=unname(immune[nrow(immune),"ICA"])))
 }
@@ -135,7 +134,6 @@ infection_initial <- function(a, zeta, psi,
   durC=(10950/365),uC=(6.06/365),
   phi0 = 0.792, phi1 = 0.00074, dC = (10950/365), IC0 = 18, kappaC = 2.37, PM = 0.774, dM = (67.7/365), ...
 ){
-
   initI20 = immune_initial(a=a, zeta=zeta, psi=psi, a0=a0,rho=rho,durB=durB,uB=uB,b0=b0,b1=b1,IB0=IB0,kappaB=kappaB,durD=durD,uD=uD,durC=durC,uC=uC,epsilon0=epsilon0,...)
 
   initICA20 = initI20[["ICA"]]

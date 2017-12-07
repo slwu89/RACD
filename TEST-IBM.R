@@ -296,6 +296,10 @@ cout = infection_ode(time = times,theta = thetaC,state = c(prS=1, prT=0, prD=0, 
 
 numIter <- 10*365 # Simulation over 10 years
 
+
+rInitialStates = initialStates(a = 20,zita = 1,psi = 1,theta = theta)
+cInitialStates = infection_initial(a = 20,zeta = 1,psi = 1,method="ode45")
+
 #########################################################################
 ## Coding the Imperial College model as an IBM:                        ##
 ## Part 1. Setting up the IBM framework                                ##
