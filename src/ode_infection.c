@@ -66,21 +66,21 @@ void init_infection(void (* odeparms)(int *, double *)){
 void derivs_infection(int *neq, double *t, double *y, double *ydot, double *yout, int*ip){
 
   double time = *t;
-  if(time<0.1){
-    printf("epsilon0 %f zeta %f rho %f time %f a0 %f psi %f\n",epsilon0,zeta,rho,time,a0,psi);
-  }
+  // if(time<0.1){
+  //   printf("epsilon0 %f zeta %f rho %f time %f a0 %f psi %f\n",epsilon0,zeta,rho,time,a0,psi);
+  // }
+  //
+  // printf("time: %f ICM: %f epsilon: %f b: %f lambda: %f phi: %f \n",time,ICM,epsilon,b,lambda,phi);
 
-  double ICM = initICA20 * exp(-time/dM);
-  double epsilon = epsilon0*zeta*(1.0 - rho*exp(-time/a0))*psi; /*EIR at age a*/
+  double ICM = initICA20 * exp(-time/dM); /*not sure*/
+  double epsilon = epsilon0*zeta*(1 - rho*exp(-time/a0))*psi; /*EIR at age a*/
   double b = b0*(b1 + ((1-b1)/(1 + pow((y[6]/IB0),kappaB)))); /*mosquito to human transmission efficiency*/
-  double lambda = epsilon*b0*(b1 + ((1.0-b1)/(1.0 + pow((y[6]/IB0),kappaB)))); /*force of infection at age a*/
-  double phi = phi0*(phi1 + ((1 - phi1)/(1 + pow(((y[7] + ICM)/IC0),kappaC))));
-
-  printf("time: %f ICM: %f epsilon: %f b: %f lambda: %f phi: %f \n",time,ICM,epsilon,b,lambda,phi);
+  double lambda = epsilon*b0*(b1 + ((1-b1)/(1 + pow((y[6]/IB0),kappaB)))); /*force of infection at age a*/
+  double phi = phi0*(phi1 + ((1 - phi1)/(1 + pow(((y[7] + ICM)/IC0),kappaC)))); /*not sure*/
 
   ydot[0] = -lambda*y[0] + y[5]/dP + y[4]/dU; /* dprS */
   ydot[1] = phi*fT*lambda*(y[0] + y[3] + y[4]) - y[1]/dT; /* dprT */
-  ydot[2] = phi*(1 - fT)*lambda*(y[1] + y[3] + y[4]) - y[2]/dD; /* dprD */
+  ydot[2] = phi*(1 - fT)*lambda*(y[0] + y[3] + y[4]) - y[2]/dD; /* dprD */
   ydot[3] = (1 - phi)*lambda*(y[0] + y[3] + y[4]) + y[2]/dD - lambda*y[3] - y[3]/dA; /* dprA */
   ydot[4] = y[3]/dA - y[4]/dU - lambda*y[4]; /* dprU */
   ydot[5] = y[1]/dT - y[5]/dP; /* dprP */

@@ -4,10 +4,7 @@
 \alias{immune_initial}
 \title{Within-host Pre-erythrocytic Immune ODE Model}
 \usage{
-immune_initial(a, zeta, psi, a0 = 8, rho = 0.85, durB = (3650/365),
-  uB = (7.2/365), b0 = 0.59, b1 = 0.5, IB0 = 43.9, kappaB = 2.16,
-  durD = (3650/365), uD = (9.45/365), durC = (10950/365),
-  uC = (6.06/365), epsilon0 = (0.01369863 * 365), ...)
+immune_initial(a, zeta, psi, theta, ...)
 }
 \arguments{
 \item{a}{age of individual}
@@ -16,31 +13,7 @@ immune_initial(a, zeta, psi, a0 = 8, rho = 0.85, durB = (3650/365),
 
 \item{psi}{relative biting rate (used to calculate psi(a))}
 
-\item{a0}{age-dependent biting heterogeneity (used to calculate psi(a))}
-
-\item{rho}{age-dependent biting heterogeneity (used to calculate psi(a))}
-
-\item{durB}{1/decay rate of immunity reducing probability of infection}
-
-\item{uB}{duration in which immunity is not boosted}
-
-\item{b0}{probability of infection with no immunity}
-
-\item{b1}{maximum relative reduction in immunity}
-
-\item{IB0}{scale parameter for probability of infection}
-
-\item{kappaB}{shape parameter for probability of infection}
-
-\item{durD}{1/decay rate of immunity reducing probability of detection}
-
-\item{uD}{duration in which immunity is not boosted}
-
-\item{durC}{1/decay rate of immunity reducing probabiltiy of clinical disease}
-
-\item{uC}{duration in which immunity is not boosted}
-
-\item{epsilon0}{mean EIR}
+\item{theta}{vector of model parameters (see \code{\link{RACD_Parameters}})}
 
 \item{...}{additional parameters passed to numerical integrator \code{\link[deSolve]{ode}}}
 }

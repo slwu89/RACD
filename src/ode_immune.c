@@ -44,24 +44,22 @@
 */
 static double     parms[15];
 
-#define a0         parms[0]
-#define rho        parms[1]
-#define zeta       parms[2]
-#define psi        parms[3]
+#define zeta       parms[0]
+#define psi        parms[1]
+#define a0         parms[2]
+#define rho        parms[3]
 
 #define durB       parms[4]
 #define uB         parms[5]
-#define b0         parms[6]
-#define b1         parms[7]
-#define IB0        parms[8]
-#define kappaB     parms[9]
+#define durD       parms[6]
+#define uD         parms[7]
+#define durC       parms[8]
+#define uC         parms[9]
 
-#define durD       parms[10]
-#define uD         parms[11]
-
-#define durC       parms[12]
-#define uC         parms[13]
-
+#define b0         parms[10]
+#define b1         parms[11]
+#define IB0        parms[12]
+#define kappaB     parms[13]
 #define epsilon0   parms[14]
 
 /* initializer */

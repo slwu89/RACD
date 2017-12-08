@@ -162,8 +162,8 @@ testOut = ode(y=c(IB=0, ID=0, ICA=0), times=time, func=I_ode,
               parms=thetaODE, method="ode45")
 
 
-thetaC = c(a0=8,rho=0.85,zeta=1,psi=1,
-           durB=(3650/365),uB=(7.2/365),b0=0.59,b1=0.5,IB0=43.9,kappaB=2.16,
+thetaC = c(zeta=1,psi=1,a0=theta[["a0"]],rho=theta[["rho"]],
+           durB=(theta[["dB"]] / 365),uB=(theta[["uB"]] / 365),b0=0.59,b1=0.5,IB0=43.9,kappaB=2.16,
            durD=(3650/365),uD=(9.45/365),
            durC=(10950/365),uC=(6.06/365),epsilon0=(0.01369863*365))
 testC = RACD::immune_ode(time = time,theta = thetaC,state = c(IB=0, ID=0, ICA=0))
