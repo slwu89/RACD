@@ -58,5 +58,9 @@ immune_initial <- function(a, zeta, psi, theta, ...){
   time_immune = seq(from=0,to=a,by=a/1e3)
 
   immune = RACDaux::immune_ode(time = time_immune,theta = theta_immune,state = state_immune,...)
-  return(c(IB=unname(immune[nrow(immune),"IB"]),ID=unname(immune[nrow(immune),"ID"]),ICA=unname(immune[nrow(immune),"ICA"])))
+  return(c(
+    IB = unname(immune[nrow(immune),"IB"]),
+    ID = unname(immune[nrow(immune),"ID"]),
+    ICA = unname(immune[nrow(immune),"ICA"])
+  ))
 }

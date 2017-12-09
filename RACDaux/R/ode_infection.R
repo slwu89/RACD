@@ -68,11 +68,11 @@ infection_initial <- function(a, zeta, psi, theta, ...){
 
   infection = RACDaux::infection_ode(time_infection,theta_infection,state_infection,...)
   return(c(
-    prS = infection[nrow(infection),"prS"],
-    prT = infection[nrow(infection),"prT"],
-    prD = infection[nrow(infection),"prD"],
-    prA = infection[nrow(infection),"prA"],
-    prU = infection[nrow(infection),"prU"],
-    prP = infection[nrow(infection),"prP"]
+    prS = unname(infection[nrow(infection),"prS"]),
+    prT = unname(infection[nrow(infection),"prT"]),
+    prD = unname(infection[nrow(infection),"prD"]),
+    prA = unname(infection[nrow(infection),"prA"]),
+    prU = unname(infection[nrow(infection),"prU"]),
+    prP = unname(infection[nrow(infection),"prP"])
   ))
 }
