@@ -275,7 +275,7 @@ RACD_Setup <- function(theta){
   	for (j in 1:N) {
   		indiv[[j]]$daysLatent <- 0
   	}
-
+browser()
 # longHouse
 # latHouse
 # householdSize
