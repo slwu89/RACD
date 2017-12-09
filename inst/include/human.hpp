@@ -11,6 +11,9 @@
  #  Human Class Definition
 */
 
+#ifndef _RACD_HUMAN_
+#define _RACD_HUMAN_
+
 #include <Rcpp.h>
 #include <string>
 
@@ -45,3 +48,5 @@ private:
 
   house*                          myHouse; /* raw pointer ok because house lifespan > human lifespan in memory */
 };
+
+#endif

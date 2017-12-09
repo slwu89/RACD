@@ -11,6 +11,9 @@
  #  House Class Definition
 */
 
+#ifndef _RACD_HOUSE_
+#define _RACD_HOUSE_
+
 #include <Rcpp.h>
 #include <memory>
 #include <list>
@@ -38,3 +41,5 @@ private:
   std::list<human_ptr>                      humans; /* people here */
 
 };
+
+#endif
