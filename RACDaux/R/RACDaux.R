@@ -1,4 +1,4 @@
 #'@import Rcpp
 #'@importFrom deSolve ode
-#'@useDynLib RACD
+#'@useDynLib RACDaux
 NULL
