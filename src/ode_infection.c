@@ -66,15 +66,10 @@ void init_infection(void (* odeparms)(int *, double *)){
 void derivs_infection(int *neq, double *t, double *y, double *ydot, double *yout, int*ip){
 
   double time = *t;
-  // if(time<0.1){
-  //   printf("epsilon0 %f zeta %f rho %f time %f a0 %f psi %f\n",epsilon0,zeta,rho,time,a0,psi);
-  // }
-  //
-  // printf("time: %f ICM: %f epsilon: %f b: %f lambda: %f phi: %f \n",time,ICM,epsilon,b,lambda,phi);
 
   double ICM = initICA20 * exp(-time/dM); /*not sure*/
   double epsilon = epsilon0*zeta*(1 - rho*exp(-time/a0))*psi; /*EIR at age a*/
-  double b = b0*(b1 + ((1-b1)/(1 + pow((y[6]/IB0),kappaB)))); /*mosquito to human transmission efficiency*/
+  // double b = b0*(b1 + ((1-b1)/(1 + pow((y[6]/IB0),kappaB)))); /*mosquito to human transmission efficiency*/
   double lambda = epsilon*b0*(b1 + ((1-b1)/(1 + pow((y[6]/IB0),kappaB)))); /*force of infection at age a*/
   double phi = phi0*(phi1 + ((1 - phi1)/(1 + pow(((y[7] + ICM)/IC0),kappaC)))); /*not sure*/
 
