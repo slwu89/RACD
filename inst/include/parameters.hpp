@@ -19,122 +19,247 @@
 class RACD_Parameters {
 public:
 
+  /* suicide at end of program */
+  void suicide(){
+    #ifdef DEBUG_HPP
+    std::cout << "RACD_Parameters being cleared at " << this << std::endl;
+    #endif
+    delete this;
+  };
+
+  /* return instance */
+  static RACD_Parameters *RACD_Parameters_instance(){
+      if (!RACD_Parameters_instance)
+          RACD_Parameters_instance = new RACD_Parameters;
+      return RACD_Parameters_instance;
+  };
+
+  /* set parameter values */
+  void set_values(
+    double _epsilon0,
+    double _fT,
+    int _dE,
+    int _dT,
+    int _dD,
+    int _dA,
+    int _dU,
+    int _dP,
+    double _cD,
+    double _cT,
+    double _cU,
+    double _gammaI,
+    double _rho,
+    double _a0,
+    double _sigma2,
+    double _d1,
+    double _dID,
+    double _ID0,
+    double _kappaD,
+    double _uD,
+    double _aD,
+    double _fD0,
+    double _gammaD,
+    double _alphaA,
+    double _alphaU,
+    double _b0,
+    double _b1,
+    double _dB,
+    double _IB0,
+    double _kappaB,
+    double _uB,
+    double _phi0,
+    double _phi1,
+    double _dC,
+    double _IC0,
+    double _kappaC,
+    double _uC,
+    double _PM,
+    double _dM,
+    double _rW,
+    double _rP,
+    double _meanAge,
+    int _N,
+    double _meanNumPeoplePerHouse,
+    int _numHousesPerBreedingSite
+  ){
+    epsilon0 = _epsilon0;
+    fT = _fT;
+    dE = _dE;
+    dT = _dT;
+    dD = _dD;
+    dA = _dA;
+    dU = _dU;
+    dP = _dP;
+    cD = _cD;
+    cT = _cT;
+    cU = _cU;
+    gammaI = _gammaI;
+    rho = _rho;
+    a0 = _a0;
+    sigma2 = _sigma2;
+    d1 = _d1;
+    dID = _dID;
+    ID0 = _ID0;
+    kappaD = _kappaD;
+    uD = _uD;
+    aD = _aD;
+    fD0 = _fD0;
+    gammaD = _gammaD;
+    alphaA = _alphaA;
+    alphaU = _alphaU;
+    b0 = _b0;
+    b1 = _b1;
+    dB = _dB;
+    IB0 = _IB0;
+    kappaB = _kappaB;
+    uB = _uB;
+    phi0 = _phi0;
+    phi1 = _phi1;
+    dC = _dC;
+    IC0 = _IC0;
+    kappaC = _kappaC;
+    uC = _uC;
+    PM = _PM;
+    dM = _dM;
+    rW = _rW;
+    rP = _rP;
+    meanAge = _meanAge;
+    N = _N;
+    meanNumPeoplePerHouse = _meanNumPeoplePerHouse;
+    numHousesPerBreedingSite = _numHousesPerBreedingSite;
+  };
+
+  /* accessors */
+  double get_epsilon0(){ return epsilon0; };
+  double get_fT(){ return fT; };
+  int get_dE(){ return dE; };
+  int get_dT(){ return dT; };
+  int get_dD(){ return dD; };
+  int get_dA(){ return dA; };
+  int get_dU(){ return dU; };
+  int get_dP(){ return dP; };
+  double get_cD(){ return cD; };
+  double get_cT(){ return cT; };
+  double get_cU(){ return cU; };
+  double get_gammaI(){ return gammaI; };
+  double get_rho(){ return rho; };
+  double get_a0(){ return a0; };
+  double get_sigma2(){ return sigma2; };
+  double get_d1(){ return d1; };
+  double get_dID(){ return dID; };
+  double get_ID0(){ return ID0; };
+  double get_kappaD(){ return kappaD; };
+  double get_uD(){ return uD; };
+  double get_aD(){ return aD; };
+  double get_fD0(){ return fD0; };
+  double get_gammaD(){ return gammaD; };
+  double get_alphaA(){ return alphaA; };
+  double get_alphaU(){ return alphaU; };
+  double get_b0(){ return b0;};
+  double get_b1(){ return b1;};
+  double get_dB(){ return dB;};
+  double get_IB0(){ return IB0;};
+  double get_kappaB(){ return kappaB;};
+  double get_uB(){ return uB;};
+  double get_phi0(){ return phi0;};
+  double get_phi1(){ return phi1;};
+  double get_dC(){ return dC;};
+  double get_IC0(){ return IC0;};
+  double get_kappaC(){ return kappaC;};
+  double get_uC(){ return uC;};
+  double get_PM(){ return PM;};
+  double get_dM(){ return dM;};
+  double get_rW(){ return rW;};
+  double get_rP(){ return rP;};
+  double get_meanAge(){ return meanAge;};
+  int get_N(){ return N;};
+  double get_meanNumPeoplePerHouse(){ return meanNumPeoplePerHouse;};
+  int get_numHousesPerBreedingSite(){ return numHousesPerBreedingSite;};
 
 private:
 
   /* constructor */
+  RACD_Parameters(){
+    #ifdef DEBUG_HPP
+    std::cout << "RACD_Parameters being born at " << this << std::endl;
+    #endif
+  };
 
   /* destructor */
+  ~RACD_Parameters(){
+    #ifdef DEBUG_HPP
+    std::cout << "RACD_Parameters being killed at " << this << std::endl;
+    #endif
+  };
 
+  /* singleton instance */
+  static RACD_Parameters      *RACD_Parameters_instance;
 
   /* parameters */
-  double              epsilon0; /* Mean EIR for adults (per day) */
-  double              fT; /* Proportion of clinical disease cases successfully treated */
+  double                      epsilon0; /* Mean EIR for adults (per day) */
+  double                      fT; /* Proportion of clinical disease cases successfully treated */
 
   /* Model parameters taken from Griffin et al. (2014) */
   /* Human infection durations */
-  int                 dE; /* Duration of latent period (days) */
-  int                 dT; /* Duration of treated clinical disease (days) */
-  int                 dD; /* Duration of untreated clinical disease (days) */
-  int                 dA; /* Duration of patent infection (days) */
-  int                 dU; /* Duration of sub-patent infection (days) (fitted) */
-  int                 dP; /* Duration of prophylactic protection following treatment (days) */
+  int                         dE; /* Duration of latent period (days) */
+  int                         dT; /* Duration of treated clinical disease (days) */
+  int                         dD; /* Duration of untreated clinical disease (days) */
+  int                         dA; /* Duration of patent infection (days) */
+  int                         dU; /* Duration of sub-patent infection (days) (fitted) */
+  int                         dP; /* Duration of prophylactic protection following treatment (days) */
 
   /* Infectiousness of humans to mosquitoes */
-  double              cD; /* Infectiousness with untreated disease & no immunity (fitted) */
-  double              cT; /* Infectiousness after treatment */
-  double              cU; /* Infectiousness with sub-patent infection (fitted) */
-  double              gammaI; /* Relates infectiousness to probability of detection (fitted) */
+  double                      cD; /* Infectiousness with untreated disease & no immunity (fitted) */
+  double                      cT; /* Infectiousness after treatment */
+  double                      cU; /* Infectiousness with sub-patent infection (fitted) */
+  double                      gammaI; /* Relates infectiousness to probability of detection (fitted) */
 
   /* Age and heterogeneity parameters */
-  double              rho; /* Age-dependent biting parameter */
-  double              a0; /* Age-dependent biting parameter (years) */
-  double              sigma2; /* Variance of log of heterogeneity in biting rates */
+  double                      rho; /* Age-dependent biting parameter */
+  double                      a0; /* Age-dependent biting parameter (years) */
+  double                      sigma2; /* Variance of log of heterogeneity in biting rates */
 
   /* Effect of immunity on reducing probability of detection */
-  double              d1; /* Probability of detection with maximum immunity (fitted) */
-  double              dID; /* Inverse of decay rate (days) */
-  double              ID0; /* Immunity scale parameter (fitted) */
-  double              kappaD; /* Immunity shape parameter (fitted) */
-  double              uD; /* Duration in which immunity is not boosted (days) (fitted) */
-  double              aD; /* Scale parameter relating age to immunity (years) (fitted) */
-  double              fD0; /* Parameter relating age to immunity (fitted) */
-  double              gammaD; /* Shape parameter relating age to immunity (fitted) */
-  double              alphaA; /* PCR prevalence parameter (fitted) */
-  double              alphaU; /* PCR prevalence parameter (fitted) */
+  double                      d1; /* Probability of detection with maximum immunity (fitted) */
+  double                      dID; /* Inverse of decay rate (days) */
+  double                      ID0; /* Immunity scale parameter (fitted) */
+  double                      kappaD; /* Immunity shape parameter (fitted) */
+  double                      uD; /* Duration in which immunity is not boosted (days) (fitted) */
+  double                      aD; /* Scale parameter relating age to immunity (years) (fitted) */
+  double                      fD0; /* Parameter relating age to immunity (fitted) */
+  double                      gammaD; /* Shape parameter relating age to immunity (fitted) */
+  double                      alphaA; /* PCR prevalence parameter (fitted) */
+  double                      alphaU; /* PCR prevalence parameter (fitted) */
 
   /* Immunity reducing probability of infection */
-  double              b0; /* Probabiliy with no immunity (fitted) */
-  double              b1; /* Maximum relative reduction */
-  double              dB; /* Inverse of decay rate (days) */
-  double              IB0; /* Scale parameter (fitted) */
-  double              kappaB; /* Shape parameter (fitted) */
-  double              uB; /* Duration in which immunity is not boosted (days) (fitted) */
+  double                      b0; /* Probabiliy with no immunity (fitted) */
+  double                      b1; /* Maximum relative reduction */
+  double                      dB; /* Inverse of decay rate (days) */
+  double                      IB0; /* Scale parameter (fitted) */
+  double                      kappaB; /* Shape parameter (fitted) */
+  double                      uB; /* Duration in which immunity is not boosted (days) (fitted) */
 
   /* Immunity reducing probability of clinical disease */
-  double              phi0; /* Probability with no immunity */
-  double              phi1; /* Maximum relative reduction */
-  double              dC /* Inverse decay rate (days) */
-  double              IC0; /* Scale parameter */
-  double              kappaC; /* Shape parameter */
-  double              uC; /* Duration in which immunity is not boosted (days) */
-  double              PM; /* New-born immunity relative to mother's immunity */
-  double              dM; /* Inverse decay rate of maternal immunity (days) */
+  double                      phi0; /* Probability with no immunity */
+  double                      phi1; /* Maximum relative reduction */
+  double                      dC; /* Inverse decay rate (days) */
+  double                      IC0; /* Scale parameter */
+  double                      kappaC; /* Shape parameter */
+  double                      uC; /* Duration in which immunity is not boosted (days) */
+  double                      PM; /* New-born immunity relative to mother's immunity */
+  double                      dM; /* Inverse decay rate of maternal immunity (days) */
 
   /* Case detection (recorded incidence relative to daily active case detection) */
-  double              rW; /* Weekly active case detection */
-  double              rP; /* Weekly passive case detection */
+  double                      rW; /* Weekly active case detection */
+  double                      rP; /* Weekly passive case detection */
 
   /* Demographic parameters */
-  double              meanAge; /* Mean age in Tanzania (males and females, years) */
-  int                 N; /* Village population size */
+  double                      meanAge; /* Mean age in Tanzania (males and females, years) */
+  int                         N; /* Village population size */
 
   /* Geographic parameters */
-  double              meanNumPeoplePerHouse; /* Mean number of people per house (from Misungu data set) */
-  int                 numHousesPerBreedingSite; /* Number of houses per breeding site */
+  double                      meanNumPeoplePerHouse; /* Mean number of people per house (from Misungu data set) */
+  int                         numHousesPerBreedingSite; /* Number of houses per breeding site */
 
 
 };
-
-
-
-
-
-class GlobalClass
-{
-    int m_value;
-    static GlobalClass *s_instance;
-    GlobalClass(int v = 0){
-        std::cout << "global singleton being born at " << this << std::endl;
-        m_value = v;
-    };
-    ~GlobalClass(){
-        std::cout << "global singleton being killed at " << this << std::endl;
-    };
-public:
-    int get_value()
-    {
-        return m_value;
-    }
-    void set_value(int v)
-    {
-        m_value = v;
-    }
-    void kill_me(){
-        std::cout << "global singleton is dying!" << std::endl;
-        delete this;
-    }
-    static GlobalClass *instance()
-    {
-        if (!s_instance)
-            s_instance = new GlobalClass;
-        return s_instance;
-    }
-};
-
-
-
-friend std::ostream& operator<<(std::ostream& os, tentPAR& tent) {
-  return os << "tentPAR: " << " t0: " << tent.t0 << " pfid: " << tent.pfid << " gr: " << tent.gr << " dr: " << tent.dr << "\n" <<
-    " MZ0 " << tent.MZ0 << " peakD " << tent.peakD << " mxPD: " << tent.mxPD << " tEnd: " << tent.tEnd << std::endl;
-}
