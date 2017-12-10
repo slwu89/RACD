@@ -42,9 +42,6 @@ RACD_Setup <- function(theta){
   	for (j in 1:N) {
   		indiv[[j]]$age <- rexp(n = 1, rate = 1/meanAge)
   	}
-  	# Checking initial age attributes:
-  	# ageVector <- sapply(indiv, function(x) x$age)
-  	# hist(ageVector)
 
   	# At the beginning of the simulation, all individuals are alive:
   	for (j in 1:N) {
