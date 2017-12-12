@@ -13,6 +13,7 @@
 
 #include "parameters.hpp"
 
+/* declare pointer to instance */
 RACD_Parameters* RACD_Parameters::RACD_Parameters_instance = nullptr;
 
 /* constructor */
