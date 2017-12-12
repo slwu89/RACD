@@ -17,11 +17,10 @@
 #include <Rcpp.h>
 #include <string>
 
-// typedefs and forward declarations
+/* typedefs and forward declarations */
 class house;
 
-
-
+/* human */
 class human {
 
 public:

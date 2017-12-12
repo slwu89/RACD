@@ -18,11 +18,11 @@
 #include <memory>
 #include <list>
 
-// typedefs and forward declarations
+/* typedefs and forward declarations */
 class human;
 typedef std::unique_ptr<human> human_ptr;
 
-
+/* house */
 class house {
 
 public:
