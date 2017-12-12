@@ -90,10 +90,18 @@ private:
   static RACD_Parameters      *RACD_Parameters_instance;
 
   /* constructor */
-  RACD_Parameters();
+  RACD_Parameters(){
+    #ifdef DEBUG_HPP
+    std::cout << "RACD_Parameters being born at " << this << std::endl;
+    #endif
+  };
 
   /* destructor */
-  ~RACD_Parameters();
+  ~RACD_Parameters(){
+    #ifdef DEBUG_HPP
+    std::cout << "RACD_Parameters being killed at " << this << std::endl;
+    #endif
+  };
 
 public:
 
@@ -144,7 +152,53 @@ public:
     int _N,
     double _meanNumPeoplePerHouse,
     int _numHousesPerBreedingSite
-  );
+  ){
+    epsilon0 = _epsilon0;
+    fT = _fT;
+    dE = _dE;
+    dT = _dT;
+    dD = _dD;
+    dA = _dA;
+    dU = _dU;
+    dP = _dP;
+    cD = _cD;
+    cT = _cT;
+    cU = _cU;
+    gammaI = _gammaI;
+    rho = _rho;
+    a0 = _a0;
+    sigma2 = _sigma2;
+    d1 = _d1;
+    dID = _dID;
+    ID0 = _ID0;
+    kappaD = _kappaD;
+    uD = _uD;
+    aD = _aD;
+    fD0 = _fD0;
+    gammaD = _gammaD;
+    alphaA = _alphaA;
+    alphaU = _alphaU;
+    b0 = _b0;
+    b1 = _b1;
+    dB = _dB;
+    IB0 = _IB0;
+    kappaB = _kappaB;
+    uB = _uB;
+    phi0 = _phi0;
+    phi1 = _phi1;
+    dC = _dC;
+    IC0 = _IC0;
+    kappaC = _kappaC;
+    uC = _uC;
+    PM = _PM;
+    dM = _dM;
+    rW = _rW;
+    rP = _rP;
+    meanAge = _meanAge;
+    N = _N;
+    meanNumPeoplePerHouse = _meanNumPeoplePerHouse;
+    numHousesPerBreedingSite = _numHousesPerBreedingSite;
+  };
 
   /* accessors */
   double get_epsilon0(){ return epsilon0; };
@@ -194,9 +248,18 @@ public:
   int get_numHousesPerBreedingSite(){ return numHousesPerBreedingSite;};
 
   /* suicide at end of program */
-  void suicide();
+  void suicide(){
+    #ifdef DEBUG_HPP
+    std::cout << "RACD_Parameters being cleared at " << this << std::endl;
+    #endif
+    delete this;
+  };
 
   /* return instance */
-  static RACD_Parameters* instance();
+  static RACD_Parameters *instance(){
+      if (!RACD_Parameters_instance)
+          RACD_Parameters_instance = new RACD_Parameters;
+      return RACD_Parameters_instance;
+  };
 
 };
