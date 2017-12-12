@@ -2,7 +2,16 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 #' @export
-test_parameters <- function() {
-    invisible(.Call('_RACD_test_parameters', PACKAGE = 'RACD'))
+hi <- function() {
+    invisible(.Call('_RACD_hi', PACKAGE = 'RACD'))
+}
+
+#' Unit Test: RACD_Parameters
+#'
+#' @param theta output of \code{\link[RACDaux]{RACD_Parameters}}
+#'
+#' @export
+test_parameters <- function(theta) {
+    invisible(.Call('_RACD_test_parameters', PACKAGE = 'RACD', theta))
 }
 
