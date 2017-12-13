@@ -74,7 +74,7 @@ void human::mortality(){
   double randNum = RACD_Parameters::instance()->get_prng()->get_runif();
 
   /* mu: daily death rate as a function of mean age in years */
-  double mu = RACD_Parameters::instance()->get_mu()
+  double mu = RACD_Parameters::instance()->get_mu();
 
   if(randNum <= mu){
     // REPLACE WITH REAL OUTPUT
@@ -405,7 +405,7 @@ void human::update_phi(){
 /* q (microscopy) */
 void human::update_q(){
 
-  double fd0 = RACD_Parameters::instance()->get_fD0();
+  double fD0 = RACD_Parameters::instance()->get_fD0();
   double aD = RACD_Parameters::instance()->get_aD();
   double gammaD = RACD_Parameters::instance()->get_gammaD();
   double d1 = RACD_Parameters::instance()->get_d1();

@@ -52,7 +52,7 @@ public:
   ~human();
 
   /* object suicide */
-  suicide();
+  void                            suicide();
 
   /* Simulation Methods */
 

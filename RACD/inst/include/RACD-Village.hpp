@@ -33,6 +33,9 @@ public:
   /* destructor */
   ~village();
 
+  /* demographics */
+  void                                      births();
+
 
 private:
 
