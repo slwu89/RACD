@@ -122,6 +122,7 @@ void RACD_Parameters::set_values(
   rP = _rP;
   meanAge = _meanAge;
   N = _N;
+  mu = 1/(_meanAge*365);
   meanNumPeoplePerHouse = _meanNumPeoplePerHouse;
   numHousesPerBreedingSite = _numHousesPerBreedingSite;
 };

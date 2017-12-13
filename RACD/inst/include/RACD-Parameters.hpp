@@ -90,6 +90,7 @@ private:
   /* Demographic parameters */
   double                      meanAge; /* Mean age in Tanzania (males and females, years) */
   int                         N; /* Village population size */
+  double                      mu; /* Daily death rate as a function of mean age in years */
 
   /* Geographic parameters */
   double                      meanNumPeoplePerHouse; /* Mean number of people per house (from Misungu data set) */
@@ -202,6 +203,7 @@ public:
   double get_rP(){ return rP;};
   double get_meanAge(){ return meanAge;};
   int get_N(){ return N;};
+  double get_mu(){ return mu; };
   double get_meanNumPeoplePerHouse(){ return meanNumPeoplePerHouse;};
   int get_numHousesPerBreedingSite(){ return numHousesPerBreedingSite;};
 

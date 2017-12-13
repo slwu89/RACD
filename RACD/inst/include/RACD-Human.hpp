@@ -17,6 +17,8 @@
 #include <Rcpp.h>
 #include <string>
 
+#include "DEBUG.hpp"
+
 /* typedefs and forward declarations */
 class house;
 
@@ -26,15 +28,65 @@ class human {
 public:
 
   /* constructor */
-  human();
+  human(const int& _humanID,
+        const double& _age,
+        const bool& _alive,
+        house* _house_ptr,
+        const double& _bitingHet,
+        const double& _IB,
+        const double& _ID,
+        const double& _ICA,
+        const double& _ICM,
+        const double& _epsilon,
+        const double& _lambda,
+        const double& _phi,
+        const double& _prDetectAMic,
+        const double& _prDetectAPCR,
+        const double& _prDetectUPCR,
+        const std::string _state,
+        const int _daysLatent
+      );
 
   /* destructor */
   ~human();
 
+  /* object suicide */
+  suicide();
+
+  /* Simulation Methods */
+
+  /* mortality */
+  void                            mortality();
+
+  /* S: susceptible */
+  void                            S_compartment();
+
+  /* E: latent period */
+  void                            E_compartment();
+
+  /* T: treated clinical disease */
+  void                            T_compartment();
+
+  /* D: untreated clinical disease */
+  void                            D_compartment();
+
+  /* A: asymptomatic patent (detectable by microscopy) infection */
+  void                            A_compartment();
+
+  /* U: asymptomatic sub-patent (not detectable by microscopy) infection */
+  void                            U_compartment();
+
+  /* P: protection due to chemoprophylaxis treatment */
+  void                            P_compartment();
+
+
+
 private:
 
-  double                          age;
-  bool                            alive;
+  int                             humanID; /* my ID */
+
+  double                          age; /* age (in years) */
+  bool                            alive; /* alive? */
   std::string                     state; /* S,T,D,A,U,P */
   int                             daysLatent; /* days of latent infection */
 
@@ -53,7 +105,7 @@ private:
   double                          prDetectAPCR; /* probability of detection by PCR for A (patent) asymptomatic */
   double                          prDetectUPCR; /* probability of detection by PCR for U (subpatent) asymptomatic */
 
-  house*                          myHouse; /* raw pointer ok because house lifespan > human lifespan in memory */
+  house*                          house_ptr; /* raw pointer ok because house lifespan > human lifespan in memory */
 };
 
 #endif

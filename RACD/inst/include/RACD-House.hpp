@@ -16,19 +16,27 @@
 
 #include <Rcpp.h>
 #include <memory>
-#include <list>
+#include <vector>
 
 /* typedefs and forward declarations */
 class human;
-typedef std::unique_ptr<human> human_ptr;
+typedef std::unique_ptr<human>          human_ptr;
+typedef std::vector<human_ptr>          human_vector;
 
 /* house */
 class house {
 
 public:
 
+  /* constructor */
   house();
+
+  /* destructor */
   ~house();
+
+  /* accessors */
+  int                                       get_houseID(){ return houseID; };
+  human_vector&                             get_humans(){ return humans; };
 
 
 private:
@@ -38,7 +46,7 @@ private:
   double                                    x; /* longitude */
   double                                    y; /* latitude */
 
-  std::list<human_ptr>                      humans; /* people here */
+  human_vector                              humans; /* people here */
 
 };
 
