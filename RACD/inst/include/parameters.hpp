@@ -11,6 +11,9 @@
  #  Parameters Singleton Class Definition
 */
 
+#ifndef _RACD_PARAMETERS_
+#define _RACD_PARAMETERS_
+
 #include <Rcpp.h>
 #include <iostream>
 
@@ -200,3 +203,5 @@ public:
   static RACD_Parameters* instance();
 
 };
+
+#endif

@@ -5,15 +5,6 @@
 
 using namespace Rcpp;
 
-// hi
-void hi();
-RcppExport SEXP _RACD_hi() {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    hi();
-    return R_NilValue;
-END_RCPP
-}
 // test_parameters
 void test_parameters(const Rcpp::NumericVector& theta);
 RcppExport SEXP _RACD_test_parameters(SEXP thetaSEXP) {
@@ -24,10 +15,20 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// test_human_parameters
+void test_human_parameters(const Rcpp::NumericVector& theta);
+RcppExport SEXP _RACD_test_human_parameters(SEXP thetaSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type theta(thetaSEXP);
+    test_human_parameters(theta);
+    return R_NilValue;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_RACD_hi", (DL_FUNC) &_RACD_hi, 0},
     {"_RACD_test_parameters", (DL_FUNC) &_RACD_test_parameters, 1},
+    {"_RACD_test_human_parameters", (DL_FUNC) &_RACD_test_human_parameters, 1},
     {NULL, NULL, 0}
 };
 

@@ -41,9 +41,14 @@ private:
   double                          ICA; /* acquired clinical immunity (reduces the probability of clinical disease, acquired from previous exposure) */
   double                          ICM; /* maternal clinical immunity (reduces the probability of clinical disease, acquired maternally) */
 
+  double                          bitingHet; /* zeta: baseline biting heterogeneity */
   double                          epsilon; /* force of infection */
   double                          lambda; /* EIR */
-  double                          phi;
+  double                          phi; /* probability of acquiring clinical disease */
+
+  double                          prDetectAMic; /* q: probability of asymptomatic infection detected by microscopy */
+  double                          prDetectAPCR; /* probability of detection by PCR for A (patent) asymptomatic */
+  double                          prDetectUPCR; /* probability of detection by PCR for U (subpatent) asymptomatic */
 
   house*                          myHouse; /* raw pointer ok because house lifespan > human lifespan in memory */
 };

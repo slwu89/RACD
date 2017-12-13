@@ -264,28 +264,20 @@ RACD_Setup <- function(theta){
     cat("\n")
     cat("Done initializing population...\n")
 
-  	# Checking state attributes:
-  	# stateVector <- sapply(indiv, function(x) x$state)
-  	# stateVector
-
   	# Add an attribute to keep track of number of days of latent infection:
   	for (j in 1:N) {
   		indiv[[j]]$daysLatent <- 0
   	}
-browser()
-# longHouse
-# latHouse
-# householdSize
-# psiHouse
-#     houses
-#
-#
-#     longBreedingSite
-#     latBreedingSite
-#
-#     return(list(
-#       humans=indiv,
-#
-#     ))
+
+    return(list(
+      humans=indiv,
+      breedingSiteX = longBreedingSite,
+      breedingSiteY = latBreedingSite,
+      breedingSiteSigma = sigmaBreedingSite,
+      houseX = longHouse,
+      houseY = latHouse,
+      houseSize = householdSize,
+      housePsi = psiHouse
+    ))
   })
 }
