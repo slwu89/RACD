@@ -18,7 +18,7 @@
 #include <iostream>
 #include <memory>
 
-#include "debug.hpp"
+#include "DEBUG.hpp"
 
 /* typedefs and forward declarations */
 class prng;
@@ -94,7 +94,7 @@ private:
   /* Geographic parameters */
   double                      meanNumPeoplePerHouse; /* Mean number of people per house (from Misungu data set) */
   int                         numHousesPerBreedingSite; /* Number of houses per breeding site */
-  
+
   /* pseudo-random number generation */
   prng_ptr                        prng_member;
 
@@ -204,11 +204,11 @@ public:
   int get_N(){ return N;};
   double get_meanNumPeoplePerHouse(){ return meanNumPeoplePerHouse;};
   int get_numHousesPerBreedingSite(){ return numHousesPerBreedingSite;};
-  
+
   /* pseudo-random number generation */
   void set_prng(const uint_least32_t &seed);
   prng* get_prng();
-  
+
   /* suicide at end of program */
   void suicide();
 

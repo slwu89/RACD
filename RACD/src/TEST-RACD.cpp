@@ -12,8 +12,8 @@
 */
 
 #include <Rcpp.h>
-#include "parameters.hpp"
-#include "prng.hpp"
+#include "RACD-Parameters.hpp"
+#include "RACD-PRNG.hpp"
 #include "TEST-HUMAN.hpp"
 
 #include <iostream>

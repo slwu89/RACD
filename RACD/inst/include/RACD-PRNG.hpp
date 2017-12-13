@@ -15,8 +15,9 @@
 #define _RACD_PRNG_
 
 #include <random>
+#include <iostream>
 
-#include "debug.hpp"
+#include "DEBUG.hpp"
 
 class prng {
 public:

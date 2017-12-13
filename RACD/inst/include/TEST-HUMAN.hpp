@@ -3,7 +3,7 @@
 
 #include <string>
 #include <iostream>
-#include "parameters.hpp"
+#include "RACD-Parameters.hpp"
 
 class test_human {
 public:

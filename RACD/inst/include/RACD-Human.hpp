@@ -25,7 +25,10 @@ class human {
 
 public:
 
+  /* constructor */
   human();
+
+  /* destructor */
   ~human();
 
 private:

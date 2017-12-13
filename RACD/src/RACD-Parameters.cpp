@@ -11,8 +11,8 @@
  #  Parameters Singleton Class Implementation
 */
 
-#include "parameters.hpp"
-#include "prng.hpp"
+#include "RACD-Parameters.hpp"
+#include "RACD-PRNG.hpp"
 
 /* declare pointer to instance */
 RACD_Parameters* RACD_Parameters::RACD_Parameters_instance = nullptr;
