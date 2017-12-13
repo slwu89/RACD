@@ -12,6 +12,7 @@
 */
 
 #include "parameters.hpp"
+#include "prng.hpp"
 
 /* declare pointer to instance */
 RACD_Parameters* RACD_Parameters::RACD_Parameters_instance = nullptr;
@@ -123,6 +124,15 @@ void RACD_Parameters::set_values(
   N = _N;
   meanNumPeoplePerHouse = _meanNumPeoplePerHouse;
   numHousesPerBreedingSite = _numHousesPerBreedingSite;
+};
+
+/* pseudo-random number generation */
+void RACD_Parameters::set_prng(const uint_least32_t &seed) {
+  prng_member = std::make_unique<prng>(seed);
+};
+
+prng* RACD_Parameters::get_prng(){
+  return prng_member.get();
 };
 
 /* suicide at end of program */

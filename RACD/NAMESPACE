@@ -2,6 +2,7 @@
 
 export(test_human_parameters)
 export(test_parameters)
+export(test_prng)
 import(Rcpp)
 importFrom(deSolve,ode)
 useDynLib(RACD)

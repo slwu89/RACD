@@ -13,6 +13,7 @@
 
 #include <Rcpp.h>
 #include "parameters.hpp"
+#include "prng.hpp"
 #include "TEST-HUMAN.hpp"
 
 #include <iostream>
@@ -143,3 +144,23 @@ void test_human_parameters(const Rcpp::NumericVector &theta){
   RACD_Parameters::instance()->suicide();
   std::cout << "exit testing getting singleton parameters from a test_human" << std::endl;
 }
+
+
+//' Unit Test: prng
+//'
+//' test the composition prng class within the parameters singleton
+//'
+//' @export
+// [[Rcpp::export]]
+void test_prng(const uint_least32_t &seed){
+  std::cout << "begin testing prng composition" << std::endl;
+  RACD_Parameters::instance();
+  RACD_Parameters::instance()->set_prng(seed);
+  std::cout << "get some runifs ";
+  for(size_t i=0; i<10; i++){
+    std::cout << RACD_Parameters::instance()->get_prng()->get_runif();
+    std::cout <<  " <--> ";
+  }
+  std::cout << std::endl;
+  std::cout << "exit testing prng composition" << std::endl;
+};

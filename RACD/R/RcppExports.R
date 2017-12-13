@@ -19,3 +19,12 @@ test_human_parameters <- function(theta) {
     invisible(.Call('_RACD_test_human_parameters', PACKAGE = 'RACD', theta))
 }
 
+#' Unit Test: prng
+#'
+#' test the composition prng class within the parameters singleton
+#'
+#' @export
+test_prng <- function(seed) {
+    invisible(.Call('_RACD_test_prng', PACKAGE = 'RACD', seed))
+}
+
