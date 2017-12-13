@@ -130,7 +130,7 @@ void RACD_Parameters::suicide(){
   #ifdef DEBUG_HPP
   std::cout << "RACD_Parameters being cleared at " << this << std::endl;
   #endif
-  delete this;
+  RACD_Parameters::~RACD_Parameters();
 };
 
 /* return instance */

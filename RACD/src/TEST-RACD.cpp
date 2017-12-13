@@ -76,7 +76,7 @@ void test_parameters(const Rcpp::NumericVector &theta){
      theta["meanNumPeoplePerHouse"],
      theta["numHousesPerBreedingSite"]
   );
-  RACD_Parameters::instance()->suicide();
   std::cout << "test getting kappaD: " << RACD_Parameters::instance()->get_kappaD() << std::endl;
+  RACD_Parameters::instance()->suicide();
   std::cout << "exit testing singleton parameters" << std::endl;
 }
