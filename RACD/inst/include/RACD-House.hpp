@@ -36,12 +36,14 @@ public:
 
   /* accessors */
   int                                       get_houseID(){ return houseID; };
+  double                                    get_psi(){ return psi; };
   human_vector&                             get_humans(){ return humans; };
 
 
 private:
 
   int                                       houseID; /* ID */
+  double                                    psi; /* relative risk */
 
   double                                    x; /* longitude */
   double                                    y; /* latitude */

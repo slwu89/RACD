@@ -16,6 +16,7 @@
 
 #include <Rcpp.h>
 #include <string>
+#include <math.h> /* for update_lambda */
 
 #include "DEBUG.hpp"
 
@@ -79,6 +80,20 @@ public:
   /* P: protection due to chemoprophylaxis treatment */
   void                            P_compartment();
 
+  /* ageing */
+  void                            ageing();
+
+  /* immunity */
+  void                            update_immunity();
+
+  /* lambda */
+  void                            update_lambda();
+
+  /* phi */
+  void                            update_phi();
+
+  /* q (microscopy) */
+  void                            update_q();
 
 
 private:
