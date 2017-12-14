@@ -35,11 +35,23 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// test_house
+void test_house(const Rcpp::NumericVector& theta, const uint_least32_t& seed);
+RcppExport SEXP _RACD_test_house(SEXP thetaSEXP, SEXP seedSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const uint_least32_t& >::type seed(seedSEXP);
+    test_house(theta, seed);
+    return R_NilValue;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_RACD_test_parameters", (DL_FUNC) &_RACD_test_parameters, 1},
     {"_RACD_test_human_parameters", (DL_FUNC) &_RACD_test_human_parameters, 1},
     {"_RACD_test_prng", (DL_FUNC) &_RACD_test_prng, 1},
+    {"_RACD_test_house", (DL_FUNC) &_RACD_test_house, 2},
     {NULL, NULL, 0}
 };
 

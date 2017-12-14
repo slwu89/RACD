@@ -29,7 +29,7 @@ class house {
 public:
 
   /* constructor */
-  house();
+  house(const int& _houseID, const double& _psi);
 
   /* destructor */
   ~house();

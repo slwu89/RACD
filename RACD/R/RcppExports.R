@@ -28,3 +28,12 @@ test_prng <- function(seed) {
     invisible(.Call('_RACD_test_prng', PACKAGE = 'RACD', seed))
 }
 
+#' Unit Test: house
+#'
+#' test putting a human in a house and calling some basic actions
+#'
+#' @export
+test_house <- function(theta, seed) {
+    invisible(.Call('_RACD_test_house', PACKAGE = 'RACD', theta, seed))
+}
+
