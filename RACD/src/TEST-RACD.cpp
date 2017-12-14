@@ -183,13 +183,24 @@ void test_house(const Rcpp::NumericVector &theta, const uint_least32_t &seed){
   );
   RACD_Parameters::instance()->set_prng(seed);
   
-  // make a house and a human and put the human in the house
-  std::unique_ptr<house> aHouse = std::make_unique<house>(1,1,1,1);
-  human_ptr aHuman = std::make_unique<human>(
-    1,1,1,"S",1,1,1,1,1,1,1,1,1,1,1,1,aHouse.get()
-  );
-  aHouse->get_humans().push_back(std::move(aHuman));
-  aHouse->get_humans().front()->S_compartment();
+  
+  
+  house aHouse(1,1,1,1);
+  
+  human_ptr bob = std::make_unique<human>(1,1,1,"S",1,1,1,1,1,1,1,1,1,1,1,1,&aHouse);
+  human_ptr alice = std::make_unique<human>(2,1,1,"S",1,1,1,1,1,1,1,1,1,1,1,1,&aHouse);
+  
+  aHouse.add_human(std::move(bob));
+  aHouse.add_human(std::move(alice));
+  aHouse.add_human(std::make_unique<human>(3,1,1,"S",1,1,1,1,1,1,1,1,1,1,1,1,&aHouse));
+  
+  std::cout << "there are " << aHouse.get_humans().size() << " humans in the house" << std::endl;
+  
+  aHouse.get_humans().front()->suicide();
+  
+  std::cout << "there are " << aHouse.get_humans().size() << " humans in the house" << std::endl;
+  
+
   
   std::cout << "exit testing house & human" << std::endl;
 }

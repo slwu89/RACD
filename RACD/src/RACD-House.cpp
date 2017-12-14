@@ -28,3 +28,8 @@ house::~house(){
   std::cout << "house " << houseID << " being killed at " << this << std::endl;
   #endif
 };
+
+/* add humans */
+void house::add_human(human_ptr h){
+  humans.push_back(std::move(h));
+};

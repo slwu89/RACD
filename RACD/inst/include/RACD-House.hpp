@@ -16,6 +16,7 @@
 
 #include <Rcpp.h>
 #include <memory>
+#include <utility>
 #include <vector>
 
 /* typedefs and forward declarations */
@@ -33,6 +34,9 @@ public:
 
   /* destructor */
   ~house();
+
+  /* add humans */
+  void                                      add_human(human_ptr h);
 
   /* accessors */
   int                                       get_houseID(){ return houseID; };

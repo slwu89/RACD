@@ -56,6 +56,9 @@ public:
 
   /* Simulation Methods */
 
+  /* daily simulation */
+  void                            one_day();
+
   /* mortality */
   void                            mortality();
 
@@ -94,7 +97,6 @@ public:
 
   /* q (microscopy) */
   void                            update_q();
-
 
 private:
 

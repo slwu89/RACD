@@ -59,14 +59,43 @@ void human::suicide(){
   std::cout << "human " << humanID << " suiciding at " << this << std::endl;
   #endif
   for(auto it = house_ptr->get_humans().begin(); it != house_ptr->get_humans().end(); it++){
-    if(it->get() == this){
-      house_ptr->get_humans().erase(it);
-    }
+      if(it->get() == this){
+        std::cout << "i found myself!" << std::endl;
+        house_ptr->get_humans().erase(it);
+          // house_ptr->get_humans().erase(it);
+      }
   }
 }
 
 
 /* Simulation Methods */
+
+/* daily simulation */
+void human::one_day(){
+
+  /* daily mortality */
+  mortality();
+
+  /* compartment transitions */
+  if(state.compare("S")==0){
+    S_compartment();
+  } else if(state.compare("E")==0){
+    E_compartment();
+  } else if(state.compare("T")==0){
+    T_compartment();
+  } else if(state.compare("D")==0){
+    D_compartment();
+  } else if(state.compare("A")==0){
+    A_compartment();
+  } else if(state.compare("U")==0){
+    U_compartment();
+  } else if(state.compare("P")==0){
+    P_compartment();
+  } else {
+    Rcpp::stop("unrecognized human state");
+  }
+
+};
 
 /* mortality */
 void human::mortality(){
