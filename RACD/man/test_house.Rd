@@ -9,3 +9,6 @@ test_house(theta, seed)
 \description{
 test putting a human in a house and calling some basic actions
 }
+\examples{
+test_house(theta = RACDaux::RACD_Parameters(),seed = 1)
+}

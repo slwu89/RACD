@@ -172,6 +172,8 @@ void test_prng(const uint_least32_t &seed){
 //'
 //' test putting a human in a house and calling some basic actions
 //'
+//' @examples
+//' test_house(theta = RACDaux::RACD_Parameters(),seed = 1)
 //' @export
 // [[Rcpp::export]]
 void test_house(const Rcpp::NumericVector &theta, const uint_least32_t &seed){
@@ -188,14 +190,18 @@ void test_house(const Rcpp::NumericVector &theta, const uint_least32_t &seed){
   house aHouse(1,1,1,1);
   
   human_ptr bob = std::make_unique<human>(1,1,1,"S",1,1,1,1,1,1,1,1,1,1,1,1,&aHouse);
-  human_ptr alice = std::make_unique<human>(2,1,1,"S",1,1,1,1,1,1,1,1,1,1,1,1,&aHouse);
+  human_ptr alice = std::make_unique<human>(2,1,1,"E",15,1,1,1,1,1,1,1,1,1,1,1,&aHouse);
   
   aHouse.add_human(std::move(bob));
   aHouse.add_human(std::move(alice));
-  aHouse.add_human(std::make_unique<human>(3,1,1,"S",1,1,1,1,1,1,1,1,1,1,1,1,&aHouse));
+  aHouse.add_human(std::make_unique<human>(3,1,1,"T",1,1,1,1,1,1,1,1,1,1,1,1,&aHouse));
   
   std::cout << "there are " << aHouse.get_humans().size() << " humans in the house" << std::endl;
   
+  for(auto &h : aHouse.get_humans()){
+    std::cout << "iterating..." << std::endl;
+    h->one_day();
+  }
   aHouse.get_humans().front()->suicide();
   
   std::cout << "there are " << aHouse.get_humans().size() << " humans in the house" << std::endl;

@@ -32,6 +32,8 @@ test_prng <- function(seed) {
 #'
 #' test putting a human in a house and calling some basic actions
 #'
+#' @examples
+#' test_house(theta = RACDaux::RACD_Parameters(),seed = 1)
 #' @export
 test_house <- function(theta, seed) {
     invisible(.Call('_RACD_test_house', PACKAGE = 'RACD', theta, seed))

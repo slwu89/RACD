@@ -60,9 +60,7 @@ void human::suicide(){
   #endif
   for(auto it = house_ptr->get_humans().begin(); it != house_ptr->get_humans().end(); it++){
       if(it->get() == this){
-        std::cout << "i found myself!" << std::endl;
         house_ptr->get_humans().erase(it);
-          // house_ptr->get_humans().erase(it);
       }
   }
 }

@@ -269,15 +269,19 @@ RACD_Setup <- function(theta){
   		indiv[[j]]$daysLatent <- 0
   	}
 
+
+
     return(list(
-      humans=indiv,
-      breedingSiteX = longBreedingSite,
-      breedingSiteY = latBreedingSite,
-      breedingSiteSigma = sigmaBreedingSite,
-      houseX = longHouse,
-      houseY = latHouse,
-      houseSize = householdSize,
-      housePsi = psiHouse
+      humans = indiv,
+      breedingSites = mapply(longBreedingSite,latBreedingSite,sigmaBreedingSite,FUN = function(x,y,z){list(x=x,y=y,sigma=z)},SIMPLIFY = FALSE),
+      # breedingSiteX = longBreedingSite,
+      # breedingSiteY = latBreedingSite,
+      # breedingSiteSigma = sigmaBreedingSite,
+      # houseX = longHouse,
+      # houseY = latHouse,
+      # houseSize = householdSize,
+      # housePsi = psiHouse
+      houses = mapply(longHouse,latHouse,householdSize,psiHouse,FUN = function(x,y,z,w){list(x=x,y=y,size=z,psi=w)},SIMPLIFY = FALSE)
     ))
   })
 }

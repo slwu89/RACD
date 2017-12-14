@@ -17,7 +17,6 @@
 #include <Rcpp.h>
 #include <memory>
 #include <vector>
-#include <string>
 
 /* typedefs and forward declarations */
 class house;
@@ -28,10 +27,15 @@ class village {
 public:
 
   /* constructor */
-  village();
+  village(const Rcpp::List& humans, const Rcpp::List& houses);
 
   /* destructor */
   ~village();
+
+  /* Simulation Methods */
+
+  /* daily simulation */
+  void                                      one_day();
 
   /* demographics */
   void                                      births();
@@ -42,7 +46,6 @@ private:
   std::vector<house_ptr>                    houses;
   // std::vector<breedingSite_ptr>             breedingSites;
 
-  std::string                               output; /* string giving valid output file to make */
 
 };
 

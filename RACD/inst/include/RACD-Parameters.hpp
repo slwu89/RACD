@@ -96,8 +96,12 @@ private:
   double                      meanNumPeoplePerHouse; /* Mean number of people per house (from Misungu data set) */
   int                         numHousesPerBreedingSite; /* Number of houses per breeding site */
 
+  /* output */
+  std::string                 outfile_events_name; /* outfile for all events */
+  std::string                 outfile_incidence_name; /* outfile for clinical incidence by age group */
+
   /* pseudo-random number generation */
-  prng_ptr                        prng_member;
+  prng_ptr                    prng_member;
 
   /* singleton instance */
   static RACD_Parameters      *RACD_Parameters_instance;
@@ -210,6 +214,11 @@ public:
   /* pseudo-random number generation */
   void set_prng(const uint_least32_t &seed);
   prng* get_prng();
+
+  /* output */
+  void set_outfile_names(const std::string& events, const std::string& incidence);
+  std::string& get_outfile_events(){return outfile_events_name; };
+  std::string& get_outfile_incidence(){return outfile_incidence_name; };
 
   /* suicide at end of program */
   void suicide();
