@@ -21,25 +21,25 @@
 human::human(const int& _humanID,
       const double& _age,
       const bool& _alive,
-      house* _house_ptr,
-      const double& _bitingHet,
+      const std::string _state,
+      const int _daysLatent,
       const double& _IB,
       const double& _ID,
       const double& _ICA,
       const double& _ICM,
+      const double& _bitingHet,
       const double& _epsilon,
       const double& _lambda,
       const double& _phi,
       const double& _prDetectAMic,
       const double& _prDetectAPCR,
       const double& _prDetectUPCR,
-      const std::string _state,
-      const int _daysLatent
-    ) : humanID(_humanID), age(_age), alive(_alive), house_ptr(_house_ptr),
-        bitingHet(_bitingHet), IB(_IB), ID(_ID), ICA(_ICA), ICM(_ICM),
-        epsilon(_epsilon), lambda(_lambda), phi(_phi),
+      house* _house_ptr
+    ) : humanID(_humanID), age(_age), alive(_alive), state(_state), daysLatent(_daysLatent),
+        IB(_IB), ID(_ID), ICA(_ICA), ICM(_ICM),
+        bitingHet(_bitingHet), epsilon(_epsilon), lambda(_lambda), phi(_phi),
         prDetectAMic(_prDetectAMic), prDetectAPCR(_prDetectAPCR), prDetectUPCR(_prDetectUPCR),
-        state(_state), daysLatent(_daysLatent)
+        house_ptr(_house_ptr)
 {
   #ifdef DEBUG_HPP
   std::cout << "human " << humanID << " being born at " << this << std::endl;

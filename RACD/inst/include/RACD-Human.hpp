@@ -32,20 +32,20 @@ public:
   human(const int& _humanID,
         const double& _age,
         const bool& _alive,
-        house* _house_ptr,
-        const double& _bitingHet,
+        const std::string _state,
+        const int _daysLatent,
         const double& _IB,
         const double& _ID,
         const double& _ICA,
         const double& _ICM,
+        const double& _bitingHet,
         const double& _epsilon,
         const double& _lambda,
         const double& _phi,
         const double& _prDetectAMic,
         const double& _prDetectAPCR,
         const double& _prDetectUPCR,
-        const std::string _state,
-        const int _daysLatent
+        house* _house_ptr
       );
 
   /* destructor */

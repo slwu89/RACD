@@ -183,13 +183,13 @@ void test_house(const Rcpp::NumericVector &theta, const uint_least32_t &seed){
   );
   RACD_Parameters::instance()->set_prng(seed);
   
-  // house* aHouse = new house();
-  // delete aHouse;
-  
-  // std::unique_ptr<house> aHouse = std::make_unique<house>();
-  // human_ptr aHuman = std::make_unique<human>(1,5.23,true,aHouse.get(),4.1,4.1,4.1,4.1,4.1,4.1,4.1,4.1,4.1,4.1,4.1,"S",0);
-  // aHouse->get_humans().push_back(std::move(aHuman));
-  
+  // make a house and a human and put the human in the house
+  std::unique_ptr<house> aHouse = std::make_unique<house>(1,1,1,1);
+  human_ptr aHuman = std::make_unique<human>(
+    1,1,1,"S",1,1,1,1,1,1,1,1,1,1,1,1,aHouse.get()
+  );
+  aHouse->get_humans().push_back(std::move(aHuman));
+  aHouse->get_humans().front()->S_compartment();
   
   std::cout << "exit testing house & human" << std::endl;
 }

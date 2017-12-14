@@ -29,7 +29,7 @@ class house {
 public:
 
   /* constructor */
-  house(const int& _houseID, const double& _psi);
+  house(const int& _houseID, const double& _psi, const double& _x, const double& _y);
 
   /* destructor */
   ~house();
@@ -38,7 +38,8 @@ public:
   int                                       get_houseID(){ return houseID; };
   double                                    get_psi(){ return psi; };
   human_vector&                             get_humans(){ return humans; };
-
+  double                                    get_x(){ return x; };
+  double                                    get_y(){ return y; };
 
 private:
 
