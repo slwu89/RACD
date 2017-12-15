@@ -246,6 +246,29 @@ void test_list(const Rcpp::List& list){
 //' house_par = init$houses
 //' @export
 // [[Rcpp::export]]
-void test_village(const Rcpp::List& human_par, const Rcpp::List& house_par){
-  village aVillage(human_par,house_par);
+void test_village(const Rcpp::List& human_par, const Rcpp::List& house_par, const Rcpp::NumericVector &theta, const uint_least32_t &seed){
+  RACD_Parameters::instance();
+  RACD_Parameters::instance()->set_values(theta["epsilon0"],theta["fT"],theta["dE"],theta["dT"],theta["dD"],theta["dA"],theta["dU"],theta["dP"],theta["cD"],theta["cT"],theta["cU"],theta["gammaI"],theta["rho"],theta["a0"],theta["sigma2"],theta["d1"],theta["dID"],theta["ID0"],theta["kappaD"],theta["uD"],theta["aD"],theta["fD0"],theta["gammaD"],theta["alphaA"],theta["alphaU"],theta["b0"],theta["b1"],theta["dB"],theta["IB0"],theta["kappaB"],theta["uB"],theta["phi0"],theta["phi1"],theta["dC"],theta["IC0"],theta["kappaC"],theta["uC"],theta["PM"],theta["dM"],theta["rW"],theta["rP"],theta["meanAge"],theta["N"],theta["meanNumPeoplePerHouse"],theta["numHousesPerBreedingSite"]);
+  RACD_Parameters::instance()->set_prng(seed);
+  
+  village simVillage(human_par,house_par);
+  simVillage.births();
+  RACD_Parameters::instance()->suicide();
+}
+
+
+//' Unit Test: test rlnorm from STL <random>
+//'
+//' draw rlnorm
+//'
+//' @export
+// [[Rcpp::export]]
+Rcpp::NumericVector test_rlnorm(const double& m, const double& s, const uint_least32_t &seed){
+  RACD_Parameters::instance();
+  RACD_Parameters::instance()->set_prng(seed);
+  Rcpp::NumericVector out;
+  for(size_t i=0; i<10000; i++){
+    out.push_back(RACD_Parameters::instance()->get_prng()->get_rlnorm(m,s));
+  }
+  return out;
 }

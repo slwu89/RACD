@@ -17,6 +17,9 @@
 #include <Rcpp.h>
 #include <memory>
 #include <vector>
+#include <math.h> /* sqrt */
+#include <progress.hpp>
+#include <progress_bar.hpp>
 
 /* typedefs and forward declarations */
 class house;
@@ -34,15 +37,21 @@ public:
 
   /* Simulation Methods */
 
+  /* one simulation run */
+  void                                      simulation(const int& tMax);
+
   /* daily simulation */
   void                                      one_day();
 
   /* demographics */
   void                                      births();
 
-
 private:
 
+  /* keep track of all human IDs */
+  int                                       max_humanID;
+
+  /* houses */
   std::vector<house_ptr>                    houses;
   // std::vector<breedingSite_ptr>             breedingSites;
 

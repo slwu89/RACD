@@ -56,6 +56,7 @@ public:
 
   /* accessors */
   double                          get_age(){ return age; };
+  double                          get_ICA(){ return ICA; };
 
   /* Simulation Methods */
 

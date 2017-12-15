@@ -48,6 +48,12 @@ public:
       return rbinom(rng);
     };
 
+    /* rlnorm(m,s) */
+    double get_rlnorm(const double& m, const double& s){
+      std::lognormal_distribution<double>rlnorm(m,s);
+      return rlnorm(rng);
+    };
+
 private:
     std::mt19937                            rng;
     std::uniform_real_distribution<double>  runif;

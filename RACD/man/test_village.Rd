@@ -4,7 +4,7 @@
 \alias{test_village}
 \title{Unit Test: make a village}
 \usage{
-test_village(human_par, house_par)
+test_village(human_par, house_par, theta, seed)
 }
 \description{
 create a village
