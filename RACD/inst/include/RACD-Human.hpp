@@ -54,6 +54,9 @@ public:
   /* object suicide */
   void                            suicide();
 
+  /* accessors */
+  double                          get_age(){ return age; };
+
   /* Simulation Methods */
 
   /* daily simulation */

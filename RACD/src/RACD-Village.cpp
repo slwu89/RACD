@@ -14,10 +14,24 @@
 #include "RACD-Village.hpp"
 #include "RACD-House.hpp"
 #include "RACD-Human.hpp"
+#include "RACD-Parameters.hpp"
+#include "RACD-PRNG.hpp"
+
+
+/* iterative mean: Knuth, The Art of Computer Programming Vol 2, section 4.2.2 */
+inline double mean(const std::vector<double> array){
+  double avg = 0;
+  int t = 1;
+  for (double x : array) {
+    avg += (x - avg) / t;
+    ++t;
+  }
+  return avg;
+}
 
 /* constructor */
 village::village(const Rcpp::List& human_par, const Rcpp::List& house_par){
-  
+
   #ifdef DEBUG_HPP
   std::cout << "village being born at " << this << std::endl;
   #endif
@@ -27,10 +41,10 @@ village::village(const Rcpp::List& human_par, const Rcpp::List& house_par){
     Rcpp::List hh = house_par[i];
     houses.push_back(std::make_unique<house>(int(i),double(hh["psi"]),double(hh["x"]),double(hh["y"])));
   }
-  
+
   /* humans */
   for(size_t i=0; i<human_par.size(); i++){
-    
+
     /* human i's parameters */
     Rcpp::List hh = human_par[i];
     int humanID = int(i);
@@ -50,11 +64,11 @@ village::village(const Rcpp::List& human_par, const Rcpp::List& house_par){
     double prDetectUPCR = double(hh["prDetectUPCR"]);
     std::string state(1,hh["state"]);
     int daysLatent = int(hh["daysLatent"]);
-    
+
     /* add human i to their house */
     houses[house]->add_human(std::make_unique<human>(humanID,age,alive,state,daysLatent,IB,ID,ICA,ICM,bitingHet,epsilon,lambda,phi,prDetectAMic,prDetectAPCR,prDetectUPCR,houses[house].get()));
   }
-  
+
 };
 
 /* destructor */
@@ -69,5 +83,17 @@ village::~village(){
 // /* daily simulation */
 // void                                      one_day();
 //
-// /* demographics */
-// void                                      births();
+/* demographics */
+void village::births(){
+
+  /* current population size */
+  int N = 0;
+  for(auto &h : houses){
+    N += h->get_humans().size();
+  }
+
+  /* number of births */
+  double mu = RACD_Parameters::instance()->get_mu();
+  int numNewBirths = RACD_Parameters::instance()->get_prng()->get_rbinom(N,mu);
+
+};

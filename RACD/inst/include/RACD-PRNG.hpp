@@ -21,20 +21,31 @@
 
 class prng {
 public:
+
+    /* constructor */
     prng(const uint_least32_t &seed) : rng(seed) {
       runif = std::uniform_real_distribution<double>(0,1);
       #ifdef DEBUG_HPP
       std::cout << "prng being born at " << this << std::endl;
       #endif
     };
+
+    /* destructor */
     ~prng(){
       #ifdef DEBUG_HPP
       std::cout << "prng being killed at " << this << std::endl;
       #endif
     };
 
+    /* runif(0,1) */
     double get_runif(){
-        return runif(rng);
+      return runif(rng);
+    };
+
+    /* rbinom(n,p) */
+    int get_rbinom(const int& n, const double& p){
+      std::binomial_distribution<int>rbinom(n,p);
+      return rbinom(rng);
     };
 
 private:
