@@ -39,3 +39,30 @@ test_house <- function(theta, seed) {
     invisible(.Call('_RACD_test_house', PACKAGE = 'RACD', theta, seed))
 }
 
+#' Unit Test: nested lists
+#'
+#' test iteration through nested list
+#'
+#' @examples
+#' theta = RACDaux::RACD_Parameters()
+#' init = RACDaux::RACD_Setup(theta)
+#' test_list(init$humans)
+#' @export
+test_list <- function(list) {
+    invisible(.Call('_RACD_test_list', PACKAGE = 'RACD', list))
+}
+
+#' Unit Test: make a village
+#'
+#' create a village
+#'
+#' @examples
+#' theta = RACDaux::RACD_Parameters()
+#' init = RACDaux::RACD_Setup(theta)
+#' human_par = init$humans
+#' house_par = init$houses
+#' @export
+test_village <- function(human_par, house_par) {
+    invisible(.Call('_RACD_test_village', PACKAGE = 'RACD', human_par, house_par))
+}
+

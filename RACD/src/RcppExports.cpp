@@ -46,12 +46,35 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// test_list
+void test_list(const Rcpp::List& list);
+RcppExport SEXP _RACD_test_list(SEXP listSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::List& >::type list(listSEXP);
+    test_list(list);
+    return R_NilValue;
+END_RCPP
+}
+// test_village
+void test_village(const Rcpp::List& human_par, const Rcpp::List& house_par);
+RcppExport SEXP _RACD_test_village(SEXP human_parSEXP, SEXP house_parSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::List& >::type human_par(human_parSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::List& >::type house_par(house_parSEXP);
+    test_village(human_par, house_par);
+    return R_NilValue;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_RACD_test_parameters", (DL_FUNC) &_RACD_test_parameters, 1},
     {"_RACD_test_human_parameters", (DL_FUNC) &_RACD_test_human_parameters, 1},
     {"_RACD_test_prng", (DL_FUNC) &_RACD_test_prng, 1},
     {"_RACD_test_house", (DL_FUNC) &_RACD_test_house, 2},
+    {"_RACD_test_list", (DL_FUNC) &_RACD_test_list, 1},
+    {"_RACD_test_village", (DL_FUNC) &_RACD_test_village, 2},
     {NULL, NULL, 0}
 };
 

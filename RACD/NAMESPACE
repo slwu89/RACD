@@ -2,8 +2,10 @@
 
 export(test_house)
 export(test_human_parameters)
+export(test_list)
 export(test_parameters)
 export(test_prng)
+export(test_village)
 import(Rcpp)
 importFrom(deSolve,ode)
 useDynLib(RACD)

@@ -16,7 +16,9 @@
 #include "RACD-PRNG.hpp"
 #include "RACD-Human.hpp"
 #include "RACD-House.hpp"
-#include "TEST-HUMAN.hpp"
+#include "RACD-Village.hpp"
+
+#include "TEST-HUMAN.hpp" /* test human object */
 
 #include <iostream>
 
@@ -209,4 +211,41 @@ void test_house(const Rcpp::NumericVector &theta, const uint_least32_t &seed){
 
   
   std::cout << "exit testing house & human" << std::endl;
+}
+
+//' Unit Test: nested lists
+//'
+//' test iteration through nested list
+//'
+//' @examples
+//' theta = RACDaux::RACD_Parameters()
+//' init = RACDaux::RACD_Setup(theta)
+//' test_list(init$humans)
+//' @export
+// [[Rcpp::export]]
+void test_list(const Rcpp::List& list){
+  for(size_t i=0; i<list.size(); i++){
+    Rcpp::List h = list[i];
+    std::cout << "age: " << double(h["age"]) << std::endl;
+    std::cout << "alive: " << bool(h["alive"]) << std::endl;
+    std::cout << "state: " << char(h["state"]) << std::endl;
+    std::string s(1,h["state"]);
+    std::cout << "state as string: " << s << std::endl;
+  }
+}
+
+
+//' Unit Test: make a village
+//'
+//' create a village
+//'
+//' @examples
+//' theta = RACDaux::RACD_Parameters()
+//' init = RACDaux::RACD_Setup(theta)
+//' human_par = init$humans
+//' house_par = init$houses
+//' @export
+// [[Rcpp::export]]
+void test_village(const Rcpp::List& human_par, const Rcpp::List& house_par){
+  village aVillage(human_par,house_par);
 }
