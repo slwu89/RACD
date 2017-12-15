@@ -45,6 +45,7 @@ public:
 
   /* demographics */
   void                                      births();
+  void                                      deaths();
 
 private:
 

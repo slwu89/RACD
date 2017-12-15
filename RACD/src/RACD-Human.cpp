@@ -58,11 +58,12 @@ void human::suicide(){
   #ifdef DEBUG_HPP
   std::cout << "human " << humanID << " suiciding at " << this << std::endl;
   #endif
-  for(auto it = house_ptr->get_humans().begin(); it != house_ptr->get_humans().end(); it++){
-      if(it->get() == this){
-        house_ptr->get_humans().erase(it);
-      }
-  }
+  // for(auto it = house_ptr->get_humans().begin(); it != house_ptr->get_humans().end(); it++){
+  //     if(it->get() == this){
+  //       house_ptr->get_humans().erase(it);
+  //     }
+  // }
+  alive = false;
 }
 
 

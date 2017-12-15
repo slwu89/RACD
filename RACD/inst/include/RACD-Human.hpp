@@ -57,6 +57,7 @@ public:
   /* accessors */
   double                          get_age(){ return age; };
   double                          get_ICA(){ return ICA; };
+  bool                            get_alive() const { return alive; };
 
   /* Simulation Methods */
 

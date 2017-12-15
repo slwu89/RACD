@@ -29,6 +29,10 @@ inline double iter_mean(const std::vector<double>& array){
   return avg;
 }
 
+bool died(const human& h){
+  return !h.get_alive();
+};
+
 
 /* constructor */
 village::village(const Rcpp::List& human_par, const Rcpp::List& house_par){
@@ -113,6 +117,7 @@ void village::one_day(){
 
   /* demographics */
   births();
+  deaths();
 
 };
 
@@ -193,5 +198,20 @@ std::cout << "got num births: " << numNewBirths << std::endl;
       max_humanID++;
     } /* end for */
   } /* end if */
+
+};
+
+void village::deaths(){
+
+  for(auto &hh : houses){
+
+    // hh->get_humans().erase(std::remove_if(hh->get_humans().begin(),hh->get_humans().end(),died),hh->get_humans().end());
+    // for(auto it = hh->get_humans().begin(); it != hh->get_humans().end(); it++){
+    //   if(!it->get()->get_alive()){
+    //     std::remove(hh->get_humans().begin(),hh->get_humans().begin(),it);
+    //   }
+    // }
+
+  }
 
 };
