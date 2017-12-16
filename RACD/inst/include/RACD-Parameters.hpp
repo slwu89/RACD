@@ -99,6 +99,7 @@ private:
   /* output */
   std::string                 outfile_events_name; /* outfile for all events */
   std::string                 outfile_incidence_name; /* outfile for clinical incidence by age group */
+  std::ofstream&              outfile_events;
 
   /* pseudo-random number generation */
   prng_ptr                    prng_member;
