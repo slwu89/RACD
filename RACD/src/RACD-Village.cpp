@@ -29,6 +29,7 @@ inline double iter_mean(const std::vector<double>& array){
   return avg;
 }
 
+/* comparator to check if the human is dead */
 bool died(const human& h){
   return !h.get_alive();
 };
