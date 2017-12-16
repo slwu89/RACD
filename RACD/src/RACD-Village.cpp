@@ -92,15 +92,15 @@ village::~village(){
 /* one simulation run */
 void village::simulation(const int& tMax){
 
-  // Progress::Progress pb(tMax,true);
+  Progress::Progress pb(tMax,true);
 std::cout << "entering simulation..." << std::endl;
   for(int i=0; i<tMax; i++){
     std::cout << "i: " << i << std::endl;
-    // if(Progress::check_abort()){
-    //   Rcpp::stop("user abort detected; exiting RACD");
-    // }
+    if(Progress::check_abort()){
+      Rcpp::stop("user abort detected; exiting RACD");
+    }
     one_day();
-    // pb.increment();
+    pb.increment();
   }
 
 };
@@ -201,16 +201,16 @@ std::cout << "got num births: " << numNewBirths << std::endl;
 
 };
 
+/* clear out corpses at end of each day */
 void village::deaths(){
 
   for(auto &hh : houses){
 
-    // hh->get_humans().erase(std::remove_if(hh->get_humans().begin(),hh->get_humans().end(),died),hh->get_humans().end());
-    // for(auto it = hh->get_humans().begin(); it != hh->get_humans().end(); it++){
-    //   if(!it->get()->get_alive()){
-    //     std::remove(hh->get_humans().begin(),hh->get_humans().begin(),it);
-    //   }
-    // }
+    auto it = std::find_if(hh->get_humans().begin(),hh->get_humans().end(), [&](human_ptr& h){ return !h->get_alive(); });
+    if(it!=hh->get_humans().end()){
+      hh->get_humans().erase(it);
+    }
+    it++;
 
   }
 
