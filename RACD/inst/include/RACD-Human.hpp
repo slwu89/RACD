@@ -62,31 +62,31 @@ public:
   /* Simulation Methods */
 
   /* daily simulation */
-  void                            one_day();
+  void                            one_day(const int& tNow);
 
   /* mortality */
-  void                            mortality();
+  void                            mortality(const int& tNow);
 
   /* S: susceptible */
-  void                            S_compartment();
+  void                            S_compartment(const int& tNow);
 
   /* E: latent period */
-  void                            E_compartment();
+  void                            E_compartment(const int& tNow);
 
   /* T: treated clinical disease */
-  void                            T_compartment();
+  void                            T_compartment(const int& tNow);
 
   /* D: untreated clinical disease */
-  void                            D_compartment();
+  void                            D_compartment(const int& tNow);
 
   /* A: asymptomatic patent (detectable by microscopy) infection */
-  void                            A_compartment();
+  void                            A_compartment(const int& tNow);
 
   /* U: asymptomatic sub-patent (not detectable by microscopy) infection */
-  void                            U_compartment();
+  void                            U_compartment(const int& tNow);
 
   /* P: protection due to chemoprophylaxis treatment */
-  void                            P_compartment();
+  void                            P_compartment(const int& tNow);
 
   /* ageing */
   void                            ageing();

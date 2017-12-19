@@ -70,6 +70,4 @@ private:
   };
 };
 
-logger *logger::l_instance = nullptr;
-
 #endif

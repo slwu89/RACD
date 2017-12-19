@@ -10,15 +10,16 @@
 #' @param human list of human parameters (see \code{\link[RACDaux]{RACD_Setup}} for details)
 #' @param house list of house parameters (see \code{\link[RACDaux]{RACD_Setup}} for details)
 #' @param seed seed for prng class
+#' @param out_trans path to .csv file for logging state transition events
 #'
 #' @examples
 #' theta = RACDaux::RACD_Parameters()
 #' init = RACDaux::RACD_Setup(theta)
-#' \dontrun{RACD_Simulation(365,theta,init$humans,init$houses,123)}
+#' \dontrun{RACD_Simulation(365,theta,init$humans,init$houses,123,"/Users/slwu89/Desktop/log_trans.csv")}
 #'
 #' @export
-RACD_Simulation <- function(tMax, theta, human, house, seed) {
-    invisible(.Call('_RACD_RACD_Simulation', PACKAGE = 'RACD', tMax, theta, human, house, seed))
+RACD_Simulation <- function(tMax, theta, human, house, seed, out_trans) {
+    invisible(.Call('_RACD_RACD_Simulation', PACKAGE = 'RACD', tMax, theta, human, house, seed, out_trans))
 }
 
 #' Unit Test: RACD_Parameters

@@ -17,6 +17,7 @@
 #include <Rcpp.h>
 #include <memory>
 #include <vector>
+#include <iostream>
 #include <math.h> /* sqrt */
 #include <progress.hpp>
 #include <progress_bar.hpp>
@@ -48,6 +49,9 @@ public:
   void                                      deaths();
 
 private:
+
+  /* time */
+  int                                       tNow;
 
   /* keep track of all human IDs */
   int                                       max_humanID;

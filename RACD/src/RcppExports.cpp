@@ -6,8 +6,8 @@
 using namespace Rcpp;
 
 // RACD_Simulation
-void RACD_Simulation(const int& tMax, const Rcpp::NumericVector& theta, const Rcpp::List& human, const Rcpp::List& house, const uint_least32_t& seed);
-RcppExport SEXP _RACD_RACD_Simulation(SEXP tMaxSEXP, SEXP thetaSEXP, SEXP humanSEXP, SEXP houseSEXP, SEXP seedSEXP) {
+void RACD_Simulation(const int& tMax, const Rcpp::NumericVector& theta, const Rcpp::List& human, const Rcpp::List& house, const uint_least32_t& seed, const std::string& out_trans);
+RcppExport SEXP _RACD_RACD_Simulation(SEXP tMaxSEXP, SEXP thetaSEXP, SEXP humanSEXP, SEXP houseSEXP, SEXP seedSEXP, SEXP out_transSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const int& >::type tMax(tMaxSEXP);
@@ -15,7 +15,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const Rcpp::List& >::type human(humanSEXP);
     Rcpp::traits::input_parameter< const Rcpp::List& >::type house(houseSEXP);
     Rcpp::traits::input_parameter< const uint_least32_t& >::type seed(seedSEXP);
-    RACD_Simulation(tMax, theta, human, house, seed);
+    Rcpp::traits::input_parameter< const std::string& >::type out_trans(out_transSEXP);
+    RACD_Simulation(tMax, theta, human, house, seed, out_trans);
     return R_NilValue;
 END_RCPP
 }
@@ -98,7 +99,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_RACD_RACD_Simulation", (DL_FUNC) &_RACD_RACD_Simulation, 5},
+    {"_RACD_RACD_Simulation", (DL_FUNC) &_RACD_RACD_Simulation, 6},
     {"_RACD_test_parameters", (DL_FUNC) &_RACD_test_parameters, 1},
     {"_RACD_test_human_parameters", (DL_FUNC) &_RACD_test_human_parameters, 1},
     {"_RACD_test_prng", (DL_FUNC) &_RACD_test_prng, 1},

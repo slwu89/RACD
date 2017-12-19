@@ -4,7 +4,7 @@
 \alias{RACD_Simulation}
 \title{RACD Simulation Model}
 \usage{
-RACD_Simulation(tMax, theta, human, house, seed)
+RACD_Simulation(tMax, theta, human, house, seed, out_trans)
 }
 \arguments{
 \item{tMax}{length of simulation in days}
@@ -16,6 +16,8 @@ RACD_Simulation(tMax, theta, human, house, seed)
 \item{house}{list of house parameters (see \code{\link[RACDaux]{RACD_Setup}} for details)}
 
 \item{seed}{seed for prng class}
+
+\item{out_trans}{path to .csv file for logging state transition events}
 }
 \description{
 Run the simulation
@@ -23,6 +25,6 @@ Run the simulation
 \examples{
 theta = RACDaux::RACD_Parameters()
 init = RACDaux::RACD_Setup(theta)
-\dontrun{RACD_Simulation(365,theta,init$humans,init$houses,123)}
+\dontrun{RACD_Simulation(365,theta,init$humans,init$houses,123,"/Users/slwu89/Desktop/log_trans.csv")}
 
 }

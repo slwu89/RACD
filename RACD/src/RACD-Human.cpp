@@ -15,6 +15,7 @@
 #include "RACD-House.hpp"
 #include "RACD-Parameters.hpp"
 #include "RACD-PRNG.hpp"
+#include "RACD-Logger.hpp"
 
 
 /* constructor */
@@ -65,26 +66,26 @@ void human::suicide(){
 /* Simulation Methods */
 
 /* daily simulation */
-void human::one_day(){
+void human::one_day(const int& tNow){
 
   /* daily mortality */
-  mortality();
+  mortality(tNow);
 
   /* compartment transitions */
   if(state.compare("S")==0){
-    S_compartment();
+    S_compartment(tNow);
   } else if(state.compare("E")==0){
-    E_compartment();
+    E_compartment(tNow);
   } else if(state.compare("T")==0){
-    T_compartment();
+    T_compartment(tNow);
   } else if(state.compare("D")==0){
-    D_compartment();
+    D_compartment(tNow);
   } else if(state.compare("A")==0){
-    A_compartment();
+    A_compartment(tNow);
   } else if(state.compare("U")==0){
-    U_compartment();
+    U_compartment(tNow);
   } else if(state.compare("P")==0){
-    P_compartment();
+    P_compartment(tNow);
   } else {
     Rcpp::stop("unrecognized human state");
   }
@@ -92,7 +93,7 @@ void human::one_day(){
 };
 
 /* mortality */
-void human::mortality(){
+void human::mortality(const int& tNow){
 
   double randNum = RACD_Parameters::instance()->get_prng()->get_runif();
 
@@ -100,9 +101,12 @@ void human::mortality(){
   double mu = RACD_Parameters::instance()->get_mu();
 
   if(randNum <= mu){
-    // REPLACE WITH REAL OUTPUT
-    std::cout << "human " << humanID << " dying from natural causes" << std::endl;
-    // REPLACE WITH REAL OUTPUT
+
+    /* logging */
+    std::string out = std::to_string(humanID) + ",Death," + std::to_string(tNow);
+    logger::instance()->log_trans(out);
+
+    /* simulation */
     alive = false;
     suicide();
   }
@@ -110,7 +114,7 @@ void human::mortality(){
 };
 
 /* S: susceptible */
-void human::S_compartment(){
+void human::S_compartment(const int& tNow){
 
   double randNum = RACD_Parameters::instance()->get_prng()->get_runif();
 
@@ -119,17 +123,24 @@ void human::S_compartment(){
    * develops a latent infection (E) in the next time step.
    */
   if(randNum <= lambda){
+
+    /* logging */
+    std::string out = std::to_string(humanID) + ",E," + std::to_string(tNow);
+    logger::instance()->log_trans(out);
+
+    // // REPLACE WITH REAL OUTPUT
+    // std::cout << "human " << humanID << " transitioning to E" << std::endl;
+    // // REPLACE WITH REAL OUTPUT
+
+    /* simulation */
     state = "E";
     daysLatent = 1;
-    // REPLACE WITH REAL OUTPUT
-    std::cout << "human " << humanID << " transitioning to E" << std::endl;
-    // REPLACE WITH REAL OUTPUT
   }
 };
 
 
 /* E: latent period */
-void human::E_compartment(){
+void human::E_compartment(const int& tNow){
   if(daysLatent < RACD_Parameters::instance()->get_dE()){
     daysLatent++;
   } else {
@@ -145,11 +156,17 @@ void human::E_compartment(){
      * in the next time step.
      */
     if(randNum <= phi*fT){
+
+      /* logging */
+      std::string out = std::to_string(humanID) + ",T," + std::to_string(tNow);
+      logger::instance()->log_trans(out);
+
+      /* simulation  */
       state = "T";
       daysLatent = 0;
-      // REPLACE WITH REAL OUTPUT
-      std::cout << "human " << humanID << " transitioning to T" << std::endl;
-      // REPLACE WITH REAL OUTPUT
+      // // REPLACE WITH REAL OUTPUT
+      // std::cout << "human " << humanID << " transitioning to T" << std::endl;
+      // // REPLACE WITH REAL OUTPUT
     }
 
     /* Untreated clinical infection (E -> D):
@@ -158,11 +175,17 @@ void human::E_compartment(){
      * clinical infection (D) in the next time step.
      */
      if((randNum > phi*fT) & (randNum <= phi)){
+
+       /* logging */
+       std::string out = std::to_string(humanID) + ",D," + std::to_string(tNow);
+       logger::instance()->log_trans(out);
+
+       /* simulation  */
        state = "D";
        daysLatent = 0;
-       // REPLACE WITH REAL OUTPUT
-       std::cout << "human " << humanID << " transitioning to D" << std::endl;
-       // REPLACE WITH REAL OUTPUT
+       // // REPLACE WITH REAL OUTPUT
+       // std::cout << "human " << humanID << " transitioning to D" << std::endl;
+       // // REPLACE WITH REAL OUTPUT
      }
 
      /* Asymptomatic infection (E -> A):
@@ -171,18 +194,24 @@ void human::E_compartment(){
       * the next time step.
       */
       if(randNum > phi){
+
+        /* logging */
+        std::string out = std::to_string(humanID) + ",A," + std::to_string(tNow);
+        logger::instance()->log_trans(out);
+
+        /* simulation  */
         state = "A";
         daysLatent = 0;
-        // REPLACE WITH REAL OUTPUT
-        std::cout << "human " << humanID << " transitioning to A" << std::endl;
-        // REPLACE WITH REAL OUTPUT
+        // // REPLACE WITH REAL OUTPUT
+        // std::cout << "human " << humanID << " transitioning to A" << std::endl;
+        // // REPLACE WITH REAL OUTPUT
       }
 
   }
 };
 
 /* T: treated clinical disease */
-void human::T_compartment(){
+void human::T_compartment(const int& tNow){
 
   double randNum = RACD_Parameters::instance()->get_prng()->get_runif();
 
@@ -194,16 +223,22 @@ void human::T_compartment(){
    * phase of prophylactic protection (P) in the next time step.
   */
   if(randNum <= (1/dT)){
+
+    /* logging */
+    std::string out = std::to_string(humanID) + ",P," + std::to_string(tNow);
+    logger::instance()->log_trans(out);
+
+    /* simulation  */
     state = "P";
-    // REPLACE WITH REAL OUTPUT
-    std::cout << "human " << humanID << " transitioning to P" << std::endl;
-    // REPLACE WITH REAL OUTPUT
+    // // REPLACE WITH REAL OUTPUT
+    // std::cout << "human " << humanID << " transitioning to P" << std::endl;
+    // // REPLACE WITH REAL OUTPUT
   }
 
 };
 
 /* D: untreated clinical disease */
-void human::D_compartment(){
+void human::D_compartment(const int& tNow){
 
   double randNum = RACD_Parameters::instance()->get_prng()->get_runif();
 
@@ -215,16 +250,22 @@ void human::D_compartment(){
    * phase of asymptomatic patent infection (A) in the next time step.
   */
   if(randNum <= (1/dD)){
+
+    /* logging */
+    std::string out = std::to_string(humanID) + ",A," + std::to_string(tNow);
+    logger::instance()->log_trans(out);
+
+    /* simulation  */
     state = "A";
-    // REPLACE WITH REAL OUTPUT
-    std::cout << "human " << humanID << " transitioning to A" << std::endl;
-    // REPLACE WITH REAL OUTPUT
+    // // REPLACE WITH REAL OUTPUT
+    // std::cout << "human " << humanID << " transitioning to A" << std::endl;
+    // // REPLACE WITH REAL OUTPUT
   }
 
 };
 
 /* A: asymptomatic patent (detectable by microscopy) infection */
-void human::A_compartment(){
+void human::A_compartment(const int& tNow){
 
   double randNum = RACD_Parameters::instance()->get_prng()->get_runif();
 
@@ -239,10 +280,16 @@ void human::A_compartment(){
    * the next time step.
    */
   if(randNum <= phi*fT*lambda){
+
+    /* logging */
+    std::string out = std::to_string(humanID) + ",T," + std::to_string(tNow);
+    logger::instance()->log_trans(out);
+
+    /* simulation  */
     state = "T";
-    // REPLACE WITH REAL OUTPUT
-    std::cout << "human " << humanID << " transitioning to T" << std::endl;
-    // REPLACE WITH REAL OUTPUT
+    // // REPLACE WITH REAL OUTPUT
+    // std::cout << "human " << humanID << " transitioning to T" << std::endl;
+    // // REPLACE WITH REAL OUTPUT
   }
 
   /* Untreated clinical infection (A -> D):
@@ -251,10 +298,16 @@ void human::A_compartment(){
    * untreated clinical infection (D) in the next time step.
    */
    if((randNum > phi*fT*lambda) && (randNum <= phi*lambda)){
+
+     /* logging */
+     std::string out = std::to_string(humanID) + ",D," + std::to_string(tNow);
+     logger::instance()->log_trans(out);
+
+     /* simulation  */
      state = "D";
-     // REPLACE WITH REAL OUTPUT
-     std::cout << "human " << humanID << " transitioning to D" << std::endl;
-     // REPLACE WITH REAL OUTPUT
+     // // REPLACE WITH REAL OUTPUT
+     // std::cout << "human " << humanID << " transitioning to D" << std::endl;
+     // // REPLACE WITH REAL OUTPUT
    }
 
    /* Progression to asymptomatic sub-patent infection (A -> U):
@@ -263,16 +316,22 @@ void human::A_compartment(){
     * infection (A) in the next time step.
     */
     if((randNum > phi*lambda) && (randNum <= (phi*lambda + (1/dA)))) {
+
+      /* logging */
+      std::string out = std::to_string(humanID) + ",U," + std::to_string(tNow);
+      logger::instance()->log_trans(out);
+
+      /* simulation  */
       state = "U";
-      // REPLACE WITH REAL OUTPUT
-      std::cout << "human " << humanID << " transitioning to U" << std::endl;
-      // REPLACE WITH REAL OUTPUT
+      // // REPLACE WITH REAL OUTPUT
+      // std::cout << "human " << humanID << " transitioning to U" << std::endl;
+      // // REPLACE WITH REAL OUTPUT
     }
 
 };
 
 /* U: asymptomatic sub-patent (not detectable by microscopy) infection */
-void human::U_compartment(){
+void human::U_compartment(const int& tNow){
 
   double randNum = RACD_Parameters::instance()->get_prng()->get_runif();
 
@@ -287,10 +346,16 @@ void human::U_compartment(){
    * the next time step.
    */
    if(randNum <= phi*fT*lambda){
+
+     /* logging */
+     std::string out = std::to_string(humanID) + ",T," + std::to_string(tNow);
+     logger::instance()->log_trans(out);
+
+     /* simulation  */
      state = "T";
-     // REPLACE WITH REAL OUTPUT
-     std::cout << "human " << humanID << " transitioning to T" << std::endl;
-     // REPLACE WITH REAL OUTPUT
+     // // REPLACE WITH REAL OUTPUT
+     // std::cout << "human " << humanID << " transitioning to T" << std::endl;
+     // // REPLACE WITH REAL OUTPUT
    }
 
    /* Untreated clinical infection (U -> D):
@@ -299,10 +364,16 @@ void human::U_compartment(){
     * untreated clinical infection (D) in the next time step.
     */
     if((randNum > phi*fT*lambda) && (randNum <= phi*lambda)){
+
+      /* logging */
+      std::string out = std::to_string(humanID) + ",D," + std::to_string(tNow);
+      logger::instance()->log_trans(out);
+
+      /* simulation  */
       state = "D";
-      // REPLACE WITH REAL OUTPUT
-      std::cout << "human " << humanID << " transitioning to D" << std::endl;
-      // REPLACE WITH REAL OUTPUT
+      // // REPLACE WITH REAL OUTPUT
+      // std::cout << "human " << humanID << " transitioning to D" << std::endl;
+      // // REPLACE WITH REAL OUTPUT
     }
 
     /* Asymptomatic infection (U -> A):
@@ -311,10 +382,16 @@ void human::U_compartment(){
      * asymptomatic infection (A) in the next time step.
      */
      if((randNum > phi*lambda) && (randNum <= lambda)){
+
+       /* logging */
+       std::string out = std::to_string(humanID) + ",A," + std::to_string(tNow);
+       logger::instance()->log_trans(out);
+
+       /* simulation  */
        state = "A";
-       // REPLACE WITH REAL OUTPUT
-       std::cout << "human " << humanID << " transitioning to A" << std::endl;
-       // REPLACE WITH REAL OUTPUT
+       // // REPLACE WITH REAL OUTPUT
+       // std::cout << "human " << humanID << " transitioning to A" << std::endl;
+       // // REPLACE WITH REAL OUTPUT
      }
 
      /* Progression to asymptomatic sub-patent infection (U -> S):
@@ -323,16 +400,22 @@ void human::U_compartment(){
       * state (S) in the next time step.
       */
       if((randNum > lambda) && (randNum <= (lambda + (1/dU)))){
+
+        /* logging */
+        std::string out = std::to_string(humanID) + ",S," + std::to_string(tNow);
+        logger::instance()->log_trans(out);
+
+        /* simulation  */
         state = "S";
-        // REPLACE WITH REAL OUTPUT
-        std::cout << "human " << humanID << " transitioning to S" << std::endl;
-        // REPLACE WITH REAL OUTPUT
+        // // REPLACE WITH REAL OUTPUT
+        // std::cout << "human " << humanID << " transitioning to S" << std::endl;
+        // // REPLACE WITH REAL OUTPUT
       }
 
 };
 
 /* P: protection due to chemoprophylaxis treatment */
-void human::P_compartment(){
+void human::P_compartment(const int& tNow){
 
     double randNum = RACD_Parameters::instance()->get_prng()->get_runif();
 
@@ -344,10 +427,16 @@ void human::P_compartment(){
      * the susceptible state (S) in the next time step.
      */
     if(randNum <= (1/dP)){
+
+      /* logging */
+      std::string out = std::to_string(humanID) + ",S," + std::to_string(tNow);
+      logger::instance()->log_trans(out);
+
+      /* simulation  */
       state = "S";
-      // REPLACE WITH REAL OUTPUT
-      std::cout << "human " << humanID << " transitioning to S" << std::endl;
-      // REPLACE WITH REAL OUTPUT
+      // // REPLACE WITH REAL OUTPUT
+      // std::cout << "human " << humanID << " transitioning to S" << std::endl;
+      // // REPLACE WITH REAL OUTPUT
     }
 
 };

@@ -103,16 +103,24 @@ village::~village(){
 void village::simulation(const int& tMax){
 
   Progress::Progress pb(tMax,true);
-std::cout << "entering simulation..." << std::endl;
-  for(int i=0; i<tMax; i++){
-    std::cout << "i: " << i << std::endl;
-    if(Progress::check_abort()){
-      Rcpp::stop("user abort detected; exiting RACD");
+
+  std::cout << "Begin RACD Simulation" << std::endl;
+
+  // for(int i=0; i<tMax; i++){
+  for(tNow = 0; tNow < tMax; tNow++){
+
+    /* check user abort */
+    if(tNow % 20 == 0){
+      if(Progress::check_abort()){
+        Rcpp::stop("user abort detected; exiting RACD");
+      }
     }
-    one_day();
-    pb.increment();
+
+    one_day(); /* one day */
+    pb.increment(); /* progress bar */
   }
 
+  std::cout << "End RACD Simulation" << std::endl;
 };
 
 /* daily simulation */
@@ -121,7 +129,7 @@ void village::one_day(){
   /* run daily simulation for all humans */
   for(auto &hh : houses){
     for(auto &h : hh->get_humans()){
-      h->one_day();
+      h->one_day(tNow);
     }
   }
 

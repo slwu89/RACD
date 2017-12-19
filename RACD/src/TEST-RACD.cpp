@@ -186,30 +186,30 @@ void test_house(const Rcpp::NumericVector &theta, const uint_least32_t &seed){
     theta["d1"],theta["dID"],theta["ID0"],theta["kappaD"],theta["uD"],theta["aD"],theta["fD0"],theta["gammaD"],theta["alphaA"],theta["alphaU"],theta["b0"],theta["b1"],theta["dB"],theta["IB0"],theta["kappaB"],theta["uB"],theta["phi0"],theta["phi1"],theta["dC"],theta["IC0"],theta["kappaC"],theta["uC"],theta["PM"],theta["dM"],theta["rW"],theta["rP"],theta["meanAge"],theta["N"],theta["meanNumPeoplePerHouse"],theta["numHousesPerBreedingSite"]
   );
   RACD_Parameters::instance()->set_prng(seed);
-  
-  
-  
+
+
+
   house aHouse(1,1,1,1);
-  
+
   human_ptr bob = std::make_unique<human>(1,1,1,"S",1,1,1,1,1,1,1,1,1,1,1,1,&aHouse);
   human_ptr alice = std::make_unique<human>(2,1,1,"E",15,1,1,1,1,1,1,1,1,1,1,1,&aHouse);
-  
+
   aHouse.add_human(std::move(bob));
   aHouse.add_human(std::move(alice));
   aHouse.add_human(std::make_unique<human>(3,1,1,"T",1,1,1,1,1,1,1,1,1,1,1,1,&aHouse));
-  
+
   std::cout << "there are " << aHouse.get_humans().size() << " humans in the house" << std::endl;
-  
+
   for(auto &h : aHouse.get_humans()){
     std::cout << "iterating..." << std::endl;
-    h->one_day();
+    h->one_day(100);
   }
   aHouse.get_humans().front()->suicide();
-  
-  std::cout << "there are " << aHouse.get_humans().size() << " humans in the house" << std::endl;
-  
 
-  
+  std::cout << "there are " << aHouse.get_humans().size() << " humans in the house" << std::endl;
+
+
+
   std::cout << "exit testing house & human" << std::endl;
 }
 
@@ -250,7 +250,7 @@ void test_village(const Rcpp::List& human_par, const Rcpp::List& house_par, cons
   RACD_Parameters::instance();
   RACD_Parameters::instance()->set_values(theta["epsilon0"],theta["fT"],theta["dE"],theta["dT"],theta["dD"],theta["dA"],theta["dU"],theta["dP"],theta["cD"],theta["cT"],theta["cU"],theta["gammaI"],theta["rho"],theta["a0"],theta["sigma2"],theta["d1"],theta["dID"],theta["ID0"],theta["kappaD"],theta["uD"],theta["aD"],theta["fD0"],theta["gammaD"],theta["alphaA"],theta["alphaU"],theta["b0"],theta["b1"],theta["dB"],theta["IB0"],theta["kappaB"],theta["uB"],theta["phi0"],theta["phi1"],theta["dC"],theta["IC0"],theta["kappaC"],theta["uC"],theta["PM"],theta["dM"],theta["rW"],theta["rP"],theta["meanAge"],theta["N"],theta["meanNumPeoplePerHouse"],theta["numHousesPerBreedingSite"]);
   RACD_Parameters::instance()->set_prng(seed);
-  
+
   village simVillage(human_par,house_par);
   simVillage.births();
   RACD_Parameters::instance()->suicide();
