@@ -136,13 +136,6 @@ prng* RACD_Parameters::get_prng(){
   return prng_member.get();
 };
 
-/* output */
-void RACD_Parameters::set_outfile_names(const std::string& events, const std::string& incidence){
-  outfile_events_name = events;
-  outfile_incidence_name = incidence;
-};
-
-
 /* suicide at end of program */
 void RACD_Parameters::suicide(){
   #ifdef DEBUG_HPP

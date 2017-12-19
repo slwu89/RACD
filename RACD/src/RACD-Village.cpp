@@ -46,8 +46,17 @@ village::village(const Rcpp::List& human_par, const Rcpp::List& house_par){
 
   /* houses */
   for(size_t i=0; i<house_par.size(); i++){
+
+    /* house i's parameters */
     Rcpp::List hh = house_par[i];
-    houses.push_back(std::make_unique<house>(int(i),double(hh["psi"]),double(hh["x"]),double(hh["y"])));
+    int houseID = int(i);
+    double psi = double(hh["psi"]);
+    double x = double(hh["x"]);
+    double y = double(hh["y"]);
+
+    /* add house i's pointer to vector of houses */
+    houses.push_back(std::make_unique<house>(houseID,psi,x,y));
+
   }
 
   /* humans */
@@ -134,22 +143,24 @@ void village::births(){
   /* number of births */
   double mu = RACD_Parameters::instance()->get_mu();
   int numNewBirths = RACD_Parameters::instance()->get_prng()->get_rbinom(N,mu);
-std::cout << "got num births: " << numNewBirths << std::endl;
-  /* ICM for newborns is function of ICA levels of 18-22 yr old women */
-  std::vector<double> ICA18_22;
-  for(auto &hh : houses){
-    for(auto &h : hh->get_humans()){
-      double age = h->get_age();
-      if(age >= 18 && age < 22){
-        ICA18_22.push_back(h->get_ICA());
-      }
-    }
-  }
-
-  double meanICA18_22 = iter_mean(ICA18_22);
-  std::cout << "got meanICA18_22: " << meanICA18_22 << std::endl;
+  std::cout << "got num births: " << numNewBirths << std::endl;
 
   if(numNewBirths>0){
+
+    /* ICM for newborns is function of ICA levels of 18-22 yr old women */
+    std::vector<double> ICA18_22;
+    for(auto &hh : houses){
+      for(auto &h : hh->get_humans()){
+        double age = h->get_age();
+        if(age >= 18 && age < 22){
+          ICA18_22.push_back(h->get_ICA());
+        }
+      }
+    }
+
+    double meanICA18_22 = iter_mean(ICA18_22);
+    std::cout << "got meanICA18_22: " << meanICA18_22 << std::endl;
+
     /* assign newborns to smallest houses */
     for(size_t i=0; i<numNewBirths; i++){
         std::cout << "making human: " << max_humanID << std::endl;
@@ -202,7 +213,7 @@ std::cout << "got num births: " << numNewBirths << std::endl;
 
 };
 
-/* clear out corpses at end of each day */
+/* clear out dead humans at end of each day */
 void village::deaths(){
 
   for(auto &hh : houses){
