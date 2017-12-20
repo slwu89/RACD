@@ -204,7 +204,7 @@ void test_house(const Rcpp::NumericVector &theta, const uint_least32_t &seed){
     std::cout << "iterating..." << std::endl;
     h->one_day(100);
   }
-  aHouse.get_humans().front()->suicide();
+  // aHouse.get_humans().front()->suicide();
 
   std::cout << "there are " << aHouse.get_humans().size() << " humans in the house" << std::endl;
 

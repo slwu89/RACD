@@ -18,6 +18,8 @@
 #include <string>
 #include <iostream>
 
+// #include "DEBUG.hpp"
+
 /* simple logging singleton
  * this logger must be initialized with logger::open_log()
  * before any other instances are made.

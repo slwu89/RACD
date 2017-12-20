@@ -47,6 +47,8 @@ void RACD_Simulation(const int& tMax, const Rcpp::NumericVector &theta, const Rc
   /* initialize logging */
   logger::instance();
   logger::instance()->open_log(out_trans);
+  std::string head_trans("HumanID,Event,Time,Age");
+  logger::instance()->log_trans(head_trans);
 
   /* create village */
   village simVillage(human,house);

@@ -16,6 +16,7 @@
 #include "RACD-Human.hpp"
 #include "RACD-Parameters.hpp"
 #include "RACD-PRNG.hpp"
+#include "RACD-Logger.hpp"
 
 
 /* iterative mean: Knuth, The Art of Computer Programming Vol 2, section 4.2.2 */
@@ -82,6 +83,10 @@ village::village(const Rcpp::List& human_par, const Rcpp::List& house_par){
     std::string state(1,hh["state"]);
     int daysLatent = int(hh["daysLatent"]);
 
+    /* logging */
+    std::string out = std::to_string(humanID) + "," + state + ",0," + std::to_string(age);
+    logger::instance()->log_trans(out);
+
     /* add human i to their house */
     houses[house]->add_human(std::make_unique<human>(humanID,age,alive,state,daysLatent,IB,ID,ICA,ICM,bitingHet,epsilon,lambda,phi,prDetectAMic,prDetectAPCR,prDetectUPCR,houses[house].get()));
 
@@ -147,11 +152,10 @@ void village::births(){
   for(auto &hh : houses){
     N += hh->get_humans().size();
   }
-  std::cout << "got current pop: " << N << std::endl;
+
   /* number of births */
   double mu = RACD_Parameters::instance()->get_mu();
   int numNewBirths = RACD_Parameters::instance()->get_prng()->get_rbinom(N,mu);
-  std::cout << "got num births: " << numNewBirths << std::endl;
 
   if(numNewBirths>0){
 
@@ -167,11 +171,10 @@ void village::births(){
     }
 
     double meanICA18_22 = iter_mean(ICA18_22);
-    std::cout << "got meanICA18_22: " << meanICA18_22 << std::endl;
 
     /* assign newborns to smallest houses */
     for(size_t i=0; i<numNewBirths; i++){
-        std::cout << "making human: " << max_humanID << std::endl;
+
       /* find smallest house */
       std::vector<int> hhSize;
       for(auto &hh : houses){
@@ -210,6 +213,10 @@ void village::births(){
       double prDetectUPCR = 1;
       std::string state = "S";
       int daysLatent = 0;
+
+      /* logging */
+      std::string out = std::to_string(humanID) + ",Birth," + std::to_string(tNow) + "," + std::to_string(age);
+      logger::instance()->log_trans(out);
 
       /* add human i to their house */
       houses[hh_ix]->add_human(std::make_unique<human>(humanID,age,alive,state,daysLatent,IB,ID,ICA,ICM,bitingHet,epsilon,lambda,phi,prDetectAMic,prDetectAPCR,prDetectUPCR,houses[hh_ix].get()));

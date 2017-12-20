@@ -54,14 +54,6 @@ human::~human(){
   #endif
 };
 
-/* object suicide */
-void human::suicide(){
-  #ifdef DEBUG_HPP
-  std::cout << "human " << humanID << " suiciding at " << this << std::endl;
-  #endif
-  alive = false;
-}
-
 
 /* Simulation Methods */
 
@@ -71,23 +63,35 @@ void human::one_day(const int& tNow){
   /* daily mortality */
   mortality(tNow);
 
-  /* compartment transitions */
-  if(state.compare("S")==0){
-    S_compartment(tNow);
-  } else if(state.compare("E")==0){
-    E_compartment(tNow);
-  } else if(state.compare("T")==0){
-    T_compartment(tNow);
-  } else if(state.compare("D")==0){
-    D_compartment(tNow);
-  } else if(state.compare("A")==0){
-    A_compartment(tNow);
-  } else if(state.compare("U")==0){
-    U_compartment(tNow);
-  } else if(state.compare("P")==0){
-    P_compartment(tNow);
-  } else {
-    Rcpp::stop("unrecognized human state");
+  if(alive){
+
+    /* compartment transitions */
+    if(state.compare("S")==0){
+      S_compartment(tNow);
+    } else if(state.compare("E")==0){
+      E_compartment(tNow);
+    } else if(state.compare("T")==0){
+      T_compartment(tNow);
+    } else if(state.compare("D")==0){
+      D_compartment(tNow);
+    } else if(state.compare("A")==0){
+      A_compartment(tNow);
+    } else if(state.compare("U")==0){
+      U_compartment(tNow);
+    } else if(state.compare("P")==0){
+      P_compartment(tNow);
+    } else {
+      Rcpp::stop("unrecognized human state");
+    }
+
+    /* ageing */
+    ageing();
+
+    /* update immunity */
+    update_immunity();
+    update_lambda();
+    update_phi();
+    update_q();
   }
 
 };
@@ -103,12 +107,11 @@ void human::mortality(const int& tNow){
   if(randNum <= mu){
 
     /* logging */
-    std::string out = std::to_string(humanID) + ",Death," + std::to_string(tNow);
+    std::string out = std::to_string(humanID) + ",Death," + std::to_string(tNow) + "," + std::to_string(age);
     logger::instance()->log_trans(out);
 
     /* simulation */
     alive = false;
-    suicide();
   }
 
 };
@@ -125,12 +128,8 @@ void human::S_compartment(const int& tNow){
   if(randNum <= lambda){
 
     /* logging */
-    std::string out = std::to_string(humanID) + ",E," + std::to_string(tNow);
+    std::string out = std::to_string(humanID) + ",E," + std::to_string(tNow) + "," + std::to_string(age);
     logger::instance()->log_trans(out);
-
-    // // REPLACE WITH REAL OUTPUT
-    // std::cout << "human " << humanID << " transitioning to E" << std::endl;
-    // // REPLACE WITH REAL OUTPUT
 
     /* simulation */
     state = "E";
@@ -158,15 +157,12 @@ void human::E_compartment(const int& tNow){
     if(randNum <= phi*fT){
 
       /* logging */
-      std::string out = std::to_string(humanID) + ",T," + std::to_string(tNow);
+      std::string out = std::to_string(humanID) + ",T," + std::to_string(tNow) + "," + std::to_string(age);
       logger::instance()->log_trans(out);
 
       /* simulation  */
       state = "T";
       daysLatent = 0;
-      // // REPLACE WITH REAL OUTPUT
-      // std::cout << "human " << humanID << " transitioning to T" << std::endl;
-      // // REPLACE WITH REAL OUTPUT
     }
 
     /* Untreated clinical infection (E -> D):
@@ -177,15 +173,12 @@ void human::E_compartment(const int& tNow){
      if((randNum > phi*fT) & (randNum <= phi)){
 
        /* logging */
-       std::string out = std::to_string(humanID) + ",D," + std::to_string(tNow);
+       std::string out = std::to_string(humanID) + ",D," + std::to_string(tNow) + "," + std::to_string(age);
        logger::instance()->log_trans(out);
 
        /* simulation  */
        state = "D";
        daysLatent = 0;
-       // // REPLACE WITH REAL OUTPUT
-       // std::cout << "human " << humanID << " transitioning to D" << std::endl;
-       // // REPLACE WITH REAL OUTPUT
      }
 
      /* Asymptomatic infection (E -> A):
@@ -196,15 +189,12 @@ void human::E_compartment(const int& tNow){
       if(randNum > phi){
 
         /* logging */
-        std::string out = std::to_string(humanID) + ",A," + std::to_string(tNow);
+        std::string out = std::to_string(humanID) + ",A," + std::to_string(tNow) + "," + std::to_string(age);
         logger::instance()->log_trans(out);
 
         /* simulation  */
         state = "A";
         daysLatent = 0;
-        // // REPLACE WITH REAL OUTPUT
-        // std::cout << "human " << humanID << " transitioning to A" << std::endl;
-        // // REPLACE WITH REAL OUTPUT
       }
 
   }
@@ -225,14 +215,11 @@ void human::T_compartment(const int& tNow){
   if(randNum <= (1/dT)){
 
     /* logging */
-    std::string out = std::to_string(humanID) + ",P," + std::to_string(tNow);
+    std::string out = std::to_string(humanID) + ",P," + std::to_string(tNow) + "," + std::to_string(age);
     logger::instance()->log_trans(out);
 
     /* simulation  */
     state = "P";
-    // // REPLACE WITH REAL OUTPUT
-    // std::cout << "human " << humanID << " transitioning to P" << std::endl;
-    // // REPLACE WITH REAL OUTPUT
   }
 
 };
@@ -252,14 +239,11 @@ void human::D_compartment(const int& tNow){
   if(randNum <= (1/dD)){
 
     /* logging */
-    std::string out = std::to_string(humanID) + ",A," + std::to_string(tNow);
+    std::string out = std::to_string(humanID) + ",A," + std::to_string(tNow) + "," + std::to_string(age);
     logger::instance()->log_trans(out);
 
     /* simulation  */
     state = "A";
-    // // REPLACE WITH REAL OUTPUT
-    // std::cout << "human " << humanID << " transitioning to A" << std::endl;
-    // // REPLACE WITH REAL OUTPUT
   }
 
 };
@@ -282,14 +266,11 @@ void human::A_compartment(const int& tNow){
   if(randNum <= phi*fT*lambda){
 
     /* logging */
-    std::string out = std::to_string(humanID) + ",T," + std::to_string(tNow);
+    std::string out = std::to_string(humanID) + ",T," + std::to_string(tNow) + "," + std::to_string(age);
     logger::instance()->log_trans(out);
 
     /* simulation  */
     state = "T";
-    // // REPLACE WITH REAL OUTPUT
-    // std::cout << "human " << humanID << " transitioning to T" << std::endl;
-    // // REPLACE WITH REAL OUTPUT
   }
 
   /* Untreated clinical infection (A -> D):
@@ -300,14 +281,11 @@ void human::A_compartment(const int& tNow){
    if((randNum > phi*fT*lambda) && (randNum <= phi*lambda)){
 
      /* logging */
-     std::string out = std::to_string(humanID) + ",D," + std::to_string(tNow);
+     std::string out = std::to_string(humanID) + ",D," + std::to_string(tNow) + "," + std::to_string(age);
      logger::instance()->log_trans(out);
 
      /* simulation  */
      state = "D";
-     // // REPLACE WITH REAL OUTPUT
-     // std::cout << "human " << humanID << " transitioning to D" << std::endl;
-     // // REPLACE WITH REAL OUTPUT
    }
 
    /* Progression to asymptomatic sub-patent infection (A -> U):
@@ -318,14 +296,11 @@ void human::A_compartment(const int& tNow){
     if((randNum > phi*lambda) && (randNum <= (phi*lambda + (1/dA)))) {
 
       /* logging */
-      std::string out = std::to_string(humanID) + ",U," + std::to_string(tNow);
+      std::string out = std::to_string(humanID) + ",U," + std::to_string(tNow) + "," + std::to_string(age);
       logger::instance()->log_trans(out);
 
       /* simulation  */
       state = "U";
-      // // REPLACE WITH REAL OUTPUT
-      // std::cout << "human " << humanID << " transitioning to U" << std::endl;
-      // // REPLACE WITH REAL OUTPUT
     }
 
 };
@@ -348,14 +323,11 @@ void human::U_compartment(const int& tNow){
    if(randNum <= phi*fT*lambda){
 
      /* logging */
-     std::string out = std::to_string(humanID) + ",T," + std::to_string(tNow);
+     std::string out = std::to_string(humanID) + ",T," + std::to_string(tNow) + "," + std::to_string(age);
      logger::instance()->log_trans(out);
 
      /* simulation  */
      state = "T";
-     // // REPLACE WITH REAL OUTPUT
-     // std::cout << "human " << humanID << " transitioning to T" << std::endl;
-     // // REPLACE WITH REAL OUTPUT
    }
 
    /* Untreated clinical infection (U -> D):
@@ -366,14 +338,11 @@ void human::U_compartment(const int& tNow){
     if((randNum > phi*fT*lambda) && (randNum <= phi*lambda)){
 
       /* logging */
-      std::string out = std::to_string(humanID) + ",D," + std::to_string(tNow);
+      std::string out = std::to_string(humanID) + ",D," + std::to_string(tNow) + "," + std::to_string(age);
       logger::instance()->log_trans(out);
 
       /* simulation  */
       state = "D";
-      // // REPLACE WITH REAL OUTPUT
-      // std::cout << "human " << humanID << " transitioning to D" << std::endl;
-      // // REPLACE WITH REAL OUTPUT
     }
 
     /* Asymptomatic infection (U -> A):
@@ -384,14 +353,11 @@ void human::U_compartment(const int& tNow){
      if((randNum > phi*lambda) && (randNum <= lambda)){
 
        /* logging */
-       std::string out = std::to_string(humanID) + ",A," + std::to_string(tNow);
+       std::string out = std::to_string(humanID) + ",A," + std::to_string(tNow) + "," + std::to_string(age);
        logger::instance()->log_trans(out);
 
        /* simulation  */
        state = "A";
-       // // REPLACE WITH REAL OUTPUT
-       // std::cout << "human " << humanID << " transitioning to A" << std::endl;
-       // // REPLACE WITH REAL OUTPUT
      }
 
      /* Progression to asymptomatic sub-patent infection (U -> S):
@@ -402,14 +368,11 @@ void human::U_compartment(const int& tNow){
       if((randNum > lambda) && (randNum <= (lambda + (1/dU)))){
 
         /* logging */
-        std::string out = std::to_string(humanID) + ",S," + std::to_string(tNow);
+        std::string out = std::to_string(humanID) + ",S," + std::to_string(tNow) + "," + std::to_string(age);
         logger::instance()->log_trans(out);
 
         /* simulation  */
         state = "S";
-        // // REPLACE WITH REAL OUTPUT
-        // std::cout << "human " << humanID << " transitioning to S" << std::endl;
-        // // REPLACE WITH REAL OUTPUT
       }
 
 };
@@ -429,14 +392,11 @@ void human::P_compartment(const int& tNow){
     if(randNum <= (1/dP)){
 
       /* logging */
-      std::string out = std::to_string(humanID) + ",S," + std::to_string(tNow);
+      std::string out = std::to_string(humanID) + ",S," + std::to_string(tNow) + "," + std::to_string(age);
       logger::instance()->log_trans(out);
 
       /* simulation  */
       state = "S";
-      // // REPLACE WITH REAL OUTPUT
-      // std::cout << "human " << humanID << " transitioning to S" << std::endl;
-      // // REPLACE WITH REAL OUTPUT
     }
 
 };

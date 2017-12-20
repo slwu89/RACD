@@ -18,7 +18,7 @@
 #include <string>
 #include <math.h> /* for update_lambda */
 
-#include "DEBUG.hpp"
+// #include "DEBUG.hpp"
 
 /* typedefs and forward declarations */
 class house;
@@ -50,9 +50,6 @@ public:
 
   /* destructor */
   ~human();
-
-  /* object suicide */
-  void                            suicide();
 
   /* accessors */
   double                          get_age(){ return age; };

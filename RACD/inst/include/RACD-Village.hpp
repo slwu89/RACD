@@ -22,6 +22,8 @@
 #include <progress.hpp>
 #include <progress_bar.hpp>
 
+// #include "DEBUG.hpp"
+
 /* typedefs and forward declarations */
 class house;
 typedef std::unique_ptr<house> house_ptr;
