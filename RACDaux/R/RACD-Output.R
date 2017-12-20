@@ -13,8 +13,8 @@
 
 #' Process RACD Simulation Output
 #'
-#' Given output from \code{\link[RACD]{RACD_Simulation}}, take continuous time state transition output
-#' and make state occupancy vector by binning events by day.
+#' Given output from \code{\link[RACD]{RACD_Simulation}}, take discrete event output
+#' and make daily state occupancy vector as matrix.
 #'
 #' @param outfile path to logged events
 #'
