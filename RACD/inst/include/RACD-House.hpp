@@ -14,7 +14,6 @@
 #ifndef _RACD_HOUSE_
 #define _RACD_HOUSE_
 
-#include <Rcpp.h>
 #include <memory>
 #include <utility>
 #include <vector>

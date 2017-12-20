@@ -43,6 +43,8 @@ village::village(const Rcpp::List& human_par, const Rcpp::List& house_par){
   std::cout << "village being born at " << this << std::endl;
   #endif
 
+  std::cout << "Initializing RACD simulation..." << std::endl;
+
   max_humanID = 0;
 
   /* houses */
@@ -93,6 +95,8 @@ village::village(const Rcpp::List& human_par, const Rcpp::List& house_par){
     max_humanID++;
   }
 
+  std::cout << "Initialization complete!" << std::endl;
+
 };
 
 /* destructor */
@@ -109,8 +113,6 @@ void village::simulation(const int& tMax){
 
   Progress::Progress pb(tMax,true);
 
-  std::cout << "Begin RACD Simulation" << std::endl;
-
   // for(int i=0; i<tMax; i++){
   for(tNow = 0; tNow < tMax; tNow++){
 
@@ -125,7 +127,6 @@ void village::simulation(const int& tMax){
     pb.increment(); /* progress bar */
   }
 
-  std::cout << "End RACD Simulation" << std::endl;
 };
 
 /* daily simulation */

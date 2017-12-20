@@ -403,7 +403,7 @@ void human::P_compartment(const int& tNow){
 
 /* ageing */
 void human::ageing(){
-  age += (1/365);
+  age = age + (1.0/365.0);
 };
 
 /* immunity */
@@ -476,6 +476,12 @@ void human::update_phi(){
 
 /* q (microscopy) */
 void human::update_q(){
+
+ /* q (the probability that an asymptomatic infection is detected by
+  * microscopy) is also calculated for each individual, as well as the
+  * probability of detection by PCR for asymptomatic infections in states
+  * A (patent) and U (subpatent). This also varies according to immune status:
+  */
 
   double fD0 = RACD_Parameters::instance()->get_fD0();
   double aD = RACD_Parameters::instance()->get_aD();

@@ -14,7 +14,6 @@
 #ifndef _RACD_PARAMETERS_
 #define _RACD_PARAMETERS_
 
-#include <Rcpp.h>
 #include <iostream>
 #include <memory>
 

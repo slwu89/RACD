@@ -154,9 +154,6 @@ RACD_Setup <- function(theta){
   	for (j in 1:N) {
   		indiv[[j]]$bitingHet <- rlnorm(n = 1, meanlog = -sigma2/2, sdlog = sqrt(sigma2))
   	}
-  	# Checking biting heterogeneity attributes:
-  	# bitingHetVector <- sapply(indiv, function(x) x$bitingHet)
-  	# hist(bitingHetVector)
 
   	# Lambda (the force of infection) is calculated for each individual. It
   	# varies according to age and biting heterogeneity group.
@@ -224,9 +221,6 @@ RACD_Setup <- function(theta){
   		indiv[[j]]$prDetectAPCR <- q^alphaA
   		indiv[[j]]$prDetectUPCR <- q^alphaU
   	}
-  	# Checking phi (probability of acquiring clinical disease) attributes:
-  	# prDetectAMicVector <- sapply(indiv, function(x) x$prDetectAMic)
-  	# hist(prDetectAMicVector)
 
   	# For each invididual, use the ODE transmission model to determine the
   	# probability that they are in each state given their age and EIR
@@ -269,18 +263,9 @@ RACD_Setup <- function(theta){
   		indiv[[j]]$daysLatent <- 0
   	}
 
-
-
     return(list(
       humans = indiv,
       breedingSites = mapply(longBreedingSite,latBreedingSite,sigmaBreedingSite,FUN = function(x,y,z){list(x=x,y=y,sigma=z)},SIMPLIFY = FALSE),
-      # breedingSiteX = longBreedingSite,
-      # breedingSiteY = latBreedingSite,
-      # breedingSiteSigma = sigmaBreedingSite,
-      # houseX = longHouse,
-      # houseY = latHouse,
-      # houseSize = householdSize,
-      # housePsi = psiHouse
       houses = mapply(longHouse,latHouse,householdSize,psiHouse,FUN = function(x,y,z,w){list(x=x,y=y,size=z,psi=w)},SIMPLIFY = FALSE)
     ))
   })
