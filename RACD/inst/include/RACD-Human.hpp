@@ -116,8 +116,8 @@ private:
   double                          ICM; /* maternal clinical immunity (reduces the probability of clinical disease, acquired maternally) */
 
   double                          bitingHet; /* zeta: baseline biting heterogeneity */
-  double                          epsilon; /* force of infection */
-  double                          lambda; /* EIR */
+  double                          epsilon; /* EIR */
+  double                          lambda; /* force of infection */
   double                          phi; /* probability of acquiring clinical disease */
 
   double                          prDetectAMic; /* q: probability of asymptomatic infection detected by microscopy */
