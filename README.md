@@ -13,3 +13,10 @@ stochastic simulation of reactive case detection for p. falciparum
 6. Validate human model
 7. Make sure that functions all make sense
 8. Validate modified treatment node in human model
+
+## RACD References
+* Human Model:
+  * https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3923296/
+  * https://www.ncbi.nlm.nih.gov/pubmed/20711482/
+* Vector Model:
+  * https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-4-153
