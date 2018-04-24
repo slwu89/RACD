@@ -11,8 +11,8 @@
  #  Village Class Definition
 */
 
-#ifndef _RACD_VILLAGE_
-#define _RACD_VILLAGE_
+#ifndef RACD_VILLAGE_
+#define RACD_VILLAGE_
 
 #include <Rcpp.h>
 #include <memory>

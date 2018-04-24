@@ -42,14 +42,14 @@ human::human(const int& _humanID,
         prDetectAMic(_prDetectAMic), prDetectAPCR(_prDetectAPCR), prDetectUPCR(_prDetectUPCR),
         house_ptr(_house_ptr)
 {
-  #ifdef DEBUG_HPP
+  #ifdef DEBUG_RACD
   std::cout << "human " << humanID << " being born at " << this << std::endl;
   #endif
 };
 
 /* destructor */
 human::~human(){
-  #ifdef DEBUG_HPP
+  #ifdef DEBUG_RACD
   std::cout << "human " << humanID << " being killed at " << this << std::endl;
   #endif
 };
@@ -99,16 +99,16 @@ void human::one_day(const int& tNow){
 /* mortality */
 void human::mortality(const int& tNow){
 
-  double randNum = RACD_Parameters::instance()->get_prng()->get_runif();
+  double randNum = prng::instance().get_runif();
 
   /* mu: daily death rate as a function of mean age in years */
-  double mu = RACD_Parameters::instance()->get_mu();
+  double mu = RACD_Parameters::instance().get_mu();
 
   if(randNum <= mu){
 
     /* logging */
     std::string out = std::to_string(humanID) + ",Death," + std::to_string(tNow) + "," + std::to_string(age);
-    logger::instance()->log_trans(out);
+    logger::instance().log_trans(out);
 
     /* simulation */
     alive = false;
@@ -119,7 +119,7 @@ void human::mortality(const int& tNow){
 /* S: susceptible */
 void human::S_compartment(const int& tNow){
 
-  double randNum = RACD_Parameters::instance()->get_prng()->get_runif();
+  double randNum = prng::instance().get_runif();
 
   /* Latent infection (S -> E):
    * If the random number is less than lambda, that individual
@@ -129,7 +129,7 @@ void human::S_compartment(const int& tNow){
 
     /* logging */
     std::string out = std::to_string(humanID) + ",E," + std::to_string(tNow) + "," + std::to_string(age);
-    logger::instance()->log_trans(out);
+    logger::instance().log_trans(out);
 
     /* simulation */
     state = "E";
@@ -140,14 +140,14 @@ void human::S_compartment(const int& tNow){
 
 /* E: latent period */
 void human::E_compartment(const int& tNow){
-  if(daysLatent < RACD_Parameters::instance()->get_dE()){
+  if(daysLatent < RACD_Parameters::instance().get_dE()){
     daysLatent++;
   } else {
 
-    double randNum = RACD_Parameters::instance()->get_prng()->get_runif();
+    double randNum = prng::instance().get_runif();
 
     /* fT: proportion of clinical disease cases successfully treated */
-    double fT = RACD_Parameters::instance()->get_fT();
+    double fT = RACD_Parameters::instance().get_fT();
 
     /* Treated clinical infection (E -> T):
      * If the random number is less than phi*fT, that
@@ -158,7 +158,7 @@ void human::E_compartment(const int& tNow){
 
       /* logging */
       std::string out = std::to_string(humanID) + ",T," + std::to_string(tNow) + "," + std::to_string(age);
-      logger::instance()->log_trans(out);
+      logger::instance().log_trans(out);
 
       /* simulation  */
       state = "T";
@@ -174,7 +174,7 @@ void human::E_compartment(const int& tNow){
 
        /* logging */
        std::string out = std::to_string(humanID) + ",D," + std::to_string(tNow) + "," + std::to_string(age);
-       logger::instance()->log_trans(out);
+       logger::instance().log_trans(out);
 
        /* simulation  */
        state = "D";
@@ -190,7 +190,7 @@ void human::E_compartment(const int& tNow){
 
         /* logging */
         std::string out = std::to_string(humanID) + ",A," + std::to_string(tNow) + "," + std::to_string(age);
-        logger::instance()->log_trans(out);
+        logger::instance().log_trans(out);
 
         /* simulation  */
         state = "A";
@@ -203,10 +203,10 @@ void human::E_compartment(const int& tNow){
 /* T: treated clinical disease */
 void human::T_compartment(const int& tNow){
 
-  double randNum = RACD_Parameters::instance()->get_prng()->get_runif();
+  double randNum = prng::instance().get_runif();
 
   /* dT: duration of treated clinical disease (days) */
-  double dT = RACD_Parameters::instance()->get_dT();
+  double dT = RACD_Parameters::instance().get_dT();
 
   /* Prophylactic protection (T -> P):
    * If the random number is less than 1/dT, that individual enters the
@@ -216,7 +216,7 @@ void human::T_compartment(const int& tNow){
 
     /* logging */
     std::string out = std::to_string(humanID) + ",P," + std::to_string(tNow) + "," + std::to_string(age);
-    logger::instance()->log_trans(out);
+    logger::instance().log_trans(out);
 
     /* simulation  */
     state = "P";
@@ -227,10 +227,10 @@ void human::T_compartment(const int& tNow){
 /* D: untreated clinical disease */
 void human::D_compartment(const int& tNow){
 
-  double randNum = RACD_Parameters::instance()->get_prng()->get_runif();
+  double randNum = prng::instance().get_runif();
 
   /* dD: duration of untreated clinical disease (days) */
-  double dD = RACD_Parameters::instance()->get_dD();
+  double dD = RACD_Parameters::instance().get_dD();
 
   /* Progression from diseased to asymptomatic (D -> A):
    * If the random number is less than 1/dD, that individual enters the
@@ -240,7 +240,7 @@ void human::D_compartment(const int& tNow){
 
     /* logging */
     std::string out = std::to_string(humanID) + ",A," + std::to_string(tNow) + "," + std::to_string(age);
-    logger::instance()->log_trans(out);
+    logger::instance().log_trans(out);
 
     /* simulation  */
     state = "A";
@@ -251,12 +251,12 @@ void human::D_compartment(const int& tNow){
 /* A: asymptomatic patent (detectable by microscopy) infection */
 void human::A_compartment(const int& tNow){
 
-  double randNum = RACD_Parameters::instance()->get_prng()->get_runif();
+  double randNum = prng::instance().get_runif();
 
   /* fT: proportion of clinical disease cases successfully treated */
-  double fT = RACD_Parameters::instance()->get_fT();
+  double fT = RACD_Parameters::instance().get_fT();
   /* dA: duration of patent infection (days) */
-  double dA = RACD_Parameters::instance()->get_dA();
+  double dA = RACD_Parameters::instance().get_dA();
 
   /* Treated clinical infection (A -> T):
    * If the random number is less than phi*fT*lambda, that
@@ -267,7 +267,7 @@ void human::A_compartment(const int& tNow){
 
     /* logging */
     std::string out = std::to_string(humanID) + ",T," + std::to_string(tNow) + "," + std::to_string(age);
-    logger::instance()->log_trans(out);
+    logger::instance().log_trans(out);
 
     /* simulation  */
     state = "T";
@@ -282,7 +282,7 @@ void human::A_compartment(const int& tNow){
 
      /* logging */
      std::string out = std::to_string(humanID) + ",D," + std::to_string(tNow) + "," + std::to_string(age);
-     logger::instance()->log_trans(out);
+     logger::instance().log_trans(out);
 
      /* simulation  */
      state = "D";
@@ -297,7 +297,7 @@ void human::A_compartment(const int& tNow){
 
       /* logging */
       std::string out = std::to_string(humanID) + ",U," + std::to_string(tNow) + "," + std::to_string(age);
-      logger::instance()->log_trans(out);
+      logger::instance().log_trans(out);
 
       /* simulation  */
       state = "U";
@@ -308,12 +308,12 @@ void human::A_compartment(const int& tNow){
 /* U: asymptomatic sub-patent (not detectable by microscopy) infection */
 void human::U_compartment(const int& tNow){
 
-  double randNum = RACD_Parameters::instance()->get_prng()->get_runif();
+  double randNum = prng::instance().get_runif();
 
   /* fT: proportion of clinical disease cases successfully treated */
-  double fT = RACD_Parameters::instance()->get_fT();
+  double fT = RACD_Parameters::instance().get_fT();
   /* dU: duration of sub-patent infection (days) (fitted) */
-  double dU = RACD_Parameters::instance()->get_dU();
+  double dU = RACD_Parameters::instance().get_dU();
 
   /* Treated clinical infection (U -> T):
    * If the random number is less than phi*fT*lambda, that
@@ -324,7 +324,7 @@ void human::U_compartment(const int& tNow){
 
      /* logging */
      std::string out = std::to_string(humanID) + ",T," + std::to_string(tNow) + "," + std::to_string(age);
-     logger::instance()->log_trans(out);
+     logger::instance().log_trans(out);
 
      /* simulation  */
      state = "T";
@@ -339,7 +339,7 @@ void human::U_compartment(const int& tNow){
 
       /* logging */
       std::string out = std::to_string(humanID) + ",D," + std::to_string(tNow) + "," + std::to_string(age);
-      logger::instance()->log_trans(out);
+      logger::instance().log_trans(out);
 
       /* simulation  */
       state = "D";
@@ -354,7 +354,7 @@ void human::U_compartment(const int& tNow){
 
        /* logging */
        std::string out = std::to_string(humanID) + ",A," + std::to_string(tNow) + "," + std::to_string(age);
-       logger::instance()->log_trans(out);
+       logger::instance().log_trans(out);
 
        /* simulation  */
        state = "A";
@@ -369,7 +369,7 @@ void human::U_compartment(const int& tNow){
 
         /* logging */
         std::string out = std::to_string(humanID) + ",S," + std::to_string(tNow) + "," + std::to_string(age);
-        logger::instance()->log_trans(out);
+        logger::instance().log_trans(out);
 
         /* simulation  */
         state = "S";
@@ -380,10 +380,10 @@ void human::U_compartment(const int& tNow){
 /* P: protection due to chemoprophylaxis treatment */
 void human::P_compartment(const int& tNow){
 
-    double randNum = RACD_Parameters::instance()->get_prng()->get_runif();
+  double randNum = prng::instance().get_runif();
 
     /* dP: duration of prophylactic protection following treatment (days) */
-    double dP = RACD_Parameters::instance()->get_dP();
+    double dP = RACD_Parameters::instance().get_dP();
 
     /* Prophylactic protection (P -> S):
      * If the random number is less than 1/dP, that individual returns to
@@ -393,7 +393,7 @@ void human::P_compartment(const int& tNow){
 
       /* logging */
       std::string out = std::to_string(humanID) + ",S," + std::to_string(tNow) + "," + std::to_string(age);
-      logger::instance()->log_trans(out);
+      logger::instance().log_trans(out);
 
       /* simulation  */
       state = "S";
@@ -420,13 +420,13 @@ void human::update_immunity(){
    *  probability of detection and reduces infectiousness to mosquitoes)
    */
 
-   double uB = RACD_Parameters::instance()->get_uB();
-   double uC = RACD_Parameters::instance()->get_uC();
-   double uD = RACD_Parameters::instance()->get_uD();
-   double dB = RACD_Parameters::instance()->get_dB();
-   double dC = RACD_Parameters::instance()->get_dC();
-   double dID = RACD_Parameters::instance()->get_dID();
-   double dM = RACD_Parameters::instance()->get_dM();
+   double uB = RACD_Parameters::instance().get_uB();
+   double uC = RACD_Parameters::instance().get_uC();
+   double uD = RACD_Parameters::instance().get_uD();
+   double dB = RACD_Parameters::instance().get_dB();
+   double dC = RACD_Parameters::instance().get_dC();
+   double dID = RACD_Parameters::instance().get_dID();
+   double dM = RACD_Parameters::instance().get_dM();
 
    IB = IB + (epsilon/(epsilon*uB + 1)) - (IB)*(1/dB);
    ICA = ICA + (lambda/(lambda*uC + 1)) - (ICA)*(1/dC);
@@ -442,13 +442,13 @@ void human::update_lambda(){
    * varies according to age and biting heterogeneity group:
    */
 
-   double a0 = RACD_Parameters::instance()->get_a0();
-   double epsilon0 = RACD_Parameters::instance()->get_epsilon0();
-   double b0 = RACD_Parameters::instance()->get_b0();
-   double b1 = RACD_Parameters::instance()->get_b1();
-   double rho = RACD_Parameters::instance()->get_rho();
-   double IB0 = RACD_Parameters::instance()->get_IB0();
-   double kappaB = RACD_Parameters::instance()->get_kappaB();
+   double a0 = RACD_Parameters::instance().get_a0();
+   double epsilon0 = RACD_Parameters::instance().get_epsilon0();
+   double b0 = RACD_Parameters::instance().get_b0();
+   double b1 = RACD_Parameters::instance().get_b1();
+   double rho = RACD_Parameters::instance().get_rho();
+   double IB0 = RACD_Parameters::instance().get_IB0();
+   double kappaB = RACD_Parameters::instance().get_kappaB();
    double psi = house_ptr->get_psi();
 
    epsilon = epsilon0 * bitingHet * (1 - rho * exp(-age/a0)) * psi;
@@ -465,10 +465,10 @@ void human::update_phi(){
    * status:
    */
 
-   double phi0 = RACD_Parameters::instance()->get_phi0();
-   double phi1 = RACD_Parameters::instance()->get_phi1();
-   double IC0 = RACD_Parameters::instance()->get_IC0();
-   double kappaC = RACD_Parameters::instance()->get_kappaC();
+   double phi0 = RACD_Parameters::instance().get_phi0();
+   double phi1 = RACD_Parameters::instance().get_phi1();
+   double IC0 = RACD_Parameters::instance().get_IC0();
+   double kappaC = RACD_Parameters::instance().get_kappaC();
 
    phi = phi0 * (phi1 + ((1 - phi1)/(1 + pow(((ICA+ICM)/IC0),kappaC))));
 
@@ -483,14 +483,14 @@ void human::update_q(){
   * A (patent) and U (subpatent). This also varies according to immune status:
   */
 
-  double fD0 = RACD_Parameters::instance()->get_fD0();
-  double aD = RACD_Parameters::instance()->get_aD();
-  double gammaD = RACD_Parameters::instance()->get_gammaD();
-  double d1 = RACD_Parameters::instance()->get_d1();
-  double ID0 = RACD_Parameters::instance()->get_ID0();
-  double kappaD = RACD_Parameters::instance()->get_kappaD();
-  double alphaA = RACD_Parameters::instance()->get_alphaA();
-  double alphaU = RACD_Parameters::instance()->get_alphaU();
+  double fD0 = RACD_Parameters::instance().get_fD0();
+  double aD = RACD_Parameters::instance().get_aD();
+  double gammaD = RACD_Parameters::instance().get_gammaD();
+  double d1 = RACD_Parameters::instance().get_d1();
+  double ID0 = RACD_Parameters::instance().get_ID0();
+  double kappaD = RACD_Parameters::instance().get_kappaD();
+  double alphaA = RACD_Parameters::instance().get_alphaA();
+  double alphaU = RACD_Parameters::instance().get_alphaU();
 
   double fD = 1 - ((1 - fD0)/(1 + pow((age/aD),gammaD)));
   double q = d1 + ((1 - d1)/(1 + (fD*pow((ID/ID0),kappaD))*fD));

@@ -6,107 +6,23 @@
 using namespace Rcpp;
 
 // RACD_Simulation
-void RACD_Simulation(const int& tMax, const Rcpp::NumericVector& theta, const Rcpp::List& human, const Rcpp::List& house, const uint_least32_t& seed, const std::string& out_trans);
+void RACD_Simulation(const int tMax, const Rcpp::NumericVector& theta, const Rcpp::List& human, const Rcpp::List& house, const uint_least32_t seed, const std::string& out_trans);
 RcppExport SEXP _RACD_RACD_Simulation(SEXP tMaxSEXP, SEXP thetaSEXP, SEXP humanSEXP, SEXP houseSEXP, SEXP seedSEXP, SEXP out_transSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const int& >::type tMax(tMaxSEXP);
+    Rcpp::traits::input_parameter< const int >::type tMax(tMaxSEXP);
     Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type theta(thetaSEXP);
     Rcpp::traits::input_parameter< const Rcpp::List& >::type human(humanSEXP);
     Rcpp::traits::input_parameter< const Rcpp::List& >::type house(houseSEXP);
-    Rcpp::traits::input_parameter< const uint_least32_t& >::type seed(seedSEXP);
+    Rcpp::traits::input_parameter< const uint_least32_t >::type seed(seedSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type out_trans(out_transSEXP);
     RACD_Simulation(tMax, theta, human, house, seed, out_trans);
     return R_NilValue;
 END_RCPP
 }
-// test_parameters
-void test_parameters(const Rcpp::NumericVector& theta);
-RcppExport SEXP _RACD_test_parameters(SEXP thetaSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type theta(thetaSEXP);
-    test_parameters(theta);
-    return R_NilValue;
-END_RCPP
-}
-// test_human_parameters
-void test_human_parameters(const Rcpp::NumericVector& theta);
-RcppExport SEXP _RACD_test_human_parameters(SEXP thetaSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type theta(thetaSEXP);
-    test_human_parameters(theta);
-    return R_NilValue;
-END_RCPP
-}
-// test_prng
-void test_prng(const uint_least32_t& seed);
-RcppExport SEXP _RACD_test_prng(SEXP seedSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const uint_least32_t& >::type seed(seedSEXP);
-    test_prng(seed);
-    return R_NilValue;
-END_RCPP
-}
-// test_house
-void test_house(const Rcpp::NumericVector& theta, const uint_least32_t& seed);
-RcppExport SEXP _RACD_test_house(SEXP thetaSEXP, SEXP seedSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type theta(thetaSEXP);
-    Rcpp::traits::input_parameter< const uint_least32_t& >::type seed(seedSEXP);
-    test_house(theta, seed);
-    return R_NilValue;
-END_RCPP
-}
-// test_list
-void test_list(const Rcpp::List& list);
-RcppExport SEXP _RACD_test_list(SEXP listSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::List& >::type list(listSEXP);
-    test_list(list);
-    return R_NilValue;
-END_RCPP
-}
-// test_village
-void test_village(const Rcpp::List& human_par, const Rcpp::List& house_par, const Rcpp::NumericVector& theta, const uint_least32_t& seed);
-RcppExport SEXP _RACD_test_village(SEXP human_parSEXP, SEXP house_parSEXP, SEXP thetaSEXP, SEXP seedSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const Rcpp::List& >::type human_par(human_parSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::List& >::type house_par(house_parSEXP);
-    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type theta(thetaSEXP);
-    Rcpp::traits::input_parameter< const uint_least32_t& >::type seed(seedSEXP);
-    test_village(human_par, house_par, theta, seed);
-    return R_NilValue;
-END_RCPP
-}
-// test_rlnorm
-Rcpp::NumericVector test_rlnorm(const double& m, const double& s, const uint_least32_t& seed);
-RcppExport SEXP _RACD_test_rlnorm(SEXP mSEXP, SEXP sSEXP, SEXP seedSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< const double& >::type m(mSEXP);
-    Rcpp::traits::input_parameter< const double& >::type s(sSEXP);
-    Rcpp::traits::input_parameter< const uint_least32_t& >::type seed(seedSEXP);
-    rcpp_result_gen = Rcpp::wrap(test_rlnorm(m, s, seed));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_RACD_RACD_Simulation", (DL_FUNC) &_RACD_RACD_Simulation, 6},
-    {"_RACD_test_parameters", (DL_FUNC) &_RACD_test_parameters, 1},
-    {"_RACD_test_human_parameters", (DL_FUNC) &_RACD_test_human_parameters, 1},
-    {"_RACD_test_prng", (DL_FUNC) &_RACD_test_prng, 1},
-    {"_RACD_test_house", (DL_FUNC) &_RACD_test_house, 2},
-    {"_RACD_test_list", (DL_FUNC) &_RACD_test_list, 1},
-    {"_RACD_test_village", (DL_FUNC) &_RACD_test_village, 4},
-    {"_RACD_test_rlnorm", (DL_FUNC) &_RACD_test_rlnorm, 3},
     {NULL, NULL, 0}
 };
 

@@ -11,8 +11,8 @@
  #  House Class Definition
 */
 
-#ifndef _RACD_HOUSE_
-#define _RACD_HOUSE_
+#ifndef RACD_HOUSE_
+#define RACD_HOUSE_
 
 #include <memory>
 #include <utility>

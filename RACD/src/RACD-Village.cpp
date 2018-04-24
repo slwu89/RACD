@@ -39,7 +39,7 @@ bool died(const human& h){
 /* constructor */
 village::village(const Rcpp::List& human_par, const Rcpp::List& house_par){
 
-  #ifdef DEBUG_HPP
+  #ifdef DEBUG_RACD
   std::cout << "village being born at " << this << std::endl;
   #endif
 
@@ -87,7 +87,7 @@ village::village(const Rcpp::List& human_par, const Rcpp::List& house_par){
 
     /* logging */
     std::string out = std::to_string(humanID) + "," + state + ",0," + std::to_string(age);
-    logger::instance()->log_trans(out);
+    logger::instance().log_trans(out);
 
     /* add human i to their house */
     houses[house]->add_human(std::make_unique<human>(humanID,age,alive,state,daysLatent,IB,ID,ICA,ICM,bitingHet,epsilon,lambda,phi,prDetectAMic,prDetectAPCR,prDetectUPCR,houses[house].get()));
@@ -101,7 +101,7 @@ village::village(const Rcpp::List& human_par, const Rcpp::List& house_par){
 
 /* destructor */
 village::~village(){
-  #ifdef DEBUG_HPP
+  #ifdef DEBUG_RACD
   std::cout << "village being killed at " << this << std::endl;
   #endif
 };
@@ -155,8 +155,8 @@ void village::births(){
   }
 
   /* number of births */
-  double mu = RACD_Parameters::instance()->get_mu();
-  int numNewBirths = RACD_Parameters::instance()->get_prng()->get_rbinom(N,mu);
+  double mu = RACD_Parameters::instance().get_mu();
+  int numNewBirths = prng::instance().get_rbinom(N,mu);
 
   if(numNewBirths>0){
 
@@ -185,23 +185,23 @@ void village::births(){
       size_t hh_ix = std::distance(hhSize.begin(), it);
 
       /* fixed parameters */
-      double sigma2 = RACD_Parameters::instance()->get_sigma2();
-      double PM = RACD_Parameters::instance()->get_PM();
-      double epsilon0 = RACD_Parameters::instance()->get_epsilon0();
-      double rho = RACD_Parameters::instance()->get_rho();
+      double sigma2 = RACD_Parameters::instance().get_sigma2();
+      double PM = RACD_Parameters::instance().get_PM();
+      double epsilon0 = RACD_Parameters::instance().get_epsilon0();
+      double rho = RACD_Parameters::instance().get_rho();
       double psi = houses[hh_ix]->get_psi();
-      double b0 = RACD_Parameters::instance()->get_b0();
-      double phi0 = RACD_Parameters::instance()->get_phi0();
-      double phi1 = RACD_Parameters::instance()->get_phi1();
-      double IC0 = RACD_Parameters::instance()->get_IC0();
-      double kappaC = RACD_Parameters::instance()->get_kappaC();
+      double b0 = RACD_Parameters::instance().get_b0();
+      double phi0 = RACD_Parameters::instance().get_phi0();
+      double phi1 = RACD_Parameters::instance().get_phi1();
+      double IC0 = RACD_Parameters::instance().get_IC0();
+      double kappaC = RACD_Parameters::instance().get_kappaC();
 
       /* human i's parameters */
       int humanID = max_humanID;
       double age = 0;
       bool alive = 1;
       /* house in hh_ix */
-      double bitingHet = RACD_Parameters::instance()->get_prng()->get_rlnorm(-sigma2/2,sqrt(sigma2));
+      double bitingHet = prng::instance().get_rlnorm(-sigma2/2,sqrt(sigma2));
       double IB = 0;
       double ID = 0;
       double ICA = 0;
@@ -217,7 +217,7 @@ void village::births(){
 
       /* logging */
       std::string out = std::to_string(humanID) + ",Birth," + std::to_string(tNow) + "," + std::to_string(age);
-      logger::instance()->log_trans(out);
+      logger::instance().log_trans(out);
 
       /* add human i to their house */
       houses[hh_ix]->add_human(std::make_unique<human>(humanID,age,alive,state,daysLatent,IB,ID,ICA,ICM,bitingHet,epsilon,lambda,phi,prDetectAMic,prDetectAPCR,prDetectUPCR,houses[hh_ix].get()));

@@ -1,5 +1,5 @@
-#ifndef _RACD_TESTHUMAN_
-#define _RACD_TESTHUMAN_
+#ifndef RACD_TESTHUMAN_
+#define RACD_TESTHUMAN_
 
 #include <string>
 #include <iostream>

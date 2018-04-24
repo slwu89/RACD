@@ -11,8 +11,8 @@
  #  Human Class Definition
 */
 
-#ifndef _RACD_HUMAN_
-#define _RACD_HUMAN_
+#ifndef RACD_HUMAN_
+#define RACD_HUMAN_
 
 #include <Rcpp.h>
 #include <string>
