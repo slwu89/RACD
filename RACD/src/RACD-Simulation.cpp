@@ -33,7 +33,10 @@
 //' @examples
 //' theta = RACDaux::RACD_Parameters()
 //' init = RACDaux::RACD_Setup(theta)
-//' \dontrun{RACD_Simulation(365,theta,init$humans,init$houses,123,"/Users/slwu89/Desktop/log_trans.csv")}
+//' \dontrun{
+//'   outfile = "/Users/slwu89/Desktop/log_trans.csv"
+//'   RACD_Simulation(365,theta,init$humans,init$houses,123,outfile)
+//' }
 //'
 //' @export
 // [[Rcpp::export]]
