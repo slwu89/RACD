@@ -34,8 +34,11 @@
 //' theta = RACDaux::RACD_Parameters()
 //' init = RACDaux::RACD_Setup(theta)
 //' \dontrun{
+//'   library(tidyverse)
 //'   outfile = "/Users/slwu89/Desktop/log_trans.csv"
 //'   RACD_Simulation(365,theta,init$humans,init$houses,123,outfile)
+//'   state = RACDaux::RACD_StateVector(outfile)
+//'   state %>% as.tibble %>% gather(state,value,-time) %>% ggplot(aes(x=time,y=value,color=state)) + geom_line() + theme_bw()
 //' }
 //'
 //' @export

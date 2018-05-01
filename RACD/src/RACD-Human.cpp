@@ -42,6 +42,14 @@ human::human(const int& _humanID,
         prDetectAMic(_prDetectAMic), prDetectAPCR(_prDetectAPCR), prDetectUPCR(_prDetectUPCR),
         house_ptr(_house_ptr)
 {
+  /* bind pointers to member functions in hash table */
+  compartment_funs.emplace("S",std::bind(&human::S_compartment,this,_1));
+  compartment_funs.emplace("E",std::bind(&human::E_compartment,this,_1));
+  compartment_funs.emplace("T",std::bind(&human::T_compartment,this,_1));
+  compartment_funs.emplace("D",std::bind(&human::D_compartment,this,_1));
+  compartment_funs.emplace("A",std::bind(&human::A_compartment,this,_1));
+  compartment_funs.emplace("U",std::bind(&human::U_compartment,this,_1));
+  compartment_funs.emplace("P",std::bind(&human::P_compartment,this,_1));
   #ifdef DEBUG_RACD
   std::cout << "human " << humanID << " being born at " << this << std::endl;
   #endif
@@ -58,7 +66,7 @@ human::~human(){
 /* Simulation Methods */
 
 /* daily simulation */
-void human::one_day(const int& tNow){
+void human::one_day(const int tNow){
 
   /* daily mortality */
   mortality(tNow);
@@ -66,23 +74,7 @@ void human::one_day(const int& tNow){
   if(alive){
 
     /* compartment transitions */
-    if(state.compare("S")==0){
-      S_compartment(tNow);
-    } else if(state.compare("E")==0){
-      E_compartment(tNow);
-    } else if(state.compare("T")==0){
-      T_compartment(tNow);
-    } else if(state.compare("D")==0){
-      D_compartment(tNow);
-    } else if(state.compare("A")==0){
-      A_compartment(tNow);
-    } else if(state.compare("U")==0){
-      U_compartment(tNow);
-    } else if(state.compare("P")==0){
-      P_compartment(tNow);
-    } else {
-      Rcpp::stop("unrecognized human state");
-    }
+    compartment_funs.at(state)(tNow);
 
     /* ageing */
     ageing();
@@ -97,7 +89,7 @@ void human::one_day(const int& tNow){
 };
 
 /* mortality */
-void human::mortality(const int& tNow){
+void human::mortality(const int tNow){
 
   double randNum = prng::instance().get_runif();
 
@@ -117,7 +109,7 @@ void human::mortality(const int& tNow){
 };
 
 /* S: susceptible */
-void human::S_compartment(const int& tNow){
+void human::S_compartment(const int tNow){
 
   double randNum = prng::instance().get_runif();
 
@@ -139,7 +131,7 @@ void human::S_compartment(const int& tNow){
 
 
 /* E: latent period */
-void human::E_compartment(const int& tNow){
+void human::E_compartment(int tNow){
   if(daysLatent < RACD_Parameters::instance().get_dE()){
     daysLatent++;
   } else {
@@ -201,7 +193,7 @@ void human::E_compartment(const int& tNow){
 };
 
 /* T: treated clinical disease */
-void human::T_compartment(const int& tNow){
+void human::T_compartment(const int tNow){
 
   double randNum = prng::instance().get_runif();
 
@@ -225,7 +217,7 @@ void human::T_compartment(const int& tNow){
 };
 
 /* D: untreated clinical disease */
-void human::D_compartment(const int& tNow){
+void human::D_compartment(const int tNow){
 
   double randNum = prng::instance().get_runif();
 
@@ -249,7 +241,7 @@ void human::D_compartment(const int& tNow){
 };
 
 /* A: asymptomatic patent (detectable by microscopy) infection */
-void human::A_compartment(const int& tNow){
+void human::A_compartment(const int tNow){
 
   double randNum = prng::instance().get_runif();
 
@@ -290,8 +282,8 @@ void human::A_compartment(const int& tNow){
 
    /* Progression to asymptomatic sub-patent infection (A -> U):
     * If the random number is greater than phi*lambda and less
-    * than (phi*lambda + 1/dA), that individual develops an asymptomatic
-    * infection (A) in the next time step.
+    * than (phi*lambda + 1/dA), that individual develops sub-patent asymptomatic
+    * infection (U) in the next time step.
     */
     if((randNum > phi*lambda) && (randNum <= (phi*lambda + (1/dA)))) {
 
@@ -306,7 +298,7 @@ void human::A_compartment(const int& tNow){
 };
 
 /* U: asymptomatic sub-patent (not detectable by microscopy) infection */
-void human::U_compartment(const int& tNow){
+void human::U_compartment(const int tNow){
 
   double randNum = prng::instance().get_runif();
 
@@ -360,7 +352,7 @@ void human::U_compartment(const int& tNow){
        state = "A";
      }
 
-     /* Progression to asymptomatic sub-patent infection (U -> S):
+     /* Recovery to susceptible (U -> S):
       * If the random number is greater than lambda and less
       * than (lambda + 1/dU), that individual returns to the susceptible
       * state (S) in the next time step.
@@ -378,7 +370,7 @@ void human::U_compartment(const int& tNow){
 };
 
 /* P: protection due to chemoprophylaxis treatment */
-void human::P_compartment(const int& tNow){
+void human::P_compartment(const int tNow){
 
   double randNum = prng::instance().get_runif();
 
@@ -403,7 +395,7 @@ void human::P_compartment(const int& tNow){
 
 /* ageing */
 void human::ageing(){
-  age = age + (1.0/365.0);
+  age += 1.0/365.0;
 };
 
 /* immunity */

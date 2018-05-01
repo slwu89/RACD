@@ -36,7 +36,7 @@ RACD_StateVector <- function(outfile){
   pb = txtProgressBar(min = 0,max = max(humans),style = 3)
   for(h in humans){
     hh = raw[raw$HumanID==h,]
-    
+
     # single event
     if(nrow(hh)==1){
       if(hh$Event=="Birth"){
@@ -55,12 +55,12 @@ RACD_StateVector <- function(outfile){
       }
       # multiple events: handle last event if not death
       if(hh$Event[e+1]!="Death"){
-        state_vector[hh$Time[e+1]:nrow(state_vector),hh$Event[e+1]] = state_vector[hh$Time[e+1]:nrow(state_vector),hh$Event[e+1]] + 1L 
+        state_vector[hh$Time[e+1]:nrow(state_vector),hh$Event[e+1]] = state_vector[hh$Time[e+1]:nrow(state_vector),hh$Event[e+1]] + 1L
       }
     }
-    
+
     setTxtProgressBar(pb,value = h)
   }
-  
+
   return(state_vector)
 }

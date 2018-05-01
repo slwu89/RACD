@@ -16,7 +16,11 @@
 
 #include <Rcpp.h>
 #include <string>
+#include <unordered_map>
+#include <functional>
 #include <math.h> /* for update_lambda */
+
+using namespace std::placeholders;
 
 // #include "DEBUG.hpp"
 
@@ -59,49 +63,29 @@ public:
   /* Simulation Methods */
 
   /* daily simulation */
-  void                            one_day(const int& tNow);
-
-  /* mortality */
-  void                            mortality(const int& tNow);
-
-  /* S: susceptible */
-  void                            S_compartment(const int& tNow);
-
-  /* E: latent period */
-  void                            E_compartment(const int& tNow);
-
-  /* T: treated clinical disease */
-  void                            T_compartment(const int& tNow);
-
-  /* D: untreated clinical disease */
-  void                            D_compartment(const int& tNow);
-
-  /* A: asymptomatic patent (detectable by microscopy) infection */
-  void                            A_compartment(const int& tNow);
-
-  /* U: asymptomatic sub-patent (not detectable by microscopy) infection */
-  void                            U_compartment(const int& tNow);
-
-  /* P: protection due to chemoprophylaxis treatment */
-  void                            P_compartment(const int& tNow);
-
-  /* ageing */
-  void                            ageing();
-
-  /* immunity */
-  void                            update_immunity();
-
-  /* lambda */
-  void                            update_lambda();
-
-  /* phi */
-  void                            update_phi();
-
-  /* q (microscopy) */
-  void                            update_q();
+  void                            one_day(const int tNow);
 
 private:
 
+  /* hash table of pointers to member functions */
+  std::unordered_map<std::string,std::function<void(const int)> >   compartment_funs;
+
+  /* private methods */
+  void                            mortality(const int tNow);      /* mortality */
+  void                            S_compartment(const int tNow);  /* S: susceptible */
+  void                            E_compartment(const int tNow);  /* E: latent liver-stage infection */
+  void                            T_compartment(const int tNow);  /* T: treated clinical disease */
+  void                            D_compartment(const int tNow);  /* D: untreated clinical disease */
+  void                            A_compartment(const int tNow);  /* A: asymptomatic patent (detectable by microscopy) infection */
+  void                            U_compartment(const int tNow);  /* U: asymptomatic sub-patent (not detectable by microscopy) infection */
+  void                            P_compartment(const int tNow);  /* P: protection due to chemoprophylaxis treatment */
+  void                            ageing();                       /* ageing */
+  void                            update_immunity();              /* immunity */
+  void                            update_lambda();                /* lambda: force of infection */
+  void                            update_phi();                   /* phi */
+  void                            update_q();                     /* q (microscopy) */
+
+  /* parameters */
   int                             humanID; /* my ID */
 
   double                          age; /* age (in years) */

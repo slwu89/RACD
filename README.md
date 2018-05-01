@@ -14,6 +14,10 @@ stochastic simulation of reactive case detection for p. falciparum
 7. Make sure that functions all make sense
 8. Validate modified treatment node in human model
 
+## Assumptions to check and change:
+* Lifespan follows geometric distribution, will be right as the ensemble average but very very wrong for individuals and small samples. Should probably allow for discrete versions of Weibull and Gamma age distributions.
+* "superinfection" is just going back to T or D from other compartments, barely more sophisticated than the RM model. Changing this would be a substantial undertaking.
+
 ## RACD References
 * Human Model:
   * https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3923296/
