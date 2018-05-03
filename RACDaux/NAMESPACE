@@ -2,6 +2,7 @@
 
 export(RACD_Parameters)
 export(RACD_Setup)
+export(RACD_Setup1)
 export(RACD_StateVector)
 export(immune_initial)
 export(immune_ode)

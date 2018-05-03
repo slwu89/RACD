@@ -29,6 +29,9 @@ stochastic simulation of reactive case detection for p. falciparum
       * Hard-core process (inhibitory):
       * Strauss process (inhibitory):
       * Strauss/Hard-core process (inhibitory):
+  * Marked point processes:
+  * Other spatial stuff:
+    * `rmh` metropolis-hastings function can simulate point patterns conditional on the total number N of points held constant (or even vector N of each type of marked point), see `p` in control parameters for rmh.
 
 ## RACD References
 * Human Model:

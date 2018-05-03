@@ -111,7 +111,7 @@ village::~village(){
 /* one simulation run */
 void village::simulation(const int& tMax){
 
-  Progress::Progress pb(tMax,true);
+  Progress pb(tMax,true);
 
   // for(int i=0; i<tMax; i++){
   for(tNow = 0; tNow < tMax; tNow++){
