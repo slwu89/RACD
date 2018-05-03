@@ -14,10 +14,16 @@
 #include <R.h>
 #include <math.h>
 
-/*
-  Initial parameters
+/* ################################################################################
+  States:
+  IB: Pre-erythrocytic immunity, reduces the probability of infection
+      following an infectious challenge
+  ID: Detection immunity, blood-stage immunity, reduces the
+      probability of detection and reduces infectiousness to mosquitoes
+  ICA: Acquired clinical immunity, reduces the probability of clinical
+      disease, acquired from previous exposure
 
-  # age and heterogeneity
+  Parameters:
   a0: age-dependent biting heterogeneity
   rho age-dependent biting heterogeneity
   zeta: relative biting rate
@@ -41,7 +47,8 @@
 
   # biting
   epsilon0: mean EIR for adults
-*/
+################################################################################ */
+
 static double     parms[15];
 
 #define zeta       parms[0]
@@ -74,16 +81,18 @@ void derivs_immune(int *neq, double *t, double *y, double *ydot, double *yout, i
 
   double time = *t;
 
+  /* states */
   double IB = y[0];
   double ID = y[1];
   double ICA = y[2];
 
+  /* parameters */
   double epsilon = epsilon0*zeta*(1 - rho*exp(-time/a0))*psi; /*EIR at age a*/
   // double b = b0*(b1 + ((1-b1)/(1 + pow((y[0]/IB0),kappaB)))); /*mosquito to human transmission efficiency*/
   double lambda = epsilon*b0*(b1 + ((1.0-b1)/(1.0 + pow((y[0]/IB0),kappaB)))); /*force of infection at age a*/
 
-  ydot[0] = epsilon/(epsilon*uB + 1.0) - y[0]/durB;
-  ydot[1] = lambda/(lambda*uD + 1.0) - y[1]/durD;
-  ydot[2] = lambda/(lambda*uC + 1.0) - y[2]/durC;
+  ydot[0] = epsilon/(epsilon*uB + 1.0) - IB/durB;
+  ydot[1] = lambda/(lambda*uD + 1.0) - ID/durD;
+  ydot[2] = lambda/(lambda*uC + 1.0) - ICA/durC;
 
 }

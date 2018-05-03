@@ -14,6 +14,54 @@
 #include <R.h>
 #include <math.h>
 
+/* ################################################################################
+
+  Differential equations for calculating the probability that an individual
+  is in each state given their age and EIR heterogeneity attributes:
+
+  Parameters:
+  Variable model parameters:
+  epsilon0: Mean EIR for adults (per year)
+  fT: proportion of clinical disease cases successfully treated
+
+  Model parameters taken from Griffin et al. (2014):
+  Human infection durations:
+  dE: Duration of latent period (years)
+  dT: Duration of treated clinical disease (years)
+  dD: Duration of untreated clinical disease (years)
+  dA: Duration of patent infection (years)
+  dU: Duration of sub-patent infection (years) (fitted)
+  dP: Duration of prophylactic protection following treatment (years)
+
+  Age parameters:
+  rho: Age-dependent biting parameter
+  a0: Age-dependent biting parameter (years)
+
+  Immunity reducing probability of infection:
+  b0: Probabiliy with no immunity (fitted)
+  b1: Maximum relative reduction
+  dB: Inverse of decay rate (years)
+  IB0: Scale parameter (fitted)
+  kappaB: Shape parameter (fitted)
+  uB: Duration in which immunity is not boosted (years) (fitted)
+
+  Immunity reducing probability of clinical disease:
+  phi0: Probability with no immunity
+  phi1: Maximum relative reduction
+  dC: Inverse decay rate (years)
+  IC0: Scale parameter
+  kappaC: Shape parameter
+  uC: Duration in which immunity is not boosted (years)
+  PM: New-born immunity relative to mother's immunity
+  dM: Inverse decay rate of maternal immunity (years)
+
+  initICA20: maternally-derived antibodies
+
+  Individual heterogeneity parameters:
+  zeta: individual level biting heterogeneity
+  psi: geographic risk (household level biting heterogeneity)
+
+################################################################################ */
 
 static double         parms[27];
 
@@ -67,19 +115,30 @@ void derivs_infection(int *neq, double *t, double *y, double *ydot, double *yout
 
   double time = *t;
 
-  double ICM = initICA20 * exp(-time/dM); /*not sure*/
+  /* states */
+  double prS = y[0];
+  double prT = y[1];
+  double prD = y[2];
+  double prA = y[3];
+  double prU = y[4];
+  double prP = y[5];
+  double IB = y[6];
+  double ICA = y[7];
+
+  /* parameters */
+  double ICM = initICA20 * exp(-time/dM); /*maternally-inherited antibodies*/
   double epsilon = epsilon0*zeta*(1 - rho*exp(-time/a0))*psi; /*EIR at age a*/
   // double b = b0*(b1 + ((1-b1)/(1 + pow((y[6]/IB0),kappaB)))); /*mosquito to human transmission efficiency*/
   double lambda = epsilon*b0*(b1 + ((1-b1)/(1 + pow((y[6]/IB0),kappaB)))); /*force of infection at age a*/
   double phi = phi0*(phi1 + ((1 - phi1)/(1 + pow(((y[7] + ICM)/IC0),kappaC)))); /*not sure*/
 
-  ydot[0] = -lambda*y[0] + y[5]/dP + y[4]/dU; /* dprS */
-  ydot[1] = phi*fT*lambda*(y[0] + y[3] + y[4]) - y[1]/dT; /* dprT */
-  ydot[2] = phi*(1 - fT)*lambda*(y[0] + y[3] + y[4]) - y[2]/dD; /* dprD */
-  ydot[3] = (1 - phi)*lambda*(y[0] + y[3] + y[4]) + y[2]/dD - lambda*y[3] - y[3]/dA; /* dprA */
-  ydot[4] = y[3]/dA - y[4]/dU - lambda*y[4]; /* dprU */
-  ydot[5] = y[1]/dT - y[5]/dP; /* dprP */
-  ydot[6] = epsilon/(epsilon*uB + 1) - y[6]/dB; /* dIB */
-  ydot[7] = lambda/(lambda*uC + 1) - y[7]/dC; /* dICA */
+  ydot[0] = -lambda*prS + prP/dP + prU/dU; /* dprS */
+  ydot[1] = phi*fT*lambda*(prS + prA + prU) - prT/dT; /* dprT */
+  ydot[2] = phi*(1 - fT)*lambda*(prS + prA + prU) - prD/dD; /* dprD */
+  ydot[3] = (1 - phi)*lambda*(prS + prA + prU) + prD/dD - lambda*prA - prA/dA; /* dprA */
+  ydot[4] = prA/dA - prU/dU - lambda*prU; /* dprU */
+  ydot[5] = prT/dT - prP/dP; /* dprP */
+  ydot[6] = epsilon/(epsilon*uB + 1) - IB/dB; /* dIB */
+  ydot[7] = lambda/(lambda*uC + 1) - ICA/dC; /* dICA */
 
 }
