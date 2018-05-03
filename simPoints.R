@@ -18,8 +18,8 @@ library(RACDaux)
 
 # spatially varying intensity function for houses (houses cluster together like gaussians)
 win <- square(1)
-sigma1 <- diag(2)*0.005
-sigma2 <- diag(2)*0.005
+sigma1 <- diag(2)*0.05
+sigma2 <- diag(2)*0.05
 mean1 <- c(0.75,0.75)
 mean2 <- c(0.25,0.25)
 w = 2/3
@@ -33,16 +33,21 @@ mu_house <- as.im(fun_house,W = win,mean1=mean1,mean2=mean2,sigma1=sigma1,sigma2
 # spatially varying intensity function for breeding sites (they are more dispersed, like a t-distribution)
 # when simulating from a t-distribution, keep df>2 otherwise it approaches Cauchy and is hard to parameterize
 # (no finite second moment)
-df1 <- 5 # as df->0 get Cauchy, as df->Inf get Gaussian
+mean3 <- c(0.15,0.5)
+df1 <- 5.5 # as df->0 get Cauchy, as df->Inf get Gaussian
 df2 <- 5
+df3 <- 4.5
 scale1 <- sigma1 * (df1-2)/df1
 scale2 <- sigma2 * (df2-2)/df2
-fun_breeding <- function(x,y,mean1,mean2,scale1,scale2,df1,df2,w){
-  (w*dmvt(x = c(x,y),sigma = scale1,delta = mean1,df = df1,log = FALSE)) +
-    ((1-w)*dmvt(x = c(x,y),sigma = scale2,delta = mean2,df = df2,log = FALSE))
+scale3 <- sigma2 * (df3-2)/df3
+ww <- rep(1/3,3)
+fun_breeding <- function(x,y,mean1,mean2,mean3,scale1,scale2,scale3,df1,df2,df3,ww){
+  (ww[1]*dmvt(x = c(x,y),sigma = scale1,delta = mean1,df = df1,log = FALSE)) +
+  (ww[2]*dmvt(x = c(x,y),sigma = scale2,delta = mean2,df = df2,log = FALSE)) +
+  (ww[3]*dmvt(x = c(x,y),sigma = scale3,delta = mean3,df = df3,log = FALSE)) 
 }
 fun_breeding <- Vectorize(FUN = fun_breeding,vectorize.args = c("x","y"))
-mu_breeding <- as.im(fun_breeding,W = win,mean1=mean1,mean2=mean2,scale1=scale1,scale2=scale2,df1=df1,df2=df2,w=w)
+mu_breeding <- as.im(fun_breeding,W = win,mean1=mean1,mean2=mean2,mean3=mean3,scale1=scale1,scale2=scale2,scale3=scale3,df1=df1,df2=df2,df3=df3,ww=ww)
 
 mu_breeding_xy <- mu_breeding %>% 
                   as.matrix %>% 
@@ -119,7 +124,20 @@ house_sim <- list(cif="hardcore",par=list(beta=1,hc=0.015),w=win,trend=rf_intens
 rmh_control <- list(p=1)
 rmh_start <- list(n.start=n_house)
 xy_h <- rmh(model = house_sim,control = rmh_control,start = rmh_start)
-plot(xy_h)
 
 # simulate breeding sites, assume breeding sites cluster around houses
-n_habitat <- 2 # on average, have this many mosquito habitats/house
+n_habitat_house <- 1.5 # on average, have this many mosquito habitats/house
+n_habitat <- rpois(n = 1,lambda = n_habitat_house*n_house)
+# use Metropolis-Hastings simulation for point process because we need to condition on number 
+# of mosquito habitats in the Thomas process
+sigma <- 0.1
+h <- density(xy_h,sigma,edge=FALSE)
+Lambda <- h * rf_intensity_b
+habitat_sim <- list(cif="poisson",par=list(beta=1),w=win,trend=rf_intensity_b)
+rmh_control <- list(p=1)
+rmh_start <- list(n.start=n_habitat)
+xy_hh <- rmh(model = habitat_sim,control = rmh_control,start = rmh_start)
+
+xy_pts <- tibble(type=c(rep("house",xy_h$n),rep("habitats",xy_hh$n)),
+                 x=c(xy_h$x,xy_hh$x),
+                 y=c(xy_h$y,xy_hh$y))

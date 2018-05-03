@@ -21,7 +21,7 @@
   a0: age-dependent biting heterogeneity
   rho age-dependent biting heterogeneity
   zeta: relative biting rate
-  psi:
+  psi: geographic risk (household level biting heterogeneity)
 
   # immunity reducing probability of infection
   durB: 1/decay rate
@@ -73,6 +73,11 @@ void init_immune(void (* odeparms)(int *, double *))
 void derivs_immune(int *neq, double *t, double *y, double *ydot, double *yout, int*ip){
 
   double time = *t;
+
+  double IB = y[0];
+  double ID = y[1];
+  double ICA = y[2];
+
   double epsilon = epsilon0*zeta*(1 - rho*exp(-time/a0))*psi; /*EIR at age a*/
   // double b = b0*(b1 + ((1-b1)/(1 + pow((y[0]/IB0),kappaB)))); /*mosquito to human transmission efficiency*/
   double lambda = epsilon*b0*(b1 + ((1.0-b1)/(1.0 + pow((y[0]/IB0),kappaB)))); /*force of infection at age a*/
