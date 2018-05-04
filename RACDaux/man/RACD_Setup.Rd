@@ -4,11 +4,25 @@
 \alias{RACD_Setup}
 \title{Initialize State for RACD Model}
 \usage{
-RACD_Setup(theta)
+RACD_Setup(xy_h, xy_b, theta)
 }
 \arguments{
+\item{xy_h}{two column matrix of house coordinates}
+
+\item{xy_b}{two column matrix of breeding site coordinates}
+
 \item{theta}{named vector of parameters (see \code{\link{RACD_Parameters}})}
 }
 \description{
-do something
+Initialize initial conditions for the RACD simulation model
+}
+\examples{
+\dontrun{
+  library(spatstat)
+  xy_h <- rpoispp(lambda = 100,win = owin(c(0,1),c(0,1)))
+  xy_b <- rpoispp(lambda = 100,win = owin(c(0,1),c(0,1)))
+  theta <- RACD_Parameters()
+  init <- RACD_Setup(as.matrix.ppx(xy_h),as.matrix.ppx(xy_b),theta)
+}
+
 }
