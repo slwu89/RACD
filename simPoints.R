@@ -17,11 +17,11 @@ library(RACDaux)
 ###############################################################################
 
 # spatially varying intensity function for houses (houses cluster together like gaussians)
-win <- square(1)
+win <- square(2)
 sigma1 <- diag(2)*0.05
 sigma2 <- diag(2)*0.05
-mean1 <- c(0.75,0.75)
-mean2 <- c(0.25,0.25)
+mean1 <- c(0.75,0.75)*2
+mean2 <- c(0.25,0.25)*2
 w = 2/3
 fun_house <- function(x,y,mean1,mean2,sigma1,sigma2,w){
   (w*dmvnorm(x =c(x,y),mean =mean1,sigma = sigma1,log = FALSE)) + 
@@ -86,12 +86,15 @@ rf_intensity_h <- attr(rf_intensity_h, "Lambda")
 rf_house <- rf_intensity_h %>% 
   as.matrix %>% 
   as.tibble %>% 
-  rename_all(funs(str_extract(.,"[0-9]+"))) %>% 
-  mutate(x=1:nrow(rf_intensity_h))  %>%
+  rename_all(~ as.character(rf_intensity_h$yrow)) %>%
+  # rename_all(funs(str_extract(.,"[0-9]+"))) %>% 
+  mutate(x = rf_intensity_h$xcol) %>%
+  # mutate(x=1:nrow(rf_intensity_b))  %>%
   gather(y,value,-x) %>%
-  mutate(y = as.integer(y)) %>%
+  mutate(y = as.numeric(y)) %>%
   arrange(x) %>%
   rename(intensity=value)
+
 
 rf_intensity_b <- rLGCP(model = "gauss",mu = log(mu_breeding),var = 0.2,scale = 0.125,win = win)
 rf_intensity_b <- attr(rf_intensity_b, "Lambda")
@@ -99,10 +102,12 @@ rf_intensity_b <- attr(rf_intensity_b, "Lambda")
 rf_habitats <- rf_intensity_b %>% 
   as.matrix %>% 
   as.tibble %>% 
-  rename_all(funs(str_extract(.,"[0-9]+"))) %>% 
-  mutate(x=1:nrow(rf_intensity_b))  %>%
+  rename_all(~ as.character(rf_intensity_b$yrow)) %>%
+  # rename_all(funs(str_extract(.,"[0-9]+"))) %>% 
+  mutate(x = rf_intensity_b$xcol) %>%
+  # mutate(x=1:nrow(rf_intensity_b))  %>%
   gather(y,value,-x) %>%
-  mutate(y = as.integer(y)) %>%
+  mutate(y = as.numeric(y)) %>%
   arrange(x) %>%
   rename(intensity=value)
 
@@ -120,7 +125,7 @@ n_house <- 100
 # use Metropolis-Hastings simulation for point process because we need to condition on number
 # of houses in the inhomogeneous  point process
 # house_sim <- list(cif="poisson",par=list(beta=1),w=win,trend=rf_intensity_h)
-house_sim <- list(cif="hardcore",par=list(beta=1,hc=0.015),w=win,trend=rf_intensity_h)
+house_sim <- list(cif="hardcore",par=list(beta=1,hc=0.1),w=win,trend=rf_intensity_h)
 rmh_control <- list(p=1)
 rmh_start <- list(n.start=n_house)
 xy_h <- rmh(model = house_sim,control = rmh_control,start = rmh_start)
@@ -138,6 +143,13 @@ rmh_control <- list(p=1)
 rmh_start <- list(n.start=n_habitat)
 xy_hh <- rmh(model = habitat_sim,control = rmh_control,start = rmh_start)
 
-xy_pts <- tibble(type=c(rep("house",xy_h$n),rep("habitats",xy_hh$n)),
+xy_pts <- tibble(type=c(rep("houses",xy_h$n),rep("habitats",xy_hh$n)),
                  x=c(xy_h$x,xy_hh$x),
                  y=c(xy_h$y,xy_hh$y))
+
+ggplot() +
+  geom_raster(data = rf_sample,mapping = aes(x = x,y = y,fill = intensity)) +
+  geom_point(data = xy_pts,aes(x=x,y=y),color=grey(0.8,0.25)) +
+  scale_fill_viridis() +
+  facet_wrap(~ type) +
+  theme_bw()
