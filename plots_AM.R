@@ -2,6 +2,7 @@ library(RACD)
 library(RACDaux)
 library(tidyverse)
 library(ggplot2)
+library(ggforce)
 
 theta = RACDaux::RACD_Parameters()
 init = RACDaux::RACD_Setup(theta)
@@ -23,6 +24,7 @@ initRiskGrid <- function(breedingSiteList, n) {
   # breedingSiteList : list of breeding sites (x, y, sigma)
   # n : number of points to split x- and y-axes into
   riskGrid <- expand.grid((1:n)/n, (1:n)/n)
+  colnames(riskGrid) <- c("x", "y")
   riskGrid$risk <- sapply(1:nrow(riskGrid),
                           function(i) {
                             sum(sapply(breedingSiteList,
@@ -42,12 +44,22 @@ plotInitCond <- function(initCond, n) {
   riskGrid <- initRiskGrid(initCond$breedingSites, n)
   breedingSites <- data.frame(t(sapply(initCond$breedingSites, unlist)))
   houses <- data.frame(t(sapply(initCond$houses, unlist)))
+  humans <- data.frame(t(sapply(initCond$humans, unlist)))
+  houseState <- data.frame(table(humans$house, humans$state))
+  colnames(houseState)[1:2] <- c("house", "state")
+  houseState <- cbind(houseState, houses[match(houseState$house, rownames(houses)),1:2])
+  pieR <- diff(range(houseState$x))/50
+  houseState <- split(houseState, houseState$house)
   riskPlot <- ggplot() +
-    geom_tile(data=riskGrid, aes(x=Var1, y=Var2, fill=risk)) +
-    stat_contour(data=riskGrid, aes(x=Var1, y=Var2, z=risk)) +
+    geom_tile(data=riskGrid, aes(x=x, y=y, fill=risk)) +
+    stat_contour(data=riskGrid, aes(x=x, y=y, z=risk)) +
     geom_point(data=breedingSites, aes(x=x, y=y), color="darkred") +
-    geom_point(data=houses, aes(x=x, y=y, size=psi), color="chartreuse3") +
-    xlab("") + ylab("") + theme_bw()
+    lapply(houseState,
+           function(house) {
+             geom_arc_bar(data=house, 
+                          aes(x0=x, y0=y, r0=0, r=pieR, amount=Freq, colour=state), 
+                          stat="pie")
+           })
   return(riskPlot)
 }
 
@@ -58,3 +70,5 @@ plotInitCond(init, n=100)
 
 ## table of model parameters
 # ?RACD_Parameters
+
+## plot simPoints.R
