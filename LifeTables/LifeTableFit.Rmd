@@ -1,0 +1,499 @@
+---
+title: "Life Table Models"
+author: "Jared Bennett"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: pdf_document
+#output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#1) Life Table
+The purpose of this file is to test the fits of different distributions to 
+human life tables. Distributions of interest are the Gompertz and Weibull. I will 
+also fit multiple splines, as we really only care about accurate fits.  
+
+
+```{r, eval=TRUE, echo=TRUE, results='hold'}
+invisible(rm(list=ls()));invisible(gc());
+###############################################################################
+###############################################################################
+# Import data and view
+USPop <- read.csv(file = "~/Desktop/LifeTables/1-TanzaniaPop.csv", header = TRUE, stringsAsFactors = FALSE)
+
+par(las = 1, font.lab = 2, font.axis = 2, font.main = 2, cex.main = 1.75,
+    mar=c(4.1,4.1,4.1,2.1), mgp = c(2.5,.75,0))
+
+plot(x = USPop[ ,1], y = USPop[ ,2], type = "p", pch = 16, ylim = c(0,1),
+     main = "Us Population Death Proportion", ylab = "Fraction of Death", lwd=2,
+     xlab = "Age (Years)")
+box(lwd = 2)
+grid()
+
+
+par(las = 1, font.lab = 2, font.axis = 2, font.main = 2, cex.main = 1.75,
+    mar=c(4.1,4.1,4.1,2.1), mgp = c(2.5,.75,0))
+
+plot(x = USPop[ ,1], y = log(USPop[ ,2]), type = "p", pch = 16,
+     main = "Us Population Death Proportion", ylab = "log(Fraction of Death)", lwd=2,
+     xlab = "Age (Years)")
+box(lwd = 2)
+grid()
+###############################################################################
+###############################################################################
+# plot
+# testLabels <- c(13:52, 1:32)
+# 
+# par(las = 1, font.lab = 2, font.axis = 2, font.main = 2, cex.main = 1.75,
+#     mar=c(4.1,4.1,4.1,2.1), mgp = c(2.5,.75,0))
+# 
+# plot(x = Chikungunya[ ,1], y = Chikungunya[ ,2]/N, type = "p", pch = 16, ylim = c(0,0.15),
+#      main = "Chikungunya Incidence Data", ylab = "Fractional Incidence", lwd=2,
+#      xlab = "Week", xaxt = 'n')
+# lines(x = Chikungunya[ ,1], y = initMod, type = "l", lwd=2, col = "Magenta")
+# axis(side = 1, at = Chikungunya[,1][c(T,F)], labels = testLabels[c(T,F)])
+# box(lwd = 2)
+# grid()
+# legend(x = "topright", legend = c("Incidence Data", "Model Estimate"), col = c("black", "magenta"),
+#        bty = "n", lty = 1, lwd = 3, cex = 1)
+
+```
+
+
+#2) Models To Fit
+I want to test the Gompertz distribution, the Weibull distribution, and splines 
+of degrees 2 through 5.
+
+```{r, eval=TRUE, echo=TRUE, results='hold'}
+###############################################################################
+###############################################################################
+# distribution functions
+dGompertz <- function(x, p){
+  # p[1] is frailty, p[2] is scale
+  exponent <- p[1]*(1-exp(p[2]*x))
+  total <- p[2]*x + exponent
+  return(p[2]*p[1]*exp(total))
+}
+
+dWeibull <- function(x,p){
+  #p[1] is shape, p[2] is scale
+  exponent1 <- exp(-(x/p[2])^p[1])
+  exponent2 <- (x/p[2])^(p[1]-1)
+  return(p[1]/p[2]*exponent2*exponent1)
+}
+
+# splines
+spline_2 <- function(x, p) return(p[1]*x + p[2]*x^2)
+spline_3 <- function(x, p) return(p[1]*x + p[2]*x^2 + p[3]*x^3)
+spline_4 <- function(x, p) return(p[1]*x + p[2]*x^2 + p[3]*x^3 + p[4]*x^4)
+spline_5 <- function(x, p) return(p[1]*x + p[2]*x^2 + p[3]*x^3 + p[4]*x^4 + p[5]*x^5)
+
+# splines with shifted exponential
+spline1Exp <- function(x, p) return(p[1] + p[2]*x + p[3]*exp(x-100.5))
+spline2Exp <- function(x, p) return(p[1] + p[2]*x + p[3]*x^2 + p[4]*exp(x-x[length(x)]))
+spline3Exp <- function(x, p) return(p[1] + p[2]*x + p[3]*x^2 + p[4]*x^3 + p[5]*exp(x-x[length(x)]))
+spline4Exp <- function(x, p) return(p[1] + p[2]*x + p[3]*x^2 + p[4]*x^3 + p[5]*x^4 + p[6]*exp(x-x[length(x)]))
+spline5Exp <- function(x, p) return(p[1] + p[2]*x + p[3]*x^2 + p[4]*x^3 + p[5]*x^4 + p[6]*x^5 + p[7]*exp(x-x[length(x)]))
+
+# splines with shifted exponential and default y=0 at x=0
+spline1Exp0 <- function(x, p) return(-exp(-x[length(x)]) + p[1]*x + p[2]*exp(x-x[length(x)]))
+spline2Exp0 <- function(x, p) return(-exp(-x[length(x)]) + p[1]*x + p[2]*x^2 + p[3]*exp(x-x[length(x)]))
+spline3Exp0 <- function(x, p) return(-exp(-x[length(x)]) + p[1]*x + p[2]*x^2 + p[3]*x^3 + p[4]*exp(x-x[length(x)]))
+spline4Exp0 <- function(x, p) return(-exp(-x[length(x)]) + p[1]*x + p[2]*x^2 + p[3]*x^3 + p[4]*x^4 + p[5]*exp(x-x[length(x)]))
+spline5Exp0 <- function(x, p) return(-exp(-x[length(x)]) + p[1]*x + p[2]*x^2 + p[3]*x^3 + p[4]*x^4 + p[5]*x^5 + p[6]*exp(x-x[length(x)]))
+
+# Just in case my assumptions suck, and because it's easy to copy/paste
+spline1ExpD <- function(x, p) return(-p[1] + p[2]*x + p[3]*exp(x-p[4]))
+spline2ExpD <- function(x, p) return(-p[1] + p[2]*x + p[2]*x^2 + p[4]*exp(x-p[5]))
+spline3ExpD <- function(x, p) return(-p[1] + p[2]*x + p[3]*x^2 + p[4]*x^3 + p[5]*exp(x-p[6]))
+spline4ExpD <- function(x, p) return(-p[1] + p[2]*x + p[3]*x^2 + p[4]*x^3 + p[5]*x^4 + p[6]*exp(x-p[7]))
+spline5ExpD <- function(x, p) return(-p[1] + p[2]*x + p[3]*x^2 + p[4]*x^3 + p[5]*x^4 + p[6]*x^5 + p[7]*exp(x-p[8]))
+
+###############################################################################
+###############################################################################
+# Cost function
+costFunc <- function(params, testFunc, data){
+
+  estimates <- testFunc(x = data[ ,1], p = params)
+  
+  #least squares
+  return( sum((data[ ,2] - estimates)^2) )
+}
+###############################################################################
+###############################################################################
+# Model scoring
+AIC_LS <- function(n, k, RSS){
+  #n: number of observations. 101 here
+  #k: number of parameters. here, length(p)
+  #RSS: Residual sum of squares. here, output of costFunc and optim$value
+  return(2*k + n*log(x = RSS))
+}
+
+BIC_LS <- function(n, k, RSS){
+  #n: number of observations. 101 here
+  #k: number of parameters. here, length(p)
+  #RSS: Residual sum of squares. here, output of costFunc and optim$value
+  return(log(x = n)*k + n*log(x = RSS))
+}
+```
+
+
+#3) Setup Data and Fit
+
+```{r, eval=TRUE, echo=TRUE, results='hold'}
+###############################################################################
+###############################################################################
+# Setup functions list and parameters lists
+funcList <- list(dGompertz, dWeibull, spline_2, spline_3, spline_4, spline_5,
+                 spline1Exp, spline2Exp, spline3Exp, spline4Exp, spline5Exp,
+                 spline1Exp0, spline2Exp0, spline3Exp0, spline4Exp0, spline5Exp0,
+                 spline1ExpD, spline2ExpD, spline3ExpD, spline4ExpD, spline5ExpD)
+
+paramList1 <- c(lapply(X = c(2,2,2:5), FUN = rep, x = 0.1),
+                lapply(X = 3:7, FUN = rep, x = 0.1),
+                lapply(X = 2:6, FUN = rep, x = 0.1),
+                lapply(X = lapply(X = 3:7, FUN = rep, x = 0.1), FUN = 'c', 100))
+
+paramList2 <- c(lapply(X = c(2,2,2:5), FUN = rep, x = 0.01),
+                lapply(X = 3:7, FUN = rep, x = 0.01),
+                lapply(X = 2:6, FUN = rep, x = 0.01),
+                lapply(X = lapply(X = 3:7, FUN = rep, x = 0.01), FUN = 'c', 100))
+
+paramList3 <- c(lapply(X = c(2,2,2:5), FUN = rep, x = 0.001),
+                lapply(X = 3:7, FUN = rep, x = 0.001),
+                lapply(X = 2:6, FUN = rep, x = 0.001),
+                lapply(X = lapply(X = 3:7, FUN = rep, x = 0.01), FUN = 'c', 100))
+
+paramList4 <- c(lapply(X = c(2,2,2:5), FUN = rep, x = 0.0001),
+                lapply(X = 3:7, FUN = rep, x = 0.0001),
+                lapply(X = 2:6, FUN = rep, x = 0.0001),
+                lapply(X = lapply(X = 3:7, FUN = rep, x = 0.01), FUN = 'c', 100))
+
+nDeps <- lapply(X = lapply(X = paramList4, FUN = length), FUN = rep, x = 1e-5)
+
+
+###############################################################################
+###############################################################################
+# fit things
+fit1 <- fit2 <- fit3 <- fit4 <- vector(mode = "list", length = length(funcList))
+
+for(iter in 1:length(funcList)){
+  
+  fit1[[iter]] <- optim(par = paramList1[[iter]], fn = costFunc, testFunc = funcList[[iter]],
+                        data = USPop, method = "BFGS", control = list(maxit = 1000, ndeps = nDeps[[iter]]))
+  
+  fit2[[iter]] <- optim(par = paramList2[[iter]], fn = costFunc, testFunc = funcList[[iter]],
+                        data = USPop, method = "BFGS", control = list(maxit = 1000, ndeps = nDeps[[iter]]))
+  
+  fit3[[iter]] <- optim(par = paramList3[[iter]], fn = costFunc, testFunc = funcList[[iter]],
+                        data = USPop, method = "BFGS", control = list(maxit = 1000, ndeps = nDeps[[iter]]))
+
+  fit4[[iter]] <- optim(par = paramList4[[iter]], fn = costFunc, testFunc = funcList[[iter]],
+                        data = USPop, method = "BFGS", control = list(maxit = 1000, ndeps = nDeps[[iter]]))
+}
+
+###############################################################################
+###############################################################################
+# get AIC and BIC values
+
+AIC1 <- AIC2 <- AIC3 <- AIC4 <- numeric(length = length(funcList))
+BIC1 <- BIC2 <- BIC3 <- BIC4 <- numeric(length = length(funcList))
+
+numObs <- dim(USPop)[1]
+
+for(iter in 1:length(funcList)){
+  # get things used several times
+  numK <- length(paramList1[[iter]])
+  
+  # AIC calcs
+  AIC1[iter] <- AIC_LS(n = numObs, k = numK, RSS = fit1[[iter]]$value)
+  AIC2[iter] <- AIC_LS(n = numObs, k = numK, RSS = fit2[[iter]]$value)
+  AIC3[iter] <- AIC_LS(n = numObs, k = numK, RSS = fit3[[iter]]$value)
+  AIC4[iter] <- AIC_LS(n = numObs, k = numK, RSS = fit4[[iter]]$value)
+  
+  # BIC calcs
+  BIC1[iter] <- BIC_LS(n = numObs, k = numK, RSS = fit1[[iter]]$value)
+  BIC2[iter] <- BIC_LS(n = numObs, k = numK, RSS = fit2[[iter]]$value)
+  BIC3[iter] <- BIC_LS(n = numObs, k = numK, RSS = fit3[[iter]]$value)
+  BIC4[iter] <- BIC_LS(n = numObs, k = numK, RSS = fit4[[iter]]$value)
+  
+}
+
+```
+
+
+
+
+
+
+#4) Plot Results
+```{r, eval=TRUE, echo=TRUE, results='hold'}
+###############################################################################
+###############################################################################
+# plots of data!!!
+
+# labels used for everything
+xDim <- length(funcList)
+xPoints1 <- jitter(x = 1:xDim, amount = .08)
+xPoints2 <- jitter(x = 1:xDim, amount = .08)
+xPoints3 <- jitter(x = 1:xDim, amount = .08)
+xPoints4 <- jitter(x = 1:xDim, amount = .08)
+
+testLabels <- c("dGompertz", "dWeibull", "spline_2", "spline_3", "spline_4", "spline_5",
+                 "spline1E", "spline2E", "spline3E", "spline4E", "spline5E",
+                 "spline1E0", "spline2E0", "spline3E0", "spline4E0", "spline5E0",
+                 "spline1ED", "spline2ED", "spline3ED", "spline4ED", "spline5ED")
+
+
+#######################################
+# Plot Residuals
+fit1Vals <- log(vapply(X = fit1, FUN = '[[', 2, FUN.VALUE = numeric(length = 1L)))
+fit2Vals <- log(vapply(X = fit2, FUN = '[[', 2, FUN.VALUE = numeric(length = 1L)))
+fit3Vals <- log(vapply(X = fit3, FUN = '[[', 2, FUN.VALUE = numeric(length = 1L)))
+fit4Vals <- log(vapply(X = fit4, FUN = '[[', 2, FUN.VALUE = numeric(length = 1L)))
+
+ybounds <- 1.1*c(min(fit1Vals,fit2Vals,fit3Vals,fit4Vals),
+                 max(fit1Vals,fit2Vals,fit3Vals,fit4Vals))
+
+# set output
+png(filename = "./10_Residuals_Full.png", width=1920, height=1080, units="px")
+
+# plot
+par(las = 1, font.lab = 2, font.axis = 2, font.main = 2, cex.main = 4,
+    cex.lab = 3, cex.axis = 2, mar=c(10,8,5,2), mgp = c(5,1,0))
+
+plot(x = xPoints1, y = fit1Vals, type = "p", pch = 16, ylim = ybounds,
+     main = "Residuals For All Model Fits", ylab = "ln(Residuals)", lwd=2,
+     xlab = "", xaxt = 'n', cex = 2)
+points(x = xPoints2, y = fit2Vals, type = "p", pch = 16, col="red", cex = 2)
+points(x = xPoints3, y = fit3Vals, type = "p", pch = 16, col="green", cex = 2)
+points(x = xPoints4, y = fit4Vals, type = "p", pch = 16, col="purple", cex = 2)
+
+axis(side = 1, at = 1:xDim, labels = FALSE)
+text(x = 1:xDim, y = par("usr")[3] - 0.25, srt = 60, adj = c(0.75,-0.5),
+     labels = testLabels, xpd = TRUE, font = 2, cex = 2)
+
+box(lwd = 2)
+grid()
+
+legend(x = "top", legend = c("Fit1", "Fit2", "Fit3", "Fit4"),
+       col = c("black", "red", "green", "purple"),
+       bty = "n", lty = 1, lwd=5, cex = 2, text.font = 2)
+
+## close output to file
+dev.off()
+
+
+#######################################
+# Plot AIC
+ybounds <- 1.1*c(min(unlist(AIC1),unlist(AIC2),unlist(AIC3),unlist(AIC4)),
+                 max(unlist(AIC1),unlist(AIC2),unlist(AIC3),unlist(AIC4)))
+
+fileNames <- c("./20_AIC_Full.png", "./21_AIC_Zoom.png")
+ybounds <- list(ybounds, c(ybounds[1], -ybounds[1]))
+
+for(i in 1:1){
+  # set output
+  png(filename = fileNames[i], width=1920, height=1080, units="px")
+  
+  # plot
+  par(las = 1, font.lab = 2, font.axis = 2, font.main = 2, cex.main = 4,
+      cex.lab = 3, cex.axis = 2, mar=c(10,8,5,2), mgp = c(5,1,0))
+
+  plot(x = xPoints1, y = unlist(AIC1), type = "p", pch = 16, ylim = ybounds[[i]],
+       main = "AIC For All Model Fits", ylab = "AIC", lwd=2,
+       xlab = "", xaxt = 'n', cex = 2)
+  points(x = xPoints2, y = unlist(AIC2), type = "p", pch = 16, col="red", cex = 2)
+  points(x = xPoints3, y = unlist(AIC3), type = "p", pch = 16, col="green", cex = 2)
+  points(x = xPoints4, y = unlist(AIC4), type = "p", pch = 16, col="purple", cex = 2)
+  
+  axis(side = 1, at = 1:xDim, labels = FALSE)
+  text(x = 1:xDim, y = par("usr")[3] - 0.25, srt = 60, adj = c(1.15,1.2),
+       labels = testLabels, xpd = TRUE, font = 2, cex = 2)
+  
+  box(lwd = 2)
+  grid()
+  
+  legend(x = "top", legend = c("AIC1", "AIC2", "AIC3", "AIC4"),
+         col = c("black", "red", "green", "purple"),
+         bty = "n", lty = 1, lwd=5, cex = 2, text.font = 2)
+  
+  ## close output to file
+  dev.off()
+}
+
+#######################################
+# Plot BIC
+ybounds <- 1.1*c(min(unlist(BIC1),unlist(BIC2),unlist(BIC3),unlist(BIC4)),
+                 max(unlist(BIC1),unlist(BIC2),unlist(BIC3),unlist(BIC4)))
+
+fileNames <- c("./30_BIC_Full.png", "./31_BIC_Zoom.png")
+ybounds <- list(ybounds, c(ybounds[1], -ybounds[1]))
+
+for(i in 1:1){
+  # set output
+  png(filename = fileNames[i], width=1920, height=1080, units="px")
+  
+  # plot
+  par(las = 1, font.lab = 2, font.axis = 2, font.main = 2, cex.main = 4,
+      cex.lab = 3, cex.axis = 2, mar=c(10,8,5,2), mgp = c(5,1,0))
+
+  plot(x = xPoints1, y = unlist(BIC1), type = "p", pch = 16, ylim = ybounds[[i]],
+       main = "BIC For All Model Fits", ylab = "BIC", lwd=2,
+       xlab = "", xaxt = 'n', cex = 2)
+  points(x = xPoints2, y = unlist(BIC2), type = "p", pch = 16, col="red", cex = 2)
+  points(x = xPoints3, y = unlist(BIC3), type = "p", pch = 16, col="green", cex = 2)
+  points(x = xPoints4, y = unlist(BIC4), type = "p", pch = 16, col="purple", cex = 2)
+  
+  axis(side = 1, at = 1:xDim, labels = FALSE)
+  text(x = 1:xDim, y = par("usr")[3] - 0.25, srt = 60, adj = c(1.15,1.2),
+       labels = testLabels, xpd = TRUE, font = 2, cex = 2)
+  
+  box(lwd = 2)
+  grid()
+  
+  legend(x = "top", legend = c("BIC1", "BIC2", "BIC3", "BIC4"),
+         col = c("black", "red", "green", "purple"),
+         bty = "n", lty = 1, lwd=5, cex = 2, text.font = 2)
+  
+  ## close output to file
+  dev.off()
+}
+
+#######################################
+# Plot Ranks
+
+# get rank of each run
+orderAIC <- lapply(X = list(AIC1,AIC2,AIC3,AIC4), FUN = rank)
+orderBIC <- lapply(X = list(BIC1,BIC2,BIC3,BIC4), FUN = rank)
+orderFit <- lapply(X = list(fit1Vals, fit2Vals, fit3Vals, fit4Vals), FUN = rank)
+
+#get mean rank
+orderAICMean <- Reduce(f = "+", x = orderAIC)/4
+orderBICMean <- Reduce(f = "+", x = orderBIC)/4
+orderFitMean <- Reduce(f = "+", x = orderFit)/4
+
+# set output
+png(filename = "./40_RankOrder.png", width=1920, height=1080, units="px")
+
+# plot1
+par(mfrow = c(1,2), las = 1, font.lab = 2, font.axis = 2, font.main = 2,
+    cex.main = 4, cex.lab = 3, cex.axis = 2, mar=c(6,7,5,2), mgp = c(4,1,0))
+
+plot(x = orderFitMean, y = orderAICMean, type = "p", pch = 16, ylim = c(0,22),
+     xlim = c(0,22),main = "Model Fit vs AIC", ylab = "AIC Mean Rank",
+     lwd=2, xlab = "Residual Mean Rank", cex = 2)
+
+box(lwd = 2)
+grid()
+
+text(x = orderFitMean, y = orderAICMean,
+     labels = testLabels[order(orderAICMean)][rank(orderAICMean)],
+     pos = 4, offset = 0.5)
+
+# plot2
+plot(x = orderFitMean, y = orderBICMean, type = "p", pch = 16, ylim = c(0,22),
+     xlim = c(0,22), main = "Model Fit vs BIC", ylab = "BIC Mean Rank",
+     lwd=2, xlab = "Residual Mean Rank", cex = 2)
+
+box(lwd = 2)
+grid()
+
+text(x = orderFitMean, y = orderBICMean,
+     labels = testLabels[order(orderBICMean)][rank(orderBICMean)],
+     pos = 4, offset = 0.5)
+
+## close output to file
+dev.off()
+
+#######################################
+# Plot fit
+
+# set output
+png(filename = "./50_FitWithData.png", width=1920, height=1080, units="px")
+
+# plot1
+par(las = 1, font.lab = 2, font.axis = 2, font.main = 2,
+    cex.main = 4, cex.lab = 3, cex.axis = 2, mar=c(6,7,5,2), mgp = c(4,1,0))
+
+plot(x = USPop[ ,1], y = USPop[ ,2], type = "p", pch = 16, ylim = c(0,1),
+     main = "US Population Death Proportion", ylab = "Fraction of Death", lwd=2,
+     xlab = "Age (Years)")
+
+lines(x = USPop[ ,1], y = spline5Exp(x = USPop[ ,1], p = fit4[[11]]$par),
+      type = "l", col = "magenta", lwd = 2)
+
+box(lwd = 2)
+grid()
+
+legend(x = "top", legend = c("Data", "spline_5_Exp"),
+       col = c("black", "magenta"),
+       bty = "n", lty = 1, lwd=5, cex = 2, text.font = 2)
+
+## close output to file
+dev.off()
+```
+
+
+
+#4) Final Function to Add to Package
+```{r, eval=TRUE, echo=TRUE, results='hold'}
+#' Fit Life Table Data
+#'
+#' This function reads in a life table of 2 columns (see examples in the data), 
+#' where the first column is the mean age of the published data (ie, if published 
+#' data is 1-2 years, the input file has 1.5) and the second column is q_x, the probability 
+#' of dying during that time period. The output is the complete fit output, from which 
+#' parameters can be taken. Least squares is used as the cost function, and base::optim
+#' is used to perform fits. A 5th-order spline with an exponential is used to fit against.
+#' 
+#' @param lifeTable Path to .csv life table where the first two columns are age and qx
+#' @param initParams Initial estimates for coefficients. Defaults to 0.001 for all
+#' @param method Method to feed to optim. Default is BFGS, which performed best in all tests
+#' @param fitArgs List of args to feed to optim. Defaults include the max iterations and step size
+#'
+#' @examples
+#' results = FitLifeTable(lifeTable = "~/PATHTOFILE.csv")
+#' coefficients = results$par
+#'
+#' @return Named list of the same structure as optim. Parameters can be obtained 
+#' by return$par
+#'
+#' @export
+FitLifeTable <- function(lifeTable,
+                         initParams = rep(x = 0.001, 7),
+                         method = "BFGS",
+                         fitArgs = list(maxit = 500, ndeps = rep(x = 1e-5, 7))
+                         ){
+  
+  # import data to fit against
+  lifeData <- read.csv(file = lifeTable, header = TRUE, stringsAsFactors = FALSE)
+  
+  # this is the function we use for describing death probs at each age
+  spline5Exp <- function(x, p) return(p[1] + p[2]*x + p[3]*x^2 + p[4]*x^3 + p[5]*x^4 + p[6]*x^5 + p[7]*exp(x-x[length(x)]))
+  
+  # Cost function - Least squares
+  costFunc <- function(params, testFunc, data){
+    #fit function against data with current params
+    estimates <- testFunc(x = data[ ,1], p = params)
+    #least squares
+    return( sum((data[ ,2] - estimates)^2) )
+  }
+
+  # perform optimization
+  results <- optim(par = initParams, fn = costFunc, testFunc = spline5Exp,
+                   data = lifeData, method = method, control = fitArgs)
+
+  return(results)
+}
+
+
+FitLifeTable(lifeTable = "../LifeTables/1-TanzaniaPop.csv")
+
+
+
+
+
+```

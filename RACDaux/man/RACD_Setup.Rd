@@ -18,11 +18,18 @@ Initialize initial conditions for the RACD simulation model
 }
 \examples{
 \dontrun{
-  library(spatstat)
-  xy_h <- rpoispp(lambda = 100,win = owin(c(0,1),c(0,1)))
-  xy_b <- rpoispp(lambda = 100,win = owin(c(0,1),c(0,1)))
-  theta <- RACD_Parameters()
-  init <- RACD_Setup(as.matrix.ppx(xy_h),as.matrix.ppx(xy_b),theta)
+library(RACD)
+library(RACDaux)
+library(tidyverse)
+library(spatstat)
+xy_h <- rpoispp(lambda = 100,win = owin(c(0,1),c(0,1)))
+xy_b <- rpoispp(lambda = 100,win = owin(c(0,1),c(0,1)))
+theta <- RACD_Parameters()
+init <- RACD_Setup(as.matrix.ppx(xy_h),as.matrix.ppx(xy_b),theta)
+outfile = "/Users/slwu89/Desktop/log_trans.csv"
+RACD_Simulation(365,theta,init$humans,init$houses,123,outfile)
+state = RACDaux::RACD_StateVector(outfile)
+state \%>\% as.tibble \%>\% gather(state,value,-time) \%>\% ggplot(aes(x=time,y=value,color=state)) + geom_line() + theme_bw()
 }
 
 }

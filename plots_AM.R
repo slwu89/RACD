@@ -1,17 +1,13 @@
 library(RACD)
 library(RACDaux)
 library(tidyverse)
-library(ggplot2)
 library(ggforce)
+library(gridExtra)
 
 theta = RACDaux::RACD_Parameters()
 init = RACDaux::RACD_Setup(theta)
-## Not run: 
-library(tidyverse)
-outfile = "/Users/pandagoneamok/Desktop/tmp.csv"
-RACD_Simulation(365,theta,init$humans,init$houses,123,outfile)
-state = RACDaux::RACD_StateVector(outfile)
-state %>% as.tibble %>% gather(state,value,-time) %>% ggplot(aes(x=time,y=value,color=state)) + geom_line() + theme_bw()
+
+## risk contour map with breeding sites and houses
 
 calcDistance <- function(x, y, breedingSite) {
   # x : x-coordinate
@@ -23,7 +19,8 @@ calcDistance <- function(x, y, breedingSite) {
 initRiskGrid <- function(breedingSiteList, n) {
   # breedingSiteList : list of breeding sites (x, y, sigma)
   # n : number of points to split x- and y-axes into
-  riskGrid <- expand.grid((1:n)/n, (1:n)/n)
+  axes <- seq(from=-0.05, to=1.05, length.out=n)
+  riskGrid <- expand.grid(axes, axes)
   colnames(riskGrid) <- c("x", "y")
   riskGrid$risk <- sapply(1:nrow(riskGrid),
                           function(i) {
@@ -36,7 +33,7 @@ initRiskGrid <- function(breedingSiteList, n) {
   return(riskGrid)
 }
 
-plotInitCond <- function(initCond, n) {
+plotInitCond <- function(initCond, n, pie=T) {
   # initCond : list of humans, breedingSites, and houses
   # humans : list of human parameters
   # breedingSites : list of breedingSite parameters (x, y, sigma)
@@ -54,16 +51,28 @@ plotInitCond <- function(initCond, n) {
     geom_tile(data=riskGrid, aes(x=x, y=y, fill=risk)) +
     stat_contour(data=riskGrid, aes(x=x, y=y, z=risk)) +
     geom_point(data=breedingSites, aes(x=x, y=y), color="darkred") +
-    lapply(houseState,
-           function(house) {
-             geom_arc_bar(data=house, 
-                          aes(x0=x, y0=y, r0=0, r=pieR, amount=Freq, colour=state), 
-                          stat="pie")
-           })
+    # geom_point(data=houses, aes(x=x, y=y), color="chartreuse3") +
+    theme_bw() + xlab("") + ylab("")
+  if(pie) {
+    riskPlot <- riskPlot +
+      lapply(houseState,
+             function(house) {
+               geom_arc_bar(data=house, 
+                            aes(x0=x, y0=y, r0=0, r=pieR, amount=Freq, colour=state), 
+                            stat="pie")
+             })
+  }
   return(riskPlot)
 }
 
 plotInitCond(init, n=100)
+plotInitCond(init, n=100, pie=F)
+
+grid.arrange(plotInitCond(RACDaux::RACD_Setup(theta), n=100),
+             plotInitCond(RACDaux::RACD_Setup(theta), n=100),
+             plotInitCond(RACDaux::RACD_Setup(theta), n=100),
+             plotInitCond(RACDaux::RACD_Setup(theta), n=100),
+             ncol=2)
 
 ## plot immunity functions
 # get fixed parameters (supplemental)

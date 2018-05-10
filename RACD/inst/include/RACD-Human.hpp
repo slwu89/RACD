@@ -1,15 +1,15 @@
-/*
- #      ____  ___   __________
- #     / __ \/   | / ____/ __ \
- #    / /_/ / /| |/ /   / / / /
- #   / _, _/ ___ / /___/ /_/ /
- #  /_/ |_/_/  |_\____/_____/
- #
- #  Sean Wu & John M. Marshall
- #  December 2017
- #
- #  Human Class Definition
-*/
+/* ################################################################################
+#       ____  ___   __________
+#      / __ \/   | / ____/ __ \
+#     / /_/ / /| |/ /   / / / /
+#    / _, _/ ___ / /___/ /_/ /
+#   /_/ |_/_/  |_\____/_____/
+#
+#   Sean Wu & John M. Marshall
+#   December 2017
+#
+#   Human Class Definition
+################################################################################ */
 
 #ifndef RACD_HUMAN_
 #define RACD_HUMAN_
@@ -59,6 +59,7 @@ public:
   double                          get_age(){ return age; };
   double                          get_ICA(){ return ICA; };
   bool const&                     get_alive() const { return alive; };
+  double                          get_c(){ return c; };
 
   /* Simulation Methods */
 
@@ -69,9 +70,9 @@ private:
 
   /* hash table of pointers to member functions */
   std::unordered_map<std::string,std::function<void(const int)> >   compartment_funs;
+  std::unordered_map<std::string,std::function<void()> >            infectiousness_funs;
 
   /* private methods */
-  void                            mortality(const int tNow);      /* mortality */
   void                            S_compartment(const int tNow);  /* S: susceptible */
   void                            E_compartment(const int tNow);  /* E: latent liver-stage infection */
   void                            T_compartment(const int tNow);  /* T: treated clinical disease */
@@ -79,11 +80,21 @@ private:
   void                            A_compartment(const int tNow);  /* A: asymptomatic patent (detectable by microscopy) infection */
   void                            U_compartment(const int tNow);  /* U: asymptomatic sub-patent (not detectable by microscopy) infection */
   void                            P_compartment(const int tNow);  /* P: protection due to chemoprophylaxis treatment */
+
+  void                            mortality(const int tNow);      /* mortality */
   void                            ageing();                       /* ageing */
   void                            update_immunity();              /* immunity */
   void                            update_lambda();                /* lambda: force of infection */
   void                            update_phi();                   /* phi */
   void                            update_q();                     /* q (microscopy) */
+
+  void                            infectiousness_S();             /* infectiousness to mosquitoes */
+  void                            infectiousness_E();
+  void                            infectiousness_T();
+  void                            infectiousness_D();
+  void                            infectiousness_A();
+  void                            infectiousness_U();
+  void                            infectiousness_P();
 
   /* parameters */
   int                             humanID; /* my ID */
@@ -92,7 +103,6 @@ private:
   bool                            alive; /* alive? */
   std::string                     state; /* S,T,D,A,U,P */
   int                             daysLatent; /* days of latent infection */
-
 
   double                          IB; /* pre-erythrocytic immunity (reduces probability of infection following infectious challenge) */
   double                          ID; /* detection immunity (blood-stage immunity, reduces the probability of detection and reduces infectiousness to mosquitoes) */
@@ -103,6 +113,7 @@ private:
   double                          epsilon; /* EIR */
   double                          lambda; /* force of infection */
   double                          phi; /* probability of acquiring clinical disease */
+  double                          c; /* infectiousness to mosquitoes */
 
   double                          prDetectAMic; /* q: probability of asymptomatic infection detected by microscopy */
   double                          prDetectAPCR; /* probability of detection by PCR for A (patent) asymptomatic */

@@ -1,15 +1,15 @@
-/*
- #      ____  ___   __________
- #     / __ \/   | / ____/ __ \
- #    / /_/ / /| |/ /   / / / /
- #   / _, _/ ___ / /___/ /_/ /
- #  /_/ |_/_/  |_\____/_____/
- #
- #  Sean Wu & John M. Marshall
- #  December 2017
- #
- #  Human Class Implementation
-*/
+/* ################################################################################
+#       ____  ___   __________
+#      / __ \/   | / ____/ __ \
+#     / /_/ / /| |/ /   / / / /
+#    / _, _/ ___ / /___/ /_/ /
+#   /_/ |_/_/  |_\____/_____/
+#
+#   Sean Wu & John M. Marshall
+#   December 2017
+#
+#   Human Class Implementation
+################################################################################ */
 
 #include "RACD-Human.hpp"
 #include "RACD-House.hpp"
@@ -42,7 +42,8 @@ human::human(const int& _humanID,
         prDetectAMic(_prDetectAMic), prDetectAPCR(_prDetectAPCR), prDetectUPCR(_prDetectUPCR),
         house_ptr(_house_ptr)
 {
-  /* bind pointers to member functions in hash table */
+
+  /* compartment daily update functions */
   compartment_funs.emplace("S",std::bind(&human::S_compartment,this,_1));
   compartment_funs.emplace("E",std::bind(&human::E_compartment,this,_1));
   compartment_funs.emplace("T",std::bind(&human::T_compartment,this,_1));
@@ -50,6 +51,16 @@ human::human(const int& _humanID,
   compartment_funs.emplace("A",std::bind(&human::A_compartment,this,_1));
   compartment_funs.emplace("U",std::bind(&human::U_compartment,this,_1));
   compartment_funs.emplace("P",std::bind(&human::P_compartment,this,_1));
+
+  /* infectiousness to mosquitoes */
+  infectiousness_funs.emplace("S",std::bind(&human::infectiousness_S,this));
+  infectiousness_funs.emplace("E",std::bind(&human::infectiousness_E,this));
+  infectiousness_funs.emplace("T",std::bind(&human::infectiousness_T,this));
+  infectiousness_funs.emplace("D",std::bind(&human::infectiousness_D,this));
+  infectiousness_funs.emplace("A",std::bind(&human::infectiousness_A,this));
+  infectiousness_funs.emplace("U",std::bind(&human::infectiousness_U,this));
+  infectiousness_funs.emplace("P",std::bind(&human::infectiousness_P,this));
+
   #ifdef DEBUG_RACD
   std::cout << "human " << humanID << " being born at " << this << std::endl;
   #endif
@@ -63,7 +74,9 @@ human::~human(){
 };
 
 
-/* Simulation Methods */
+/* ################################################################################
+#   Compartment Daily Update
+################################################################################ */
 
 /* daily simulation */
 void human::one_day(const int tNow){
@@ -84,29 +97,13 @@ void human::one_day(const int tNow){
     update_lambda();
     update_phi();
     update_q();
+
+    /* infectiousness to mosquitoes */
+    infectiousness_funs.at(state)();
   }
 
 };
 
-/* mortality */
-void human::mortality(const int tNow){
-
-  double randNum = prng::instance().get_runif();
-
-  /* mu: daily death rate as a function of mean age in years */
-  double mu = RACD_Parameters::instance().get_mu();
-
-  if(randNum <= mu){
-
-    /* logging */
-    std::string out = std::to_string(humanID) + ",Death," + std::to_string(tNow) + "," + std::to_string(age);
-    logger::instance().log_trans(out);
-
-    /* simulation */
-    alive = false;
-  }
-
-};
 
 /* S: susceptible */
 void human::S_compartment(const int tNow){
@@ -393,6 +390,31 @@ void human::P_compartment(const int tNow){
 
 };
 
+
+/* ################################################################################
+#   Immunity & Ageing
+################################################################################ */
+
+/* mortality */
+void human::mortality(const int tNow){
+
+  double randNum = prng::instance().get_runif();
+
+  /* mu: daily death rate as a function of mean age in years */
+  double mu = RACD_Parameters::instance().get_mu();
+
+  if(randNum <= mu){
+
+    /* logging */
+    std::string out = std::to_string(humanID) + ",Death," + std::to_string(tNow) + "," + std::to_string(age);
+    logger::instance().log_trans(out);
+
+    /* simulation */
+    alive = false;
+  }
+
+};
+
 /* ageing */
 void human::ageing(){
   age += 1.0/365.0;
@@ -491,4 +513,40 @@ void human::update_q(){
   prDetectAPCR = pow(q,alphaA);
   prDetectUPCR = pow(q,alphaU);
 
+};
+
+
+/* ################################################################################
+#   Infectiousness to Mosquitoes
+################################################################################ */
+
+void human::infectiousness_S(){
+  c = 0;
+};
+
+void human::infectiousness_E(){
+  c = 0;
+};
+
+void human::infectiousness_T(){
+  c = RACD_Parameters::instance().get_cT();
+};
+
+void human::infectiousness_D(){
+  c = RACD_Parameters::instance().get_cD();
+};
+
+void human::infectiousness_A(){
+  double cU = RACD_Parameters::instance().get_cU();
+  double cD = RACD_Parameters::instance().get_cD();
+  double gammaI = RACD_Parameters::instance().get_gammaI();
+  c = cU + (cD - cU)*pow(prDetectAMic,gammaI);
+};
+
+void human::infectiousness_U(){
+  c = RACD_Parameters::instance().get_cU();
+};
+
+void human::infectiousness_P(){
+  c = 0;
 };
