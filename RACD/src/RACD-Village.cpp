@@ -58,7 +58,7 @@ village::village(const Rcpp::List& human_par, const Rcpp::List& house_par){
     double y = double(hh["y"]);
 
     /* add house i's pointer to vector of houses */
-    houses.push_back(std::make_unique<house>(houseID,psi,x,y));
+    houses.push_back(std::make_unique<house>(houseID,psi,x,y,this));
 
   }
 

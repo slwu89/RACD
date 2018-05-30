@@ -20,10 +20,12 @@
 
 // #include "DEBUG.hpp"
 
-/* typedefs and forward declarations */
+/* alias and forward declarations */
 class human;
-typedef std::unique_ptr<human>          human_ptr;
-typedef std::vector<human_ptr>          human_vector;
+using human_ptr       = std::unique_ptr<human>;
+using human_vector    = std::vector<human_ptr>;
+
+class village;
 
 /* house */
 class house {
@@ -31,7 +33,7 @@ class house {
 public:
 
   /* constructor */
-  house(const int& _houseID, const double& _psi, const double& _x, const double& _y);
+  house(const int& _houseID, const double& _psi, const double& _x, const double& _y, village* village_ptr_);
 
   /* destructor */
   ~house();
@@ -56,6 +58,7 @@ private:
 
   human_vector                              humans; /* people here */
 
+  village*                                  village_ptr; /* raw pointer ok because village lifespan > house lifespan */
 };
 
 #endif

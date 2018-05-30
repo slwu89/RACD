@@ -16,7 +16,7 @@
 
 
 /* constructor */
-house::house(const int& _houseID, const double& _psi, const double& _x, const double& _y) : houseID(_houseID), psi(_psi), x(_x), y(_y) {
+house::house(const int& _houseID, const double& _psi, const double& _x, const double& _y, village* village_ptr_) : houseID(_houseID), psi(_psi), x(_x), y(_y), village_ptr(village_ptr_) {
   #ifdef DEBUG_RACD
   std::cout << "house " << houseID << " being born at " << this << std::endl;
   #endif

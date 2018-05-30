@@ -24,7 +24,7 @@ using namespace std::placeholders;
 
 // #include "DEBUG.hpp"
 
-/* typedefs and forward declarations */
+/* alias and forward declarations */
 class house;
 
 /* human */

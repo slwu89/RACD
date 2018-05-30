@@ -24,9 +24,9 @@
 
 // #include "DEBUG.hpp"
 
-/* typedefs and forward declarations */
+/* alias and forward declarations */
 class house;
-typedef std::unique_ptr<house> house_ptr;
+using house_ptr = std::unique_ptr<house>;
 
 class village {
 
