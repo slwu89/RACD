@@ -51,7 +51,7 @@ public:
 protected:
   /* default data members */
   int                         habitatID;
-  std::vector<double>         psi; /* vector of biting distribution */
+  std::vector<double>         psi; /* vector of biting distribution on houses */
   village*                    village_ptr; /* raw pointer ok because house lifespan > human lifespan in memory */
 };
 
