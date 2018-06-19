@@ -1,3 +1,16 @@
+/*
+ #      ____  ___   __________
+ #     / __ \/   | / ____/ __ \
+ #    / /_/ / /| |/ /   / / / /
+ #   / _, _/ ___ / /___/ /_/ /
+ #  /_/ |_/_/  |_\____/_____/
+ #
+ #  Marshall Lab
+ #  June 2018
+ #
+ #  Mosquito Habitat Class Implementation
+*/
+
 #include "RACD-Mosquito.hpp"
 
 /* ################################################################################
@@ -5,8 +18,8 @@
 ################################################################################ */
 
 /* constructor for base class */
-mosquito_habitat_base::mosquito_habitat_base(const int habitatID_, village* village_ptr_) :
-  habitatID(habitatID_), village_ptr(village_ptr_) {
+mosquito_habitat_base::mosquito_habitat_base(const int habitatID_, const std::vector<double> psi_, village* village_ptr_) :
+  habitatID(habitatID_), psi(psi_), village_ptr(village_ptr_) {
   #ifdef DEBUG_RACD
   std::cout << "mosquito_habitat_base " << habitatID << " being born at " << this << std::endl;
   #endif
@@ -25,8 +38,8 @@ mosquito_habitat_base::~mosquito_habitat_base(){
 ################################################################################ */
 
 /* constructor */
-mosquito_habitat_eir::mosquito_habitat_eir(const double EIR_mean_, const double offset_, const int habitatID_, village* village_ptr_) :
-  mosquito_habitat_base(habitatID_,village_ptr_), EIR_mean(EIR_mean_), offset(offset_) {
+mosquito_habitat_eir::mosquito_habitat_eir(const double EIR_mean_, const double offset_, const int habitatID_, const std::vector<double> psi_, village* village_ptr_) :
+  mosquito_habitat_base(habitatID_,psi_,village_ptr_), EIR_mean(EIR_mean_), offset(offset_) {
 
     #ifdef DEBUG_RACD
     std::cout << "mosquito_habitat_eir " << habitatID << " being born at " << this << std::endl;

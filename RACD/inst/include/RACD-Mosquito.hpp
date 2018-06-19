@@ -6,7 +6,7 @@
  #  /_/ |_/_/  |_\____/_____/
  #
  #  Marshall Lab
- #  May 2018
+ #  June 2018
  #
  #  Mosquito Habitat Class Definition
 */
@@ -17,6 +17,7 @@
 #include <iostream>
 #include <math.h>
 #include <memory>
+#include <vector>
 
 /* alias and forward declarations */
 class village;
@@ -35,7 +36,7 @@ public:
   /* define the interface */
 
   /* constructor */
-  mosquito_habitat_base(const int habitatID_, village* village_ptr_);
+  mosquito_habitat_base(const int habitatID_, const std::vector<double> psi_, village* village_ptr_);
 
   /* pure virtual destructor */
   virtual ~mosquito_habitat_base() = 0;
@@ -50,6 +51,7 @@ public:
 protected:
   /* default data members */
   int                         habitatID;
+  std::vector<double>         psi; /* vector of biting distribution */
   village*                    village_ptr; /* raw pointer ok because house lifespan > human lifespan in memory */
 };
 
@@ -64,7 +66,7 @@ class mosquito_habitat_eir : public mosquito_habitat_base {
 public:
 
   /* constructor */
-  mosquito_habitat_eir(const double EIR_mean_, const double offset_, const int habitatID_, village* village_ptr_);
+  mosquito_habitat_eir(const double EIR_mean_, const double offset_, const int habitatID_, const std::vector<double> psi_, village* village_ptr_);
 
   /* destructor */
   ~mosquito_habitat_eir();
