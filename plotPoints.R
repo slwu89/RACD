@@ -4,6 +4,7 @@ library(RACD)
 library(RACDaux)
 library(tidyverse)
 library(spatstat)
+library(viridis)
 
 xy_h <- rpoispp(lambda = 100,win = owin(c(0,1),c(0,1)))
 xy_b <- rpoispp(lambda = 100,win = owin(c(0,1),c(0,1)))
@@ -59,5 +60,17 @@ ggplot() +
   stat_contour(aes(x=x,y=y,z=psi),colour=grey(0.75,0.75),size=0.25,data = grid,geom = "contour") +
   geom_point(aes(x=x,y=y,colour=sigma),data=habitats) +
   scale_color_viridis(begin=1,end=0.5) +
+  geom_contour() +
+  theme_bw()
+
+houseXhabitat <- rbind(data.frame(unname(habitats),type="habitat"),
+                       data.frame(unname(houses),type="house"))
+names(houseXhabitat)[1:3] <- c("x","y","z")
+
+ggplot() +
+  geom_raster(aes(x=x,y=y,fill=psi),data=grid) +
+  stat_contour(aes(x=x,y=y,z=psi),colour=grey(0.75,0.75),size=0.25,data = grid,geom = "contour") +
+  geom_point(aes(x=x,y=y,shape=type),colour=grey(0.75,0.75),data=houseXhabitat) +
+  scale_fill_viridis() +
   geom_contour() +
   theme_bw()
