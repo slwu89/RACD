@@ -21,8 +21,17 @@ BEGIN_RCPP
 END_RCPP
 }
 
+RcppExport SEXP derivs_immune(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+RcppExport SEXP derivs_infection(SEXP, SEXP, SEXP, SEXP, SEXP, SEXP);
+RcppExport SEXP init_immune(SEXP, SEXP);
+RcppExport SEXP init_infection(SEXP, SEXP);
+
 static const R_CallMethodDef CallEntries[] = {
     {"_RACD_RACD_Simulation", (DL_FUNC) &_RACD_RACD_Simulation, 6},
+    {"derivs_immune",         (DL_FUNC) &derivs_immune,         6},
+    {"derivs_infection",      (DL_FUNC) &derivs_infection,      6},
+    {"init_immune",           (DL_FUNC) &init_immune,           2},
+    {"init_infection",        (DL_FUNC) &init_infection,        2},
     {NULL, NULL, 0}
 };
 

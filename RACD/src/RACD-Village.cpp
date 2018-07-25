@@ -43,7 +43,7 @@ village::village(const Rcpp::List& human_par, const Rcpp::List& house_par){
   std::cout << "village being born at " << this << std::endl;
   #endif
 
-  std::cout << "Initializing RACD simulation..." << std::endl;
+  Rcpp::Rcout << "Initializing RACD simulation..." << std::endl;
 
   max_humanID = 0;
 
@@ -95,7 +95,7 @@ village::village(const Rcpp::List& human_par, const Rcpp::List& house_par){
     max_humanID++;
   }
 
-  std::cout << "Initialization complete!" << std::endl;
+  Rcpp::Rcout << "Initialization complete!" << std::endl;
 
 };
 
