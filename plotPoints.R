@@ -1,7 +1,6 @@
 rm(list=ls());gc()
 
 library(RACD)
-library(RACDaux)
 library(tidyverse)
 library(spatstat)
 library(viridis)
