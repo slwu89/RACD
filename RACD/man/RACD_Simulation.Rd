@@ -4,20 +4,20 @@
 \alias{RACD_Simulation}
 \title{RACD Simulation Model}
 \usage{
-RACD_Simulation(tMax, theta, human, house, seed, out_trans)
+RACD_Simulation(tMax, theta, human, house, seed, outfile)
 }
 \arguments{
 \item{tMax}{length of simulation in days}
 
-\item{theta}{named list of parameters (see \code{\link[RACDaux]{RACD_Parameters}} for details)}
+\item{theta}{named list of parameters (see \code{\link{RACD_Parameters}} for details)}
 
-\item{human}{list of human parameters (see \code{\link[RACDaux]{RACD_Setup}} for details)}
+\item{human}{list of human parameters (see \code{\link{RACD_Setup}} for details)}
 
-\item{house}{list of house parameters (see \code{\link[RACDaux]{RACD_Setup}} for details)}
+\item{house}{list of house parameters (see \code{\link{RACD_Setup}} for details)}
 
 \item{seed}{seed for prng class}
 
-\item{out_trans}{path to .csv file for logging state transition events}
+\item{outfile}{path to .csv file for logging state transition events}
 }
 \description{
 Run the simulation
@@ -33,7 +33,7 @@ theta <- RACD_Parameters()
 init <- RACD_Setup(as.matrix.ppx(xy_h),as.matrix.ppx(xy_b),theta)
 outfile = "/Users/slwu89/Desktop/log_trans.csv"
 RACD_Simulation(365,theta,init$humans,init$houses,123,outfile)
-state = RACDaux::RACD_StateVector(outfile)
+state = RACD_StateVector(outfile)
 state \%>\% as.tibble \%>\% gather(state,value,-time) \%>\% ggplot(aes(x=time,y=value,color=state)) + geom_line() + theme_bw()
 }
 

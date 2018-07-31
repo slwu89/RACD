@@ -6,11 +6,11 @@
 #' Run the simulation
 #'
 #' @param tMax length of simulation in days
-#' @param theta named list of parameters (see \code{\link[RACDaux]{RACD_Parameters}} for details)
-#' @param human list of human parameters (see \code{\link[RACDaux]{RACD_Setup}} for details)
-#' @param house list of house parameters (see \code{\link[RACDaux]{RACD_Setup}} for details)
+#' @param theta named list of parameters (see \code{\link{RACD_Parameters}} for details)
+#' @param human list of human parameters (see \code{\link{RACD_Setup}} for details)
+#' @param house list of house parameters (see \code{\link{RACD_Setup}} for details)
 #' @param seed seed for prng class
-#' @param out_trans path to .csv file for logging state transition events
+#' @param outfile path to .csv file for logging state transition events
 #'
 #' @examples
 #' \dontrun{
@@ -23,12 +23,12 @@
 #' init <- RACD_Setup(as.matrix.ppx(xy_h),as.matrix.ppx(xy_b),theta)
 #' outfile = "/Users/slwu89/Desktop/log_trans.csv"
 #' RACD_Simulation(365,theta,init$humans,init$houses,123,outfile)
-#' state = RACDaux::RACD_StateVector(outfile)
+#' state = RACD_StateVector(outfile)
 #' state %>% as.tibble %>% gather(state,value,-time) %>% ggplot(aes(x=time,y=value,color=state)) + geom_line() + theme_bw()
 #' }
 #'
 #' @export
-RACD_Simulation <- function(tMax, theta, human, house, seed, out_trans) {
-    invisible(.Call('_RACD_RACD_Simulation', PACKAGE = 'RACD', tMax, theta, human, house, seed, out_trans))
+RACD_Simulation <- function(tMax, theta, human, house, seed, outfile) {
+    invisible(.Call('_RACD_RACD_Simulation', PACKAGE = 'RACD', tMax, theta, human, house, seed, outfile))
 }
 

@@ -21,28 +21,18 @@ logger::logger(){
 };
 
 logger::~logger(){
+  close_log();
   #ifdef DEBUG_RACD
   std::cout << "logger being killed at " << this << std::endl;
   #endif
 };
 
-/* utility methods */
-logger& logger::instance(){
-    static logger instance;
-    return instance;
-};
-
 /* open logging file */
-void logger::open_log(const std::string &_out_trans){
-  out_trans.open(_out_trans);
-}
-
-/* log data */
-void logger::log_trans(const std::string &trans){
-  out_trans << trans << "\n";
+void logger::open_log(const std::string &outfile_){
+  outfile.open(outfile_);
 }
 
 /* close open streams */
 void logger::close_log(){
-  out_trans.close();
+  outfile.close();
 }

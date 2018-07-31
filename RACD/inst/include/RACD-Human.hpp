@@ -33,23 +33,23 @@ class human {
 public:
 
   /* constructor */
-  human(const int& _humanID,
-        const double& _age,
-        const bool& _alive,
-        const std::string& _state,
-        const int& _daysLatent,
-        const double& _IB,
-        const double& _ID,
-        const double& _ICA,
-        const double& _ICM,
-        const double& _bitingHet,
-        const double& _epsilon,
-        const double& _lambda,
-        const double& _phi,
-        const double& _prDetectAMic,
-        const double& _prDetectAPCR,
-        const double& _prDetectUPCR,
-        house* _house_ptr
+  human(const int humanID_,
+        const double age_,
+        const bool alive_,
+        const std::string& state_,
+        const int daysLatent_,
+        const double IB_,
+        const double ID_,
+        const double ICA_,
+        const double ICM_,
+        const double bitingHet_,
+        const double epsilon_,
+        const double lambda_,
+        const double phi_,
+        const double prDetectAMic_,
+        const double prDetectAPCR_,
+        const double prDetectUPCR_,
+        house* house_ptr_
       );
 
   /* destructor */

@@ -11,7 +11,13 @@
  #  R Interface to RACD Simulation
 */
 
+/* C++ includes */
+#include <memory>
+
+/* Rcpp includes */
 #include <Rcpp.h>
+
+/* RACD includes */
 #include "RACD-Parameters.hpp"
 #include "RACD-PRNG.hpp"
 #include "RACD-Human.hpp"
@@ -24,11 +30,11 @@
 //' Run the simulation
 //'
 //' @param tMax length of simulation in days
-//' @param theta named list of parameters (see \code{\link[RACDaux]{RACD_Parameters}} for details)
-//' @param human list of human parameters (see \code{\link[RACDaux]{RACD_Setup}} for details)
-//' @param house list of house parameters (see \code{\link[RACDaux]{RACD_Setup}} for details)
+//' @param theta named list of parameters (see \code{\link{RACD_Parameters}} for details)
+//' @param human list of human parameters (see \code{\link{RACD_Setup}} for details)
+//' @param house list of house parameters (see \code{\link{RACD_Setup}} for details)
 //' @param seed seed for prng class
-//' @param out_trans path to .csv file for logging state transition events
+//' @param outfile path to .csv file for logging state transition events
 //'
 //' @examples
 //' \dontrun{
@@ -41,31 +47,25 @@
 //' init <- RACD_Setup(as.matrix.ppx(xy_h),as.matrix.ppx(xy_b),theta)
 //' outfile = "/Users/slwu89/Desktop/log_trans.csv"
 //' RACD_Simulation(365,theta,init$humans,init$houses,123,outfile)
-//' state = RACDaux::RACD_StateVector(outfile)
+//' state = RACD_StateVector(outfile)
 //' state %>% as.tibble %>% gather(state,value,-time) %>% ggplot(aes(x=time,y=value,color=state)) + geom_line() + theme_bw()
 //' }
 //'
 //' @export
 // [[Rcpp::export]]
-void RACD_Simulation(const int tMax, const Rcpp::NumericVector &theta, const Rcpp::List& human, const Rcpp::List& house, const uint_least32_t seed, const std::string& out_trans){
+void RACD_Simulation(const int tMax, const Rcpp::NumericVector &theta, const Rcpp::List& human, const Rcpp::List& house, const uint_least32_t seed, const std::string& outfile){
 
-  /* initialize parameters */
-  RACD_Parameters::instance().set_values(theta["epsilon0"],theta["fT"],theta["dE"],theta["dT"],theta["dD"],theta["dA"],theta["dU"],theta["dP"],theta["cD"],theta["cT"],theta["cU"],theta["gammaI"],theta["rho"],theta["a0"],theta["sigma2"],theta["d1"],theta["dID"],theta["ID0"],theta["kappaD"],theta["uD"],theta["aD"],theta["fD0"],theta["gammaD"],theta["alphaA"],theta["alphaU"],theta["b0"],theta["b1"],theta["dB"],theta["IB0"],theta["kappaB"],theta["uB"],theta["phi0"],theta["phi1"],theta["dC"],theta["IC0"],theta["kappaC"],theta["uC"],theta["PM"],theta["dM"],theta["rW"],theta["rP"],theta["meanAge"],theta["N"],theta["meanNumPeoplePerHouse"],theta["numHousesPerBreedingSite"]);
-
-  /* prng seed */
-  prng::instance().set_seed(seed);
+  /* construct village */
+  std::unique_ptr<village> village_ptr(std::make_unique<village>(seed,theta));
 
   /* initialize logging */
-  logger::instance().open_log(out_trans);
-  std::string head_trans("HumanID,Event,Time,Age");
-  logger::instance().log_trans(head_trans);
+  village_ptr->logger_ptr->open_log(outfile);
+  village_ptr->logger_ptr->get_log() << "HumanID,Event,Time,Age\n";
 
-  /* create village */
-  village simVillage(human,house);
+  /* initialize objects */
+  village_ptr->initialize(human,house);
 
   /* run simulation */
-  simVillage.simulation(tMax);
+  village_ptr->simulation(tMax);
 
-  /* close logging */
-  logger::instance().close_log();
 };

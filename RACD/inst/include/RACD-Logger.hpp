@@ -8,30 +8,31 @@
  #  Sean Wu & John M. Marshall
  #  December 2017
  #
- #  Logger Class Definition & Implementation
+ #  Logger Class Declaration
 */
 
-#ifndef RACD_LOGGER_
-#define RACD_LOGGER_
+/* ######################################################################
+ # includes and foward declarations
+###################################################################### */
 
+#ifndef RACD_LOGGER
+#define RACD_LOGGER
+
+/* C++ includes */
 #include <fstream>
 #include <string>
 #include <iostream>
 
 // #include "DEBUG.hpp"
 
-class logger final {
+
+/* ######################################################################
+ # class declaration
+###################################################################### */
+
+class logger {
 public:
 
-  /* utility methods */
-  static logger&                           instance(); /* get instance */
-  void open_log(const std::string& _out_trans);
-
-  void log_trans(const std::string& trans);
-
-  void close_log();
-
-private:
   /* constructor & destructor */
   logger();
   ~logger();
@@ -42,61 +43,13 @@ private:
   logger(logger&&) = delete;
   logger& operator=(logger&&) = delete;
 
-  std::ofstream out_trans;  /* all state transitions */
+  /* interface methods */
+  void open_log(const std::string& outfile_);
+  std::ofstream& get_log(){return outfile;};
+  void close_log();
+
+private:
+  std::ofstream outfile;
 };
-
-
-
-// /* simple logging singleton
-//  * this logger must be initialized with logger::open_log()
-//  * before any other instances are made.
-//  */
-// class logger {
-// public:
-//
-//   void open_log(const std::string& _out_trans){
-//     out_trans.open(_out_trans);
-//   };
-//
-//   void log_trans(const std::string& trans){
-//     out_trans << trans << std::endl;
-//   };
-//
-//   void suicide(){
-//     #ifdef DEBUG_HPP
-//     std::cout << "logger suiciding at " << this << std::endl;
-//     #endif
-//     out_trans.close();
-//   };
-//
-//   static logger* instance(){
-//     if(!l_instance){
-//       l_instance = new logger;
-//     }
-//     return l_instance;
-//   };
-//
-// private:
-//   std::ofstream out_trans; /* all state transitions */
-//   std::ofstream out_pop; /* population size */
-//   std::ofstream out_clinic; /* clinical incidence */
-//   std::ofstream out_slide; /* slide positivity */
-//
-//   static logger* l_instance;
-//
-//   /* private constructor */
-//   logger(){
-//     #ifdef DEBUG_HPP
-//     std::cout << "logger being born at " << this << std::endl;
-//     #endif
-//   };
-//
-//   /* private destructor */
-//   ~logger(){
-//     #ifdef DEBUG_HPP
-//     std::cout << "logger being killed at " << this << std::endl;
-//     #endif
-//   };
-// };
 
 #endif

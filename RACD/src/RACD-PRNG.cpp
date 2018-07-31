@@ -14,7 +14,8 @@
 #include "RACD-PRNG.hpp"
 
 /* constructor & destructor */
-prng::prng(){
+prng::prng(const uint_least32_t seed) : rng(seed) {
+  runif = std::uniform_real_distribution<double>(0,1);
   #ifdef DEBUG_RACD
   std::cout << "prng being born at " << this << std::endl;
   #endif
@@ -24,22 +25,6 @@ prng::~prng(){
   #ifdef DEBUG_RACD
   std::cout << "prng being killed at " << this << std::endl;
   #endif
-};
-
-/* utility methods */
-prng& prng::instance(){
-    static prng instance;
-    return instance;
-};
-
-void prng::set_seed(const uint_least32_t &seed){
-
-  #ifdef DEBUG_RACD
-  std::cout << "prng being seeded at " << this << std::endl;
-  #endif
-
-  rng.seed(seed);
-  runif = std::uniform_real_distribution<double>(0,1);
 };
 
 /* continuous random variate sampling */

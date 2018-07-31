@@ -11,68 +11,79 @@
  #  Parameters Singleton Class Definition
 */
 
-#ifndef RACD_PARAMETERS_
-#define RACD_PARAMETERS_
+/* ######################################################################
+ # includes and foward declarations
+###################################################################### */
 
+#ifndef RACD_PARAMETERS
+#define RACD_PARAMETERS
+
+/* C++ includes */
 #include <iostream>
 #include <memory>
 
 // #include "DEBUG.hpp"
 
-class RACD_Parameters final {
+/* ######################################################################
+ # class declaration
+###################################################################### */
+
+class parameters {
 
 public:
-  /* utility methods */
-  static RACD_Parameters& instance(); /* get instance */
 
-  /* set parameter values */
-  void set_values(
-    double _epsilon0,
-    double _fT,
-    int _dE,
-    int _dT,
-    int _dD,
-    int _dA,
-    int _dU,
-    int _dP,
-    double _cD,
-    double _cT,
-    double _cU,
-    double _gammaI,
-    double _rho,
-    double _a0,
-    double _sigma2,
-    double _d1,
-    double _dID,
-    double _ID0,
-    double _kappaD,
-    double _uD,
-    double _aD,
-    double _fD0,
-    double _gammaD,
-    double _alphaA,
-    double _alphaU,
-    double _b0,
-    double _b1,
-    double _dB,
-    double _IB0,
-    double _kappaB,
-    double _uB,
-    double _phi0,
-    double _phi1,
-    double _dC,
-    double _IC0,
-    double _kappaC,
-    double _uC,
-    double _PM,
-    double _dM,
-    double _rW,
-    double _rP,
-    double _meanAge,
-    int _N,
-    double _meanNumPeoplePerHouse,
-    int _numHousesPerBreedingSite
-  );
+  /* constructor & destructor */
+  parameters(
+      double epsilon0_,
+      double fT_,
+      int dE_,
+      int dT_,
+      int dD_,
+      int dA_,
+      int dU_,
+      int dP_,
+      double cD_,
+      double cT_,
+      double cU_,
+      double gammaI_,
+      double rho_,
+      double a0_,
+      double sigma2_,
+      double d1_,
+      double dID_,
+      double ID0_,
+      double kappaD_,
+      double uD_,
+      double aD_,
+      double fD0_,
+      double gammaD_,
+      double alphaA_,
+      double alphaU_,
+      double b0_,
+      double b1_,
+      double dB_,
+      double IB0_,
+      double kappaB_,
+      double uB_,
+      double phi0_,
+      double phi1_,
+      double dC_,
+      double IC0_,
+      double kappaC_,
+      double uC_,
+      double PM_,
+      double dM_,
+      double rW_,
+      double rP_,
+      double meanAge_,
+      int N_);
+  ~parameters();
+
+  /* delete all copy & move semantics */
+  parameters(const parameters&) = delete;
+  parameters& operator=(const parameters&) = delete;
+  parameters(parameters&&) = delete;
+  parameters& operator=(parameters&&) = delete;
 
   /* accessors */
   double get_epsilon0(){ return epsilon0; };
@@ -119,20 +130,8 @@ public:
   double get_meanAge(){ return meanAge;};
   int get_N(){ return N;};
   double get_mu(){ return mu; };
-  double get_meanNumPeoplePerHouse(){ return meanNumPeoplePerHouse;};
-  int get_numHousesPerBreedingSite(){ return numHousesPerBreedingSite;};
 
 private:
-  /* constructor & destructor */
-  RACD_Parameters();
-  ~RACD_Parameters();
-
-  /* delete all copy & move semantics */
-  RACD_Parameters(const RACD_Parameters&) = delete;
-  RACD_Parameters& operator=(const RACD_Parameters&) = delete;
-  RACD_Parameters(RACD_Parameters&&) = delete;
-  RACD_Parameters& operator=(RACD_Parameters&&) = delete;
-
   /* parameters */
   double                      epsilon0; /* Mean EIR for adults (per day) */
   double                      fT; /* Proportion of clinical disease cases successfully treated */
@@ -195,10 +194,6 @@ private:
   double                      meanAge; /* Mean age in Tanzania (males and females, years) */
   int                         N; /* Village population size */
   double                      mu; /* Daily death rate as a function of mean age in years */
-
-  /* Geographic parameters */
-  double                      meanNumPeoplePerHouse; /* Mean number of people per house (from Misungu data set) */
-  int                         numHousesPerBreedingSite; /* Number of houses per breeding site */
 };
 
 #endif

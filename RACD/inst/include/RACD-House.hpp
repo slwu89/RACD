@@ -8,11 +8,15 @@
  #  Sean Wu & John M. Marshall
  #  December 2017
  #
- #  House Class Definition
+ #  House Class Declaration
 */
 
-#ifndef RACD_HOUSE_
-#define RACD_HOUSE_
+/* ######################################################################
+ # includes and foward declarations
+###################################################################### */
+
+#ifndef RACD_HOUSE
+#define RACD_HOUSE
 
 #include <memory>
 #include <utility>
@@ -27,13 +31,17 @@ using human_vector    = std::vector<human_ptr>;
 
 class village;
 
-/* house */
+
+/* ######################################################################
+ # class declarations
+###################################################################### */
+
 class house {
 
 public:
 
   /* constructor */
-  house(const int& _houseID, const double& _psi, const double& _x, const double& _y, village* village_ptr_);
+  house(const int houseID_, const double psi_, const double x_, const double y_, village* village_ptr_);
 
   /* destructor */
   ~house();
@@ -48,6 +56,8 @@ public:
   double                                    get_x(){ return x; };
   double                                    get_y(){ return y; };
 
+  village*                                  village_ptr; /* raw pointer ok because village lifespan > house lifespan */
+
 private:
 
   int                                       houseID; /* ID */
@@ -57,8 +67,6 @@ private:
   double                                    y; /* latitude */
 
   human_vector                              humans; /* people here */
-
-  village*                                  village_ptr; /* raw pointer ok because village lifespan > house lifespan */
 };
 
 #endif
