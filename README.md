@@ -14,25 +14,6 @@ stochastic simulation of reactive case detection for p. falciparum
 7. Make sure that functions all make sense
 8. Validate modified treatment node in human model
 
-## Stuff to investigate:
-* Lifespan follows geometric distribution, will be right as the ensemble average but very very wrong for individuals and small samples. Should probably allow for discrete versions of Weibull and Gamma age distributions.
-* "superinfection" is just going back to T or D from other compartments, barely more sophisticated than the RM model. Changing this would be a substantial undertaking.
-* look into using Gibbs processes to sample houses and breeding sites (can use `spatstat`), maybe also bivariate marked point processes for between type covariance.
-  * Cox & Cluster processes:
-    * Crucial assumptions: offspring mutually independent within a cluster (only depend on position of parents), parents are independent thus implying clusters are independent (can only depend on first-order intensity terms; in general will follow a Poisson or Cox process).
-    * Remember: all Neyman-Scott cluster processes are just Cox processes with different modulating intensity. In fact they all belong to the class of "shot-noise field" models because they are Cox processes with driving intensity Lambda equal to the superposition of the offspring kernels centered on parent points. The intensity surface is a random field because the distribution of the parent generator points is random.
-    * Matérn cluster process when represented as a Cox process has driving intensity: $\Lambda(u) = \sum_{i} h(u-y_{i})$, where $h(z) = \frac{\mu}{\pi R^{2}}$ if $\left \| z \right \|<R$, $0$ otherwise.
-    * See similar results for Thomas process (isotropic Gaussian density of offspring points), Cauchy, variance-Gamma.
-    * For non Neyman-Scott clustering process see `rGaussPoisson` for Gauss-Poisson clustering process (violates following common assumptions: offspring independent within a cluster, Poisson number of offspring, isotropic clusters).
-  * Gibbs processes:
-    * Pairwise interaction:
-      * Hard-core process (inhibitory):
-      * Strauss process (inhibitory):
-      * Strauss/Hard-core process (inhibitory):
-  * Marked point processes:
-  * Other spatial stuff:
-    * `rmh` metropolis-hastings function can simulate point patterns conditional on the total number N of points held constant (or even vector N of each type of marked point), see `p` in control parameters for rmh.
-
 ## RACD References
 * Human Model:
   * https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3923296/
