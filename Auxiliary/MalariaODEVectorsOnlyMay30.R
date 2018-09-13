@@ -104,7 +104,7 @@ IVM_ode <- function(time, state, theta) {
 	dEV <- lambdaV*SV - lambdaV*SVLag*exp(-muVCom*durEV) - muVCom*EV
 	dIV <- lambdaV*SVLag*exp(-muVCom*durEV) - muVCom*IV
 
-	return(list(c(dEL, dLL, dPL, dSV, dEV, dIV))) 
+	return(list(c(dEL, dLL, dPL, dSV, dEV, dIV)))
 }
 
 ## Model parameters:
@@ -199,23 +199,22 @@ IV_eq <- iV_eq*NV_eq
 initState <- c(
 	EL = EL_eq,
 	LL = LL_eq,
-	PL = PL_eq, 
-	SV = SV_eq, 
-	EV = EV_eq, 
+	PL = PL_eq,
+	SV = SV_eq,
+	EV = EV_eq,
 	IV = IV_eq)
 
 ## Run the IVM ODEs:
 simPeriod <- 80 # Simulation runs up to 365 days
 times <- seq(0, simPeriod, by = 1)
-IVM_traj <- data.frame(dede(y = initState, times = times, parms = theta, 
+IVM_traj <- data.frame(dede(y = initState, times = times, parms = theta,
 				func = IVM_ode, method = "lsoda"))
 
 ## Plot results:
 library(ggplot2)
 ggplot(IVM_traj, aes(x = time, y = IVM_traj, color = State)) +
-	geom_line(aes(y = SV+EV+IV, col = "NV"), size = 1.2) + 
-	geom_line(aes(y = SV, col = "SV"), size = 1.2) + 
+	geom_line(aes(y = SV+EV+IV, col = "NV"), size = 1.2) +
+	geom_line(aes(y = SV, col = "SV"), size = 1.2) +
 	geom_line(aes(y = EV, col = "EV"), size = 1.2) +
 	geom_line(aes(y = IV, col = "IV"), size = 1.2) +
 	labs(x = "Time (days)", y = "Number of mosquitoes")
-
