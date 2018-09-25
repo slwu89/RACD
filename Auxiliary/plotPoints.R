@@ -44,27 +44,48 @@ grid$psi <- surface$V1
 houses <- data.frame(x=x,y=y,psi=z)
 habitats <- data.frame(x=x_a,y=y_a,sigma=z_a)
 
+# plots
+library(tikzDevice)
+plotdir <- "/Users/slwu89/Desktop/git/mosymodel/"
+
 # houses
+tikz(file = paste0(plotdir,"tikzplots/rf_house.tex"),
+     width = 5,height = 4)
+
 ggplot() +
   geom_raster(aes(x=x,y=y,fill=psi),data=grid) +
   stat_contour(aes(x=x,y=y,z=psi),colour=grey(0.75,0.75),size=0.25,data = grid,geom = "contour") +
   geom_point(aes(x=x,y=y,colour=psi),data=houses) +
   scale_color_viridis(begin=0.5,end=1) +
   geom_contour() +
-  theme_bw()
+  theme_bw() +
+  theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+
+dev.off()
 
 # habitats
+tikz(file = paste0(plotdir,"tikzplots/rf_habitats.tex"),
+     width = 5,height = 4)
+
 ggplot() +
   geom_raster(aes(x=x,y=y,fill=psi),data=grid) +
   stat_contour(aes(x=x,y=y,z=psi),colour=grey(0.75,0.75),size=0.25,data = grid,geom = "contour") +
   geom_point(aes(x=x,y=y,colour=sigma),data=habitats) +
   scale_color_viridis(begin=1,end=0.5) +
   geom_contour() +
-  theme_bw()
+  theme_bw() +
+  theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+
+dev.off()
+
+# joint density
 
 houseXhabitat <- rbind(data.frame(unname(habitats),type="habitat"),
                        data.frame(unname(houses),type="house"))
 names(houseXhabitat)[1:3] <- c("x","y","z")
+
+tikz(file = paste0(plotdir,"tikzplots/rf_joint.tex"),
+     width = 5,height = 4)
 
 ggplot() +
   geom_raster(aes(x=x,y=y,fill=psi),data=grid) +
@@ -72,4 +93,7 @@ ggplot() +
   geom_point(aes(x=x,y=y,shape=type),colour=grey(0.75,0.75),data=houseXhabitat) +
   scale_fill_viridis() +
   geom_contour() +
-  theme_bw()
+  theme_bw() +
+  theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+
+dev.off()
