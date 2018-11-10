@@ -142,7 +142,7 @@ RACD_Setup <- function(xy_h, xy_b, theta){
       indiv[[j]]$ICM <- ICM
       indiv[[j]]$epsilon <- epsilon
       indiv[[j]]$lambda <- lambda
-
+      
       # Phi (the probability of acquiring clinical disease upon infection) is
       # also calculated for each individual. It varies according to immune
       # status:
