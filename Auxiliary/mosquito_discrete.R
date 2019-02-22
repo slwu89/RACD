@@ -2,71 +2,7 @@
 #   Exponential distribution of EIP
 ################################################################################
 
-
-
-# inbound oviposition to EL
-exp_eggs <- betaCom*NV*dt
-
-# inbound jump size to EL
-
-# instantaneous hazards for EL
-haz_EL_mort <- muEL*(1 + ((EL+LL)/K))
-haz_EL_2LL <- 1/durEL
-
-# jump probabilities
-p_EL_0 <- exp(-(haz_EL_mort + haz_EL_2LL)*dt)
-p_EL_mort <- (1 - p_EL_0)*(haz_EL_mort / (haz_EL_mort + haz_EL_2LL)) # death
-p_EL_2LL <- (1 - p_EL_0)*(haz_EL_2LL / (haz_EL_mort + haz_EL_2LL)) # to late-instar
-
-# instantaneous hazards for LL
-haz_LL_mort <- muLL*(1 + gamma*((EL+LL)/K))
-haz_LL_2PL <- 1/durLL
-
-# jump probabilities
-p_LL_0 <- exp(-(haz_LL_mort + haz_LL_2PL)*dt)
-p_LL_mort <- (1 - p_LL_0)*(haz_LL_mort / (haz_LL_mort + haz_LL_2PL)) # death
-p_LL_2PL <- (1 - p_LL_0)*(haz_LL_2PL / (haz_LL_mort + haz_LL_2PL)) # to pupae
-
-# instantaneous hazards for PL
-haz_PL_mort <- muPL
-haz_PL_2PL <- 1/durPL
-
-# jump probabilities
-p_PL_0 <- exp(-(haz_PL_mort + haz_PL_2PL)*dt)
-p_PL_mort <- (1 - p_PL_0)*(haz_PL_mort / (haz_PL_mort + haz_PL_2PL)) # death
-p_PL_2PL <- (1 - p_PL_0)*(haz_PL_2PL / (haz_PL_mort + haz_PL_2PL)) # to susceptible
-
-# instantaneous hazards for SV
-haz_SV_mort <-  muVCom
-haz_SV_inf <- lambdaV
-
-# jump probabilities
-p_SV_0 <- exp(-(haz_SV_mort + haz_SV_inf)*dt)
-p_SV_mort <- (1 - p_SV_0)*(haz_SV_mort / (haz_SV_mort + haz_SV_inf)) # death
-p_SV_2EV <- (1 - p_SV_0)*(haz_SV_inf / (haz_SV_mort + haz_SV_inf)) # to incubating
-
-# instantaneous hazards for EV
-haz_EV_mort <-  muVCom
-haz_EV_inc <- 1/durEV
-
-# jump probabilities
-p_EV_0 <- exp(-(haz_EV_mort + haz_EV_inc)*dt)
-p_EV_mort <- (1 - p_EV_0)*(haz_EV_mort / (haz_EV_mort + haz_EV_inc)) # death
-p_EV_2IV <- (1 - p_EV_0)*(haz_EV_inc / (haz_EV_mort + haz_EV_inc)) # to infectious
-
-# instantaneous hazards for IV
-haz_IV_mort <- muVCom
-
-# jump probabilities
-p_IV_0 <- exp(-haz_IV_mort*dt)
-p_IV_mort <- (1 - p_IV_0)
-
-# dEL <- betaCom*NV - muEL*(1 + ((EL+LL)/K))*EL - EL/durEL
-# dLL <- EL/durEL - muLL*(1 + gamma*((EL+LL)/K))*LL - LL/durLL
-# dPL <- LL/durLL - muPL*PL - PL/durPL
-# dSV <- 0.5*PL/durPL - lambdaV*SV - muVCom*SV
-# dEV <- lambdaV*SV - lambdaV*SVLag*exp(-muVCom*durEV) - muVCom*EV
-# dIV <- lambdaV*SVLag*exp(-muVCom*durEV) - muVCom*IV
+rm(list=ls());gc()
 
 # make a single node
 make_node <- function(){
@@ -126,7 +62,7 @@ make_node <- function(){
 # execute an Euler-step for the model
 # rates -> probabilities are defined by discretisation of the underlying
 # CTMC system (competing hazards)
-euler_step <- function(node,pars,tnow){
+euler_step <- function(node,pars,tnow,dt){
   with(pars,{
 
     ########################################
@@ -139,7 +75,7 @@ euler_step <- function(node,pars,tnow){
     } else {
       ITNcov_t <- 0
     }
-    if(time > pars$time_IRS_on){
+    if(tnow > pars$time_IRS_on){
       IRScov_t <- pars$IRScov
     } else {
       IRScov_t <- 0
@@ -175,10 +111,11 @@ euler_step <- function(node,pars,tnow){
     ########################################
 
     # inbound oviposition to EL
+    NV <- sum(node$SV,node$EV,node$IV)
     node$EL_new <- betaCom*NV*dt
 
     # instantaneous hazards for EL
-    haz_EL_mort <- muEL*(1 + ((EL+LL)/K))
+    haz_EL_mort <- muEL*(1 + ((node$EL+node$LL)/K))
     haz_EL_2LL <- 1/durEL
 
     # jump probabilities
@@ -196,7 +133,7 @@ euler_step <- function(node,pars,tnow){
     ########################################
 
     # instantaneous hazards for LL
-    haz_LL_mort <- muLL*(1 + gamma*((EL+LL)/K))
+    haz_LL_mort <- muLL*(1 + gamma*((node$EL+node$LL)/K))
     haz_LL_2PL <- 1/durLL
 
     # jump probabilities
@@ -225,7 +162,7 @@ euler_step <- function(node,pars,tnow){
     # jump sizes
     node$PL_transitions[["PL"]] <- node$PL * node$PL_probs[["PL"]]
     node$PL_transitions[["D"]] <- node$PL * node$PL_probs[["D"]]
-    node$PL_transitions[["SV"]] <- node$PL * node$PL_probs[["SV"]]
+    node$PL_transitions[["SV"]] <- node$PL * node$PL_probs[["SV"]] * 0.5
 
     ########################################
     # SUSCEPTIBLE VECTORS (SV)
@@ -278,11 +215,235 @@ euler_step <- function(node,pars,tnow){
     node$IV_transitions[["IV"]] <- node$IV * node$IV_probs[["IV"]]
     node$IV_transitions[["D"]] <- node$IV * node$IV_probs[["D"]]
 
+    ########################################
+    # UPDATE POPULATION
+    ########################################
+
+    node$EL <- node$EL_transitions[["EL"]] + node$EL_new
+    node$LL <- node$LL_transitions[["LL"]] + node$EL_transitions[["LL"]]
+    node$PL <- node$PL_transitions[["PL"]] + node$LL_transitions[["PL"]]
+    node$SV <- node$SV_transitions[["SV"]] + node$PL_transitions[["SV"]]
+    node$EV <- node$EV_transitions[["EV"]] + node$SV_transitions[["SV"]]
+    node$IV <- node$IV_transitions[["IV"]] + node$EV_transitions[["IV"]]
+
   })
 }
 
+## Model parameters:
+theta <- list(
+	## Mosquito life cycle parameters:
+	beta = 21.19, # Number of eggs laid per day by female mosquito
+	muEL = 0.034, # Early larval instar daily mortality
+	muLL = 0.035, # Late larval instar daily mortality
+	muPL = 0.25, # Pupal daily mortality
+	durEL = 6.64, # Duration of early instar stage
+	durLL = 3.72, # Duration of late instar stage
+	durPL = 0.64, # Duration of pupal stage
+	durEV = 10, # Duration of latent period in mosquito (days)
+	gamma = 13.25, # Effect of density-dependence on late instars relative to early instars
+	tau1 = 0.68, # Time spent foraging for a blood meal at 0% ITN coverage
+	tau2 = 2.32, # Time spent resting and ovipositing by a mosquito
+
+	## Intervention parameters (variable):
+	ITNcov = 0.5, # ITN coverage
+	IRScov = 0, # IRS coverave
+	time_ITN_on = 1e3, # When ITNs are applied (days)
+	time_IRS_on = 1e3, # When IRS is applied (days)
+
+	## Species-specific parameters:
+	## An. gambiae:
+	muV = 1/7.6, # Adult mosquito daily mortality
+	Q0 = 0.92, # Human blood index
+	phiB = 0.89, # Proportion of bites on a person while they are in bed
+	phiI = 0.97, # Proportion of bites on a person while they are indoors
+	rITN = 0.56, # Probability of mosquito repeating a feeding attempt due to IRS
+	sITN = 0.03, # Probability of mosquito feeding and surviving in presence of ITNs
+	rIRS = 0.60, # Probability of mosquito repeating a feeding attempt due to IRS
+	sIRS = 0, # Probability of mosquito feeding and surviving in presence of IRS
+
+	## An. arabiensis:
+	# muV = 1/7.6, # Adult mosquito daily mortality
+	# Q0 = 0.71, # Human blood index
+	# phiB = 0.90, # Proportion of bites on a person while they are in bed
+	# phiI = 0.96, # Proportion of bites on a person while they are indoors
+	# rITN = 0.48, # Probability of mosquito repeating a feeding attempt due to IRS
+	# sITN = 0.39, # Probability of mosquito feeding and surviving in presence of ITNs
+	# rIRS = 0.60, # Probability of mosquito repeating a feeding attempt due to IRS
+	# sIRS = 0, # Probability of mosquito feeding and surviving in presence of IRS
+
+	## An. funestus:
+	# muV = 1/8.9, # Adult mosquito daily mortality
+	# Q0 = 0.94, # Human blood index
+	# phiB = 0.90, # Proportion of bites on a person while they are in bed
+	# phiI = 0.98, # Proportion of bites on a person while they are indoors
+	# rITN = 0.56, # Probability of mosquito repeating a feeding attempt due to IRS
+	# sITN = 0.03, # Probability of mosquito feeding and surviving in presence of ITNs
+	# rIRS = 0.63, # Probability of mosquito repeating a feeding attempt due to IRS
+	# sIRS = 0, # Probability of mosquito feeding and surviving in presence of IRS
+
+	## Additional transmission parameters:
+	f0 = 1/3, # Daily biting rate by mosquitoes on animals and humans
+	epsilon0 = 10/365, # Daily entomological inolculation rate
+	iH_eq = 0.35, # Equilibrium malaria prevalence in humans
+	NH_eq = 200, # Equilibrium human population size
+	bV = 0.05 # Probability of transmission from human to vector per infectious bite
+)
+
+# equilibrium solutions
+with(theta,{
+
+  ## Derived parameters:
+  # NV <<- SV + EV + IV # Total mosquito population size
+  delta <<- 1/(tau1+tau2) # Inverse of gonotrophic cycle without ITNs/IRS
+  e_ov <<- beta*(exp(muV/delta)-1)/muV # Number of eggs per oviposition per mosquito
+  b_omega <<- gamma*muLL/muEL - durEL/durLL + (gamma-1)*muLL*durEL
+  omega <<- -0.5*b_omega + sqrt(0.25*b_omega^2 + gamma*beta*muLL*durEL/(2*muEL*muV*durLL*(1+durPL*muPL)))
+
+  a0 <<- Q0*f0 # Human biting rate at equilibrium
+
+  lambdaV <<- a0*iH_eq*bV # Force of infection in mosquitoes at equilibrium
+
+  iV_eq <<- lambdaV*exp(-muV*durEV)/(lambdaV + muV)
+  sV_eq <<- iV_eq*muV/(lambdaV*exp(-muV*durEV))
+  eV_eq <<- 1 - sV_eq - iV_eq
+
+  NV_eq <<- epsilon0*NH_eq/(iV_eq*a0)
+
+  EL_eq <<- 2*omega*muV*durLL*(1 + muPL*durPL)*NV_eq
+  LL_eq <<- 2*muV*durLL*(1 + muPL*durPL)*NV_eq
+  PL_eq <<- 2*muV*durPL*NV_eq
+  SV_eq <<- sV_eq*NV_eq
+  EV_eq <<- eV_eq*NV_eq
+  IV_eq <<- iV_eq*NV_eq
+
+  K <<- 2*NV_eq*muV*durLL*(1 + muPL*durPL)*gamma*(omega+1)/(omega/(muLL*durEL) - 1/(muLL*durLL) - 1) # Larval carrying capacity
+
+})
+
+theta1 <- c(theta,K=K,lambdaV=lambdaV)
+
+node <- make_node()
+node$EL <- EL_eq
+node$LL <- LL_eq
+node$PL <- PL_eq
+node$SV <- SV_eq
+node$EV <- EV_eq
+node$IV <- IV_eq
+
+tmax <- 250
+dt <- 0.05
+time <- seq(from=1,to=tmax,by=dt)
+
+# sampling grid
+sample_grid <- tsamp <- c(0,seq(from=10,to = tmax,by = 5))
+sample_pop <- matrix(0,nrow=6,ncol=length(sample_grid),dimnames=list(c("EL","LL","PL","SV","EV","IV"),paste0(sample_grid)))
+
+sample_pop["EL",1] <- node$EL
+sample_pop["LL",1] <- node$LL
+sample_pop["PL",1] <- node$PL
+sample_pop["SV",1] <- node$SV
+sample_pop["EV",1] <- node$EV
+sample_pop["IV",1] <- node$IV
+sample_grid <- sample_grid[-1]
+
+# run simulation
+pb <- txtProgressBar(min = 1,max = length(time))
+for(t in 1:length(time)){
+
+  # euler step
+  euler_step(node = node,pars = theta1,tnow = time[t],dt = dt)
+
+  # sample the population (done at the very end of the time-step, because its not part of the dynamics)
+  if(time[t] == sample_grid[1]){
+
+    sample_pop["EL",as.character(sample_grid[1])] <- node$EL
+    sample_pop["LL",as.character(sample_grid[1])] <- node$LL
+    sample_pop["PL",as.character(sample_grid[1])] <- node$PL
+    sample_pop["SV",as.character(sample_grid[1])] <- node$SV
+    sample_pop["EV",as.character(sample_grid[1])] <- node$EV
+    sample_pop["IV",as.character(sample_grid[1])] <- node$IV
+    sample_grid <- sample_grid[-1]
+
+  }
+  setTxtProgressBar(pb = pb,value = t)
+}
+
+matplot(t(sample_pop[,3:6]),type="l",lwd=2,lty=1)
 
 
 ################################################################################
 #   Dirac (fixed delay) distribution of EIP
 ################################################################################
+
+
+
+
+
+
+
+
+
+
+# # inbound oviposition to EL
+# exp_eggs <- betaCom*NV*dt
+#
+# # inbound jump size to EL
+#
+# # instantaneous hazards for EL
+# haz_EL_mort <- muEL*(1 + ((EL+LL)/K))
+# haz_EL_2LL <- 1/durEL
+#
+# # jump probabilities
+# p_EL_0 <- exp(-(haz_EL_mort + haz_EL_2LL)*dt)
+# p_EL_mort <- (1 - p_EL_0)*(haz_EL_mort / (haz_EL_mort + haz_EL_2LL)) # death
+# p_EL_2LL <- (1 - p_EL_0)*(haz_EL_2LL / (haz_EL_mort + haz_EL_2LL)) # to late-instar
+#
+# # instantaneous hazards for LL
+# haz_LL_mort <- muLL*(1 + gamma*((EL+LL)/K))
+# haz_LL_2PL <- 1/durLL
+#
+# # jump probabilities
+# p_LL_0 <- exp(-(haz_LL_mort + haz_LL_2PL)*dt)
+# p_LL_mort <- (1 - p_LL_0)*(haz_LL_mort / (haz_LL_mort + haz_LL_2PL)) # death
+# p_LL_2PL <- (1 - p_LL_0)*(haz_LL_2PL / (haz_LL_mort + haz_LL_2PL)) # to pupae
+#
+# # instantaneous hazards for PL
+# haz_PL_mort <- muPL
+# haz_PL_2PL <- 1/durPL
+#
+# # jump probabilities
+# p_PL_0 <- exp(-(haz_PL_mort + haz_PL_2PL)*dt)
+# p_PL_mort <- (1 - p_PL_0)*(haz_PL_mort / (haz_PL_mort + haz_PL_2PL)) # death
+# p_PL_2PL <- (1 - p_PL_0)*(haz_PL_2PL / (haz_PL_mort + haz_PL_2PL)) # to susceptible
+#
+# # instantaneous hazards for SV
+# haz_SV_mort <-  muVCom
+# haz_SV_inf <- lambdaV
+#
+# # jump probabilities
+# p_SV_0 <- exp(-(haz_SV_mort + haz_SV_inf)*dt)
+# p_SV_mort <- (1 - p_SV_0)*(haz_SV_mort / (haz_SV_mort + haz_SV_inf)) # death
+# p_SV_2EV <- (1 - p_SV_0)*(haz_SV_inf / (haz_SV_mort + haz_SV_inf)) # to incubating
+#
+# # instantaneous hazards for EV
+# haz_EV_mort <-  muVCom
+# haz_EV_inc <- 1/durEV
+#
+# # jump probabilities
+# p_EV_0 <- exp(-(haz_EV_mort + haz_EV_inc)*dt)
+# p_EV_mort <- (1 - p_EV_0)*(haz_EV_mort / (haz_EV_mort + haz_EV_inc)) # death
+# p_EV_2IV <- (1 - p_EV_0)*(haz_EV_inc / (haz_EV_mort + haz_EV_inc)) # to infectious
+#
+# # instantaneous hazards for IV
+# haz_IV_mort <- muVCom
+#
+# # jump probabilities
+# p_IV_0 <- exp(-haz_IV_mort*dt)
+# p_IV_mort <- (1 - p_IV_0)
+#
+# # dEL <- betaCom*NV - muEL*(1 + ((EL+LL)/K))*EL - EL/durEL
+# # dLL <- EL/durEL - muLL*(1 + gamma*((EL+LL)/K))*LL - LL/durLL
+# # dPL <- LL/durLL - muPL*PL - PL/durPL
+# # dSV <- 0.5*PL/durPL - lambdaV*SV - muVCom*SV
+# # dEV <- lambdaV*SV - lambdaV*SVLag*exp(-muVCom*durEV) - muVCom*EV
+# # dIV <- lambdaV*SVLag*exp(-muVCom*durEV) - muVCom*IV
