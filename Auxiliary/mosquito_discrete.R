@@ -64,7 +64,7 @@ make_node <- function(){
 # CTMC system (competing hazards)
 euler_step <- function(node,pars,tnow,dt){
   with(pars,{
-
+    # browser()
     ########################################
     # INTERVENTION-DEPENDENT PARAMETERS
     ########################################
@@ -223,7 +223,7 @@ euler_step <- function(node,pars,tnow,dt){
     node$LL <- node$LL_transitions[["LL"]] + node$EL_transitions[["LL"]]
     node$PL <- node$PL_transitions[["PL"]] + node$LL_transitions[["PL"]]
     node$SV <- node$SV_transitions[["SV"]] + node$PL_transitions[["SV"]]
-    node$EV <- node$EV_transitions[["EV"]] + node$SV_transitions[["SV"]]
+    node$EV <- node$EV_transitions[["EV"]] + node$SV_transitions[["EV"]]
     node$IV <- node$IV_transitions[["IV"]] + node$EV_transitions[["IV"]]
 
   })
@@ -368,7 +368,8 @@ for(t in 1:length(time)){
   setTxtProgressBar(pb = pb,value = t)
 }
 
-matplot(t(sample_pop[,3:6]),type="l",lwd=2,lty=1)
+matplot(t(sample_pop)[,4:6],type="l",lwd=2,lty=1)
+tail(t(sample_pop))
 
 
 ################################################################################
