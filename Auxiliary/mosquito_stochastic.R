@@ -476,6 +476,8 @@ for(i in 1:nruns){
 # mean_L <- colMeans(sample_pop["LL",,])
 # mean_P <- colMeans(sample_pop["PL",,])
 
+mean_pops <- apply(X = sample_pop,MARGIN = c(1,2),FUN = mean)
+
 mean_SV <- colMeans(sample_pop["SV",,])
 mean_EV <- colMeans(sample_pop["EV",,])
 mean_IV <- colMeans(sample_pop["IV",,])
