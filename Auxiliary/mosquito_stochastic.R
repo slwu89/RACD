@@ -72,7 +72,7 @@ make_node <- function(){
 # CTMC system (competing hazards)
 euler_step <- function(node,pars,tnow,dt){
   with(pars,{
-    
+
     ########################################
     # INTERVENTION-DEPENDENT PARAMETERS
     ########################################
@@ -286,9 +286,9 @@ theta <- list(
 	## Additional transmission parameters:
 	f0 = 1/3, # Daily biting rate by mosquitoes on animals and humans
 	epsilon0 = 10/365, # Daily entomological inolculation rate
-	iH_eq = 0.35, # Equilibrium malaria prevalence in humans
-	NH_eq = 2000, # Equilibrium human population size
-	bV = 0.05 # Probability of transmission from human to vector per infectious bite
+	iH_eq = 0.45, # Equilibrium malaria prevalence in humans
+	NH_eq = 200, # Equilibrium human population size
+	bV = 0.15 # Probability of transmission from human to vector per infectious bite
 )
 
 with(theta,{
@@ -296,7 +296,7 @@ with(theta,{
   a0 <<- Q0*f0 # Human biting rate at equilibrium
   lambdaV <<- a0*iH_eq*bV # Force of infection in mosquitoes at equilibrium
 
-  IV_eq <<- 500
+  IV_eq <<- 100
   EV_eq <<- durEV*IV_eq*muV
   SV_eq <<- ((durEV*IV_eq*muV) + ((durEV^2)*IV_eq*(muV^2))) / (durEV*lambdaV)
   NV_eq <<- IV_eq + EV_eq + SV_eq
@@ -358,8 +358,8 @@ node$SV <- as.integer(SV_eq)
 node$EV <- as.integer(EV_eq)
 node$IV <- as.integer(IV_eq)
 
-tmax <- 250
-dt <- 0.01
+tmax <- 500
+dt <- 0.05
 time <- seq(from=1,to=tmax,by=dt)
 
 # sampling grid
@@ -397,10 +397,77 @@ for(t in 1:length(time)){
 }
 
 sample_pop_t <- t(sample_pop)
+par(mfrow=c(1,2))
 ylim <- max(sample_pop_t[,4:6])
 plot(x = tsamp,y = sample_pop_t[,"SV"],col="blue",lwd=2,ylim=c(0,ylim),type="l")
 lines(x = tsamp,y = sample_pop_t[,"EV"],col="green",lwd=2)
 lines(x = tsamp,y = sample_pop_t[,"IV"],col="red",lwd=2)
 
+ylim <- max(sample_pop_t[,5:6])
+plot(x = tsamp,y = sample_pop_t[,"EV"],col="green",lwd=2,ylim=c(0,ylim),type="l")
+lines(x = tsamp,y = sample_pop_t[,"IV"],col="red",lwd=2)
+par(mfrow=c(1,1))
+
 tail(sample_pop_t)
 mean(sample_pop_t[,"IV"])
+
+
+
+################################################################################
+# run ensemble of simulations
+################################################################################
+
+nruns <- 100
+tmax <- 500
+dt <- 0.05
+time <- seq(from=1,to=tmax,by=dt)
+
+# sampling grid
+tsamp <- c(0,seq(from=10,to = tmax,by = 5))
+sample_pop <- array(0,dim=c(6,length(tsamp),nruns),dimnames=list(c("EL","LL","PL","SV","EV","IV"),paste0(sample_grid),paste0(1:nruns)))
+
+
+pb <- txtProgressBar(min = 1,max = nruns)
+for(i in 1:nruns){
+
+  sample_grid <- tsamp
+
+  # make the node
+  node <- make_node()
+  node$EL <- as.integer(EL_eq)
+  node$LL <- as.integer(LL_eq)
+  node$PL <- as.integer(PL_eq)
+  node$SV <- as.integer(SV_eq)
+  node$EV <- as.integer(EV_eq)
+  node$IV <- as.integer(IV_eq)
+
+  # record output
+  sample_pop["EL",1,i] <- node$EL
+  sample_pop["LL",1,i] <- node$LL
+  sample_pop["PL",1,i] <- node$PL
+  sample_pop["SV",1,i] <- node$SV
+  sample_pop["EV",1,i] <- node$EV
+  sample_pop["IV",1,i] <- node$IV
+  sample_grid <- sample_grid[-1]
+
+  for(t in 1:length(time)){
+
+    # euler step
+    euler_step(node = node,pars = theta1,tnow = time[t],dt = dt)
+
+    # sample the population (done at the very end of the time-step, because its not part of the dynamics)
+    if(time[t] == sample_grid[1]){
+
+      sample_pop["EL",as.character(sample_grid[1]),i] <- node$EL
+      sample_pop["LL",as.character(sample_grid[1]),i] <- node$LL
+      sample_pop["PL",as.character(sample_grid[1]),i] <- node$PL
+      sample_pop["SV",as.character(sample_grid[1]),i] <- node$SV
+      sample_pop["EV",as.character(sample_grid[1]),i] <- node$EV
+      sample_pop["IV",as.character(sample_grid[1]),i] <- node$IV
+      sample_grid <- sample_grid[-1]
+
+    }
+  }
+  
+  setTxtProgressBar(pb,i)
+}

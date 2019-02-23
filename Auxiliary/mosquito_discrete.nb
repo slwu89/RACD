@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[      5003,        157]
-NotebookOptionsPosition[      4346,        136]
-NotebookOutlinePosition[      4698,        152]
-CellTagsIndexPosition[      4655,        149]
+NotebookDataLength[     11102,        341]
+NotebookOptionsPosition[     10030,        314]
+NotebookOutlinePosition[     10383,        330]
+CellTagsIndexPosition[     10340,        327]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -132,10 +132,188 @@ Cell[BoxData[
      RowBox[{"EIP", " ", "IV", " ", "\[Mu]"}]}]}], "}"}], "}"}]], "Output",
  CellChangeTimes->{3.759866115168446*^9},
  CellLabel->"Out[6]=",ExpressionUUID->"6973b09d-8dae-458c-bfa5-98558c7bf61f"]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{"Solve", "[", "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{
+    RowBox[{
+     RowBox[{
+      RowBox[{"(", 
+       RowBox[{"\[Lambda]", "*", "SV"}], ")"}], "-", 
+      RowBox[{"(", 
+       RowBox[{
+        RowBox[{"(", 
+         RowBox[{"\[Mu]", "+", 
+          FractionBox["1", "EIP"]}], ")"}], "*", "EV"}], ")"}]}], "\[Equal]", 
+     "0"}], "&&", "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"(", 
+       RowBox[{
+        FractionBox["1", "EIP"], "*", "EV"}], ")"}], "-", 
+      RowBox[{"(", 
+       RowBox[{"\[Mu]", "*", "IV"}], ")"}]}], "\[Equal]", "0"}]}], ",", 
+   "\[IndentingNewLine]", 
+   RowBox[{"{", 
+    RowBox[{"SV", ",", "EV"}], "}"}], ",", "Reals"}], "\[IndentingNewLine]", 
+  "]"}]], "Input",ExpressionUUID->"3250c65f-b6d9-436a-a1a7-9d15891cf1e6"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", 
+   RowBox[{
+   "get", " ", "equilibrium", " ", "solutions", " ", "for", " ", 
+    "discretized", " ", "system"}], "*)"}], "\[IndentingNewLine]", 
+  RowBox[{"Reduce", "[", "\[IndentingNewLine]", 
+   RowBox[{
+    RowBox[{
+     RowBox[{
+      RowBox[{
+       RowBox[{"(", 
+        RowBox[{
+         RowBox[{"(", 
+          RowBox[{"1", "-", 
+           RowBox[{"Exp", "[", 
+            RowBox[{
+             RowBox[{"-", 
+              RowBox[{"(", 
+               RowBox[{"\[Mu]", "+", "\[Lambda]"}], ")"}]}], "*", "dt"}], 
+            "]"}]}], ")"}], "*", 
+         RowBox[{"(", 
+          FractionBox["\[Lambda]", 
+           RowBox[{"\[Mu]", "+", "\[Lambda]"}]], ")"}], "*", "SV"}], ")"}], 
+       "-", 
+       RowBox[{"(", 
+        RowBox[{
+         RowBox[{"(", 
+          RowBox[{"1", "-", 
+           RowBox[{"Exp", "[", 
+            RowBox[{
+             RowBox[{"-", 
+              RowBox[{"(", 
+               RowBox[{"\[Mu]", "+", 
+                FractionBox["1", "EIP"]}], ")"}]}], "*", "dt"}], "]"}]}], 
+          ")"}], "*", 
+         RowBox[{"(", 
+          FractionBox["\[Mu]", 
+           RowBox[{"\[Mu]", "+", 
+            FractionBox["1", "EIP"]}]], ")"}], "*", "EV"}], ")"}]}], 
+      "\[Equal]", "0"}], "&&", "\[IndentingNewLine]", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"(", 
+        RowBox[{
+         RowBox[{"(", 
+          RowBox[{"1", "-", 
+           RowBox[{"Exp", "[", 
+            RowBox[{
+             RowBox[{"-", 
+              RowBox[{"(", 
+               RowBox[{"\[Mu]", "+", 
+                FractionBox["1", "EIP"]}], ")"}]}], "*", "dt"}], "]"}]}], 
+          ")"}], "*", 
+         RowBox[{"(", 
+          FractionBox[
+           FractionBox["1", "EIP"], 
+           RowBox[{"\[Mu]", "+", 
+            FractionBox["1", "EIP"]}]], ")"}], "*", "EV"}], ")"}], "-", 
+       RowBox[{"(", 
+        RowBox[{
+         RowBox[{"(", 
+          RowBox[{"1", "-", 
+           RowBox[{"Exp", "[", 
+            RowBox[{
+             RowBox[{"-", "\[Mu]"}], "*", "dt"}], "]"}]}], ")"}], "*", "IV"}],
+         ")"}]}], "\[Equal]", "0"}]}], ",", "\[IndentingNewLine]", 
+    RowBox[{"{", 
+     RowBox[{"SV", ",", "EV"}], "}"}], ",", "Reals"}], "\[IndentingNewLine]", 
+   "]"}]}]], "Input",
+ CellChangeTimes->{{3.759876422009836*^9, 3.7598765225323467`*^9}, {
+  3.759876555926527*^9, 3.75987661950953*^9}, {3.75987666808333*^9, 
+  3.75987666885023*^9}},
+ CellLabel->"In[3]:=",ExpressionUUID->"f0d01b86-6ce2-401d-bb75-428bab17f3a5"],
+
+Cell[BoxData[
+ TemplateBox[{
+  "Solve","nsmet",
+   "\"This system cannot be solved with the methods available to Solve.\"",2,
+   2,2,32469955046918625806,"Local"},
+  "MessageTemplate"]], "Message", "MSG",
+ CellChangeTimes->{3.759876603080593*^9, 3.7598766473829527`*^9},
+ CellLabel->
+  "During evaluation of \
+In[2]:=",ExpressionUUID->"3a396eae-3057-41c6-821a-8ba26e50d88c"],
+
+Cell[BoxData[
+ RowBox[{"Solve", "[", 
+  RowBox[{
+   RowBox[{
+    RowBox[{
+     RowBox[{
+      RowBox[{"-", 
+       FractionBox[
+        RowBox[{
+         RowBox[{"(", 
+          RowBox[{"1", "-", 
+           SuperscriptBox["\[ExponentialE]", 
+            RowBox[{"dt", " ", 
+             RowBox[{"(", 
+              RowBox[{
+               RowBox[{"-", 
+                FractionBox["1", "EIP"]}], "-", "\[Mu]"}], ")"}]}]]}], ")"}], 
+         " ", "EV", " ", "\[Mu]"}], 
+        RowBox[{
+         FractionBox["1", "EIP"], "+", "\[Mu]"}]]}], "+", 
+      FractionBox[
+       RowBox[{
+        RowBox[{"(", 
+         RowBox[{"1", "-", 
+          SuperscriptBox["\[ExponentialE]", 
+           RowBox[{"dt", " ", 
+            RowBox[{"(", 
+             RowBox[{
+              RowBox[{"-", "\[Lambda]"}], "-", "\[Mu]"}], ")"}]}]]}], ")"}], 
+        " ", "SV", " ", "\[Lambda]"}], 
+       RowBox[{"\[Lambda]", "+", "\[Mu]"}]]}], "\[Equal]", "0"}], "&&", 
+    RowBox[{
+     RowBox[{
+      RowBox[{
+       RowBox[{"-", 
+        RowBox[{"(", 
+         RowBox[{"1", "-", 
+          SuperscriptBox["\[ExponentialE]", 
+           RowBox[{
+            RowBox[{"-", "dt"}], " ", "\[Mu]"}]]}], ")"}]}], " ", "IV"}], "+", 
+      FractionBox[
+       RowBox[{
+        RowBox[{"(", 
+         RowBox[{"1", "-", 
+          SuperscriptBox["\[ExponentialE]", 
+           RowBox[{"dt", " ", 
+            RowBox[{"(", 
+             RowBox[{
+              RowBox[{"-", 
+               FractionBox["1", "EIP"]}], "-", "\[Mu]"}], ")"}]}]]}], ")"}], 
+        " ", "EV"}], 
+       RowBox[{"EIP", " ", 
+        RowBox[{"(", 
+         RowBox[{
+          FractionBox["1", "EIP"], "+", "\[Mu]"}], ")"}]}]]}], "\[Equal]", 
+     "0"}]}], ",", 
+   RowBox[{"{", 
+    RowBox[{"SV", ",", "EV"}], "}"}], ",", 
+   TemplateBox[{},
+    "Reals"]}], "]"}]], "Output",
+ CellChangeTimes->{3.759876603084042*^9, 3.7598766474674473`*^9},
+ CellLabel->"Out[2]=",ExpressionUUID->"c7a485b2-e628-47e6-8b81-beabada70c4e"]
 }, Open  ]]
 },
-WindowSize->{615, 636},
-WindowMargins->{{4, Automatic}, {Automatic, 4}},
+WindowSize->{798, 591},
+WindowMargins->{{46, Automatic}, {Automatic, 0}},
 FrontEndVersion->"11.3 for Mac OS X x86 (32-bit, 64-bit Kernel) (March 5, \
 2018)",
 StyleDefinitions->"Default.nb"
@@ -152,16 +330,20 @@ CellTagsIndex->{}
 (*NotebookFileOutline
 Notebook[{
 Cell[CellGroupData[{
-Cell[580, 22, 1126, 31, 184, "Input",ExpressionUUID->"35032488-b27b-4a5e-8f3a-d1e0e2d41405"],
-Cell[1709, 55, 1148, 30, 109, "Output",ExpressionUUID->"70d0fd55-bd91-435e-97b5-8f5828ba1af7"]
+Cell[580, 22, 1126, 31, 163, "Input",ExpressionUUID->"35032488-b27b-4a5e-8f3a-d1e0e2d41405"],
+Cell[1709, 55, 1148, 30, 81, "Output",ExpressionUUID->"70d0fd55-bd91-435e-97b5-8f5828ba1af7"]
 }, Open  ]],
 Cell[CellGroupData[{
 Cell[2894, 90, 871, 26, 163, "Input",ExpressionUUID->"0e35eb42-f908-4463-80a0-b952da941da0"],
-Cell[3768, 118, 562, 15, 111, "Output",ExpressionUUID->"6973b09d-8dae-458c-bfa5-98558c7bf61f"]
+Cell[3768, 118, 562, 15, 53, "Output",ExpressionUUID->"6973b09d-8dae-458c-bfa5-98558c7bf61f"]
+}, Open  ]],
+Cell[4345, 136, 806, 24, 163, "Input",ExpressionUUID->"3250c65f-b6d9-436a-a1a7-9d15891cf1e6"],
+Cell[CellGroupData[{
+Cell[5176, 164, 2496, 73, 225, "Input",ExpressionUUID->"f0d01b86-6ce2-401d-bb75-428bab17f3a5"],
+Cell[7675, 239, 374, 9, 24, "Message",ExpressionUUID->"3a396eae-3057-41c6-821a-8ba26e50d88c"],
+Cell[8052, 250, 1962, 61, 147, "Output",ExpressionUUID->"c7a485b2-e628-47e6-8b81-beabada70c4e"]
 }, Open  ]]
 }
 ]
 *)
-
-(* End of internal cache information *)
 
