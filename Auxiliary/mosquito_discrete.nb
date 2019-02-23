@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[     11102,        341]
-NotebookOptionsPosition[     10030,        314]
-NotebookOutlinePosition[     10383,        330]
-CellTagsIndexPosition[     10340,        327]
+NotebookDataLength[     12201,        374]
+NotebookOptionsPosition[     11128,        347]
+NotebookOutlinePosition[     11482,        363]
+CellTagsIndexPosition[     11439,        360]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -201,6 +201,22 @@ Cell[BoxData[
          RowBox[{"(", 
           FractionBox["\[Mu]", 
            RowBox[{"\[Mu]", "+", 
+            FractionBox["1", "EIP"]}]], ")"}], "*", "EV"}], ")"}], "-", 
+       RowBox[{"(", 
+        RowBox[{
+         RowBox[{"(", 
+          RowBox[{"1", "-", 
+           RowBox[{"Exp", "[", 
+            RowBox[{
+             RowBox[{"-", 
+              RowBox[{"(", 
+               RowBox[{"\[Mu]", "+", 
+                FractionBox["1", "EIP"]}], ")"}]}], "*", "dt"}], "]"}]}], 
+          ")"}], "*", 
+         RowBox[{"(", 
+          FractionBox[
+           FractionBox["1", "EIP"], 
+           RowBox[{"\[Mu]", "+", 
             FractionBox["1", "EIP"]}]], ")"}], "*", "EV"}], ")"}]}], 
       "\[Equal]", "0"}], "&&", "\[IndentingNewLine]", 
      RowBox[{
@@ -234,22 +250,23 @@ Cell[BoxData[
    "]"}]}]], "Input",
  CellChangeTimes->{{3.759876422009836*^9, 3.7598765225323467`*^9}, {
   3.759876555926527*^9, 3.75987661950953*^9}, {3.75987666808333*^9, 
-  3.75987666885023*^9}},
- CellLabel->"In[3]:=",ExpressionUUID->"f0d01b86-6ce2-401d-bb75-428bab17f3a5"],
+  3.75987666885023*^9}, {3.7598890548766127`*^9, 3.75988905514016*^9}},
+ CellLabel->"In[1]:=",ExpressionUUID->"f0d01b86-6ce2-401d-bb75-428bab17f3a5"],
 
 Cell[BoxData[
  TemplateBox[{
-  "Solve","nsmet",
-   "\"This system cannot be solved with the methods available to Solve.\"",2,
-   2,2,32469955046918625806,"Local"},
+  "Reduce","nsmet",
+   "\"This system cannot be solved with the methods available to Reduce.\"",2,
+   1,1,32470043035463782244,"Local"},
   "MessageTemplate"]], "Message", "MSG",
- CellChangeTimes->{3.759876603080593*^9, 3.7598766473829527`*^9},
+ CellChangeTimes->{3.759876603080593*^9, 3.7598766473829527`*^9, 
+  3.759889277822413*^9},
  CellLabel->
   "During evaluation of \
-In[2]:=",ExpressionUUID->"3a396eae-3057-41c6-821a-8ba26e50d88c"],
+In[1]:=",ExpressionUUID->"e7cc43f2-9ad4-4ed7-b4c7-71cbd077f2b2"],
 
 Cell[BoxData[
- RowBox[{"Solve", "[", 
+ RowBox[{"Reduce", "[", 
   RowBox[{
    RowBox[{
     RowBox[{
@@ -265,9 +282,24 @@ Cell[BoxData[
               RowBox[{
                RowBox[{"-", 
                 FractionBox["1", "EIP"]}], "-", "\[Mu]"}], ")"}]}]]}], ")"}], 
-         " ", "EV", " ", "\[Mu]"}], 
-        RowBox[{
-         FractionBox["1", "EIP"], "+", "\[Mu]"}]]}], "+", 
+         " ", "EV"}], 
+        RowBox[{"EIP", " ", 
+         RowBox[{"(", 
+          RowBox[{
+           FractionBox["1", "EIP"], "+", "\[Mu]"}], ")"}]}]]}], "-", 
+      FractionBox[
+       RowBox[{
+        RowBox[{"(", 
+         RowBox[{"1", "-", 
+          SuperscriptBox["\[ExponentialE]", 
+           RowBox[{"dt", " ", 
+            RowBox[{"(", 
+             RowBox[{
+              RowBox[{"-", 
+               FractionBox["1", "EIP"]}], "-", "\[Mu]"}], ")"}]}]]}], ")"}], 
+        " ", "EV", " ", "\[Mu]"}], 
+       RowBox[{
+        FractionBox["1", "EIP"], "+", "\[Mu]"}]], "+", 
       FractionBox[
        RowBox[{
         RowBox[{"(", 
@@ -308,11 +340,12 @@ Cell[BoxData[
     RowBox[{"SV", ",", "EV"}], "}"}], ",", 
    TemplateBox[{},
     "Reals"]}], "]"}]], "Output",
- CellChangeTimes->{3.759876603084042*^9, 3.7598766474674473`*^9},
- CellLabel->"Out[2]=",ExpressionUUID->"c7a485b2-e628-47e6-8b81-beabada70c4e"]
+ CellChangeTimes->{3.759876603084042*^9, 3.7598766474674473`*^9, 
+  3.759889278310726*^9},
+ CellLabel->"Out[1]=",ExpressionUUID->"838b6867-685e-4c77-aecb-8273663d936f"]
 }, Open  ]]
 },
-WindowSize->{798, 591},
+WindowSize->{1111, 591},
 WindowMargins->{{46, Automatic}, {Automatic, 0}},
 FrontEndVersion->"11.3 for Mac OS X x86 (32-bit, 64-bit Kernel) (March 5, \
 2018)",
@@ -339,9 +372,9 @@ Cell[3768, 118, 562, 15, 53, "Output",ExpressionUUID->"6973b09d-8dae-458c-bfa5-9
 }, Open  ]],
 Cell[4345, 136, 806, 24, 163, "Input",ExpressionUUID->"3250c65f-b6d9-436a-a1a7-9d15891cf1e6"],
 Cell[CellGroupData[{
-Cell[5176, 164, 2496, 73, 225, "Input",ExpressionUUID->"f0d01b86-6ce2-401d-bb75-428bab17f3a5"],
-Cell[7675, 239, 374, 9, 24, "Message",ExpressionUUID->"3a396eae-3057-41c6-821a-8ba26e50d88c"],
-Cell[8052, 250, 1962, 61, 147, "Output",ExpressionUUID->"c7a485b2-e628-47e6-8b81-beabada70c4e"]
+Cell[5176, 164, 3067, 89, 227, "Input",ExpressionUUID->"f0d01b86-6ce2-401d-bb75-428bab17f3a5"],
+Cell[8246, 255, 401, 10, 24, "Message",ExpressionUUID->"e7cc43f2-9ad4-4ed7-b4c7-71cbd077f2b2"],
+Cell[8650, 267, 2462, 77, 76, "Output",ExpressionUUID->"838b6867-685e-4c77-aecb-8273663d936f"]
 }, Open  ]]
 }
 ]

@@ -424,7 +424,7 @@ time <- seq(from=1,to=tmax,by=dt)
 
 # sampling grid
 tsamp <- c(0,seq(from=10,to = tmax,by = 5))
-sample_pop <- array(0,dim=c(6,length(tsamp),nruns),dimnames=list(c("EL","LL","PL","SV","EV","IV"),paste0(sample_grid),paste0(1:nruns)))
+sample_pop <- array(0,dim=c(6,length(tsamp),nruns),dimnames=list(c("EL","LL","PL","SV","EV","IV"),paste0(tsamp),paste0(1:nruns)))
 
 
 pb <- txtProgressBar(min = 1,max = nruns)
@@ -471,3 +471,33 @@ for(i in 1:nruns){
   
   setTxtProgressBar(pb,i)
 }
+
+# mean_E <- colMeans(sample_pop["EL",,])
+# mean_L <- colMeans(sample_pop["LL",,])
+# mean_P <- colMeans(sample_pop["PL",,])
+
+mean_SV <- colMeans(sample_pop["SV",,])
+mean_EV <- colMeans(sample_pop["EV",,])
+mean_IV <- colMeans(sample_pop["IV",,])
+
+quant_SV <- apply(X = sample_pop["SV",,],MARGIN = 2,FUN = function(x){
+  quantile(x,probs = c(0.05,0.95))
+})
+quant_EV <- apply(X = sample_pop["EV",,],MARGIN = 2,FUN = function(x){
+  quantile(x,probs = c(0.05,0.95))
+})
+quant_IV <- apply(X = sample_pop["IV",,],MARGIN = 2,FUN = function(x){
+  quantile(x,probs = c(0.05,0.95))
+})
+
+plot_datEV <- data.frame(time=tsamp,EV=mean_EV,EV_l=quant_EV[1,],EV_h=quant_EV[2,])
+plot_datIV <- data.frame(time=tsamp,IV=mean_IV,IV_l=quant_IV[1,],IV_h=quant_IV[2,])
+
+library(ggplot2)
+
+ggplot() +
+  geom_line(data=plot_datEV,aes(x=time,y=EV),color="steelblue") +
+  geom_ribbon(data=plot_datEV,aes(x=time,ymin=EV_l,ymax=EV_h),alpha=0.35,fill="steelblue") +
+  geom_line(data=plot_datIV,aes(x=time,y=IV),color="firebrick3") +
+  geom_ribbon(data=plot_datIV,aes(x=time,ymin=IV_l,ymax=IV_h),alpha=0.35,fill="firebrick3") +
+  theme_bw()
