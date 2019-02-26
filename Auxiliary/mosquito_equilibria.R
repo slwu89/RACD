@@ -143,7 +143,7 @@ calc_eq <- function(theta,dt,IV,lambdaV){
   if(any(cons_g(approx) < 0)){
     stop("initial values do not respect constraints!")
   }
-  
+
   # first try constrOptim
   ui <- matrix(c(1,0,0,
                  0,1,0,
@@ -151,28 +151,28 @@ calc_eq <- function(theta,dt,IV,lambdaV){
                  1,-1,0),
                byrow = T,nrow = 4,ncol = 3)
   ci <- rep(0,4)
-  
+
   # from many starting points
   nstart <- 1e3
   # starts <- matrix(rnorm(n = nstart,mean = approx,sd = approx*0.1),nrow = nstart,ncol = 3,byrow = T)
-  starts <- replicate(n = nstart,expr = {rnorm(n = 3,mean = approx,sd = approx*0.1)},simplify = FALSE)
-  
+  starts <- replicate(n = nstart,expr = {pmax(0,rnorm(n = 3,mean = approx,sd = approx*0.1))},simplify = FALSE)
+
   control <- list(trace=6,maxit=1e3,reltol=1e-10)
   opt <-  mclapply(X = starts,FUN = function(start){
     constrOptim(theta = start,f = obj_f,grad = grad_f,
                 ui = ui,ci = ci, method = "Nelder-Mead",
                 control=control,outer.eps = 1e-6,outer.iterations = 2e2)
   },mc.cores = 4)
-  
+
   min <- which.min(sapply(opt,function(x){x$value}))
   # opt <- nloptr::auglag(x0 = approx, fn = obj_f, gr = grad_f, lower = rep(0,3), upper = rep(Inf,3),
   #   hin = cons_g, hinjac = jac_g, heq = NULL, heqjac = NULL, localsolver = c("LBFGS"),
   #   localtol = 1e-8, ineq2local = FALSE, nl.info = FALSE)
-    
+
   # nloptr.print.options( opts.user = list(print_level = 2) )
   # ops <- nloptr::isres(x0 = approx,fn = obj_f,lower = rep(0,3),upper = rep(Inf,3),
   #                      hin = cons_g,heq = NULL,pop.size = 1e3,xtol_rel = 1e-10,nl.info = TRUE)
-  
+
   # return(opt[[min]])
   out <- list(
     SV_eq = SV,
@@ -185,4 +185,3 @@ calc_eq <- function(theta,dt,IV,lambdaV){
     opt_min = opt[[min]]
   )
 }
-

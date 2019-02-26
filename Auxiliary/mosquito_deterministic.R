@@ -364,11 +364,11 @@ node$EV <- EV_eq
 node$IV <- IV_eq
 
 tmax <- 250
-dt <- 0.5
+dt <- 1
 time <- seq(from=1,to=tmax,by=dt)
 
 # sampling grid
-sample_grid <- tsamp <- c(0,seq(from=10,to = tmax,by = 5))
+sample_grid <- tsamp <- c(0,seq(from=10,to = tmax,by = 1))
 sample_pop <- matrix(0,nrow=6,ncol=length(sample_grid),dimnames=list(c("EL","LL","PL","SV","EV","IV"),paste0(sample_grid)))
 
 sample_pop["EL",1] <- node$EL
@@ -428,11 +428,10 @@ node$IV <- IV_eq
 theta2$K <- eq$K_eq
 
 tmax <- 250
-dt <- 0.5
 time <- seq(from=1,to=tmax,by=dt)
 
 # sampling grid
-sample_grid <- tsamp <- c(0,seq(from=10,to = tmax,by = 5))
+sample_grid <- tsamp <- c(0,seq(from=10,to = tmax,by = 1))
 sample_pop <- matrix(0,nrow=6,ncol=length(sample_grid),dimnames=list(c("EL","LL","PL","SV","EV","IV"),paste0(sample_grid)))
 
 sample_pop["EL",1] <- node$EL

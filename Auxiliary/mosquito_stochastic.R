@@ -248,7 +248,7 @@ theta <- list(
 
 	## Intervention parameters (variable):
 	ITNcov = 0.5, # ITN coverage
-	IRScov = 0, # IRS coverave
+	IRScov = 0.5, # IRS coverave
 	time_ITN_on = 1e3, # When ITNs are applied (days)
 	time_IRS_on = 1e3, # When IRS is applied (days)
 
@@ -510,15 +510,15 @@ ggplot() +
 ################################################################################
 
 # test our numerical/analytic "exact" equilibria
-dt <- 0.5
+dt <- 1
 eq <- calc_eq(theta = theta1,dt = dt,IV = IV_eq,lambdaV = lambdaV)
 theta2 <- theta1
 theta2$K <- eq$K_eq
 
 # ensemble parameters
 nruns <- 100
-tmax <- 250
-dt <- 0.5
+tmax <- 1e3
+dt <- 1
 time <- seq(from=1,to=tmax,by=dt)
 
 # sampling grid
