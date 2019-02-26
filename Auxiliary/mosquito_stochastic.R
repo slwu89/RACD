@@ -249,8 +249,8 @@ theta <- list(
 	## Intervention parameters (variable):
 	ITNcov = 0.5, # ITN coverage
 	IRScov = 0, # IRS coverave
-	time_ITN_on = 1e3, # When ITNs are applied (days)
-	time_IRS_on = 1e3, # When IRS is applied (days)
+	time_ITN_on = 50, # When ITNs are applied (days)
+	time_IRS_on = 50, # When IRS is applied (days)
 
 	## Species-specific parameters:
 	## An. gambiae:
@@ -423,7 +423,7 @@ dt <- 0.05
 time <- seq(from=1,to=tmax,by=dt)
 
 # sampling grid
-tsamp <- c(0,seq(from=10,to = tmax,by = 5))
+tsamp <- c(0,seq(from=10,to = tmax,by = 1))
 sample_pop <- array(0,dim=c(6,length(tsamp),nruns),dimnames=list(c("EL","LL","PL","SV","EV","IV"),paste0(tsamp),paste0(1:nruns)))
 
 
@@ -478,17 +478,17 @@ for(i in 1:nruns){
 
 mean_pops <- apply(X = sample_pop,MARGIN = c(1,2),FUN = mean)
 
-mean_SV <- colMeans(sample_pop["SV",,])
-mean_EV <- colMeans(sample_pop["EV",,])
-mean_IV <- colMeans(sample_pop["IV",,])
+mean_SV <- rowMeans(sample_pop["SV",,])
+mean_EV <- rowMeans(sample_pop["EV",,])
+mean_IV <- rowMeans(sample_pop["IV",,])
 
-quant_SV <- apply(X = sample_pop["SV",,],MARGIN = 2,FUN = function(x){
+quant_SV <- apply(X = sample_pop["SV",,],MARGIN = 1,FUN = function(x){
   quantile(x,probs = c(0.05,0.95))
 })
-quant_EV <- apply(X = sample_pop["EV",,],MARGIN = 2,FUN = function(x){
+quant_EV <- apply(X = sample_pop["EV",,],MARGIN = 1,FUN = function(x){
   quantile(x,probs = c(0.05,0.95))
 })
-quant_IV <- apply(X = sample_pop["IV",,],MARGIN = 2,FUN = function(x){
+quant_IV <- apply(X = sample_pop["IV",,],MARGIN = 1,FUN = function(x){
   quantile(x,probs = c(0.05,0.95))
 })
 

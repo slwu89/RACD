@@ -408,3 +408,67 @@ lines(x = tsamp,y = sample_pop_t[,"EV"],col="green",lwd=2)
 lines(x = tsamp,y = sample_pop_t[,"IV"],col="red",lwd=2)
 
 tail(sample_pop_t)
+
+
+
+
+# test our numerical/analytic "exact" equilibria
+eq <- calc_eq(theta = theta1,dt = dt,IV = IV_eq,lambdaV = lambdaV)
+
+theta2 <- theta1
+
+node <- make_node()
+node$EL <- eq$EL_eq
+node$LL <- eq$LL_eq
+node$PL <- eq$PL_eq
+node$SV <- eq$SV_eq
+node$EV <- eq$EV_eq
+node$IV <- IV_eq
+
+theta2$K <- eq$K_eq
+
+tmax <- 250
+dt <- 0.05
+time <- seq(from=1,to=tmax,by=dt)
+
+# sampling grid
+sample_grid <- tsamp <- c(0,seq(from=10,to = tmax,by = 5))
+sample_pop <- matrix(0,nrow=6,ncol=length(sample_grid),dimnames=list(c("EL","LL","PL","SV","EV","IV"),paste0(sample_grid)))
+
+sample_pop["EL",1] <- node$EL
+sample_pop["LL",1] <- node$LL
+sample_pop["PL",1] <- node$PL
+sample_pop["SV",1] <- node$SV
+sample_pop["EV",1] <- node$EV
+sample_pop["IV",1] <- node$IV
+sample_grid <- sample_grid[-1]
+
+# run simulation
+pb <- txtProgressBar(min = 1,max = length(time))
+for(t in 1:length(time)){
+  
+  # euler step
+  euler_step(node = node,pars = theta2,tnow = time[t],dt = dt)
+  
+  # sample the population (done at the very end of the time-step, because its not part of the dynamics)
+  if(time[t] == sample_grid[1]){
+    
+    sample_pop["EL",as.character(sample_grid[1])] <- node$EL
+    sample_pop["LL",as.character(sample_grid[1])] <- node$LL
+    sample_pop["PL",as.character(sample_grid[1])] <- node$PL
+    sample_pop["SV",as.character(sample_grid[1])] <- node$SV
+    sample_pop["EV",as.character(sample_grid[1])] <- node$EV
+    sample_pop["IV",as.character(sample_grid[1])] <- node$IV
+    sample_grid <- sample_grid[-1]
+    
+  }
+  setTxtProgressBar(pb = pb,value = t)
+}
+
+sample_pop_t <- t(sample_pop)
+ylim <- max(sample_pop_t[,4:6])
+plot(x = tsamp,y = sample_pop_t[,"SV"],col="blue",lwd=2,ylim=c(0,ylim),type="l")
+lines(x = tsamp,y = sample_pop_t[,"EV"],col="green",lwd=2)
+lines(x = tsamp,y = sample_pop_t[,"IV"],col="red",lwd=2)
+
+tail(sample_pop_t)

@@ -81,8 +81,8 @@ cons_g <- function(x){
   LL <- x[2]
   K <- x[3]
   rbind(
-    K - EL,
-    K - LL,
+    # K - EL,
+    # K - LL,
     EL - LL
   )
 }
@@ -100,29 +100,37 @@ calc_eq <- function(theta,dt,IV,lambdaV){
   # get approximate values from the continuous-time model
   approx <- approx_equilibrium(theta,lambdaV,IV)
 
-  # jump probabilities
-  IV2D <- 1 - exp(-muV*dt)
-  EV2D <- (1 - exp(-((1/durEV) + muV)*dt)) * (muV / ((1/durEV) + muV))
-  EV2IV <- (1 - exp(-((1/durEV) + muV)*dt)) * ((1/durEV) / ((1/durEV) + muV))
-  SV2EV <- (1 - exp(-(lambdaV + muV)*dt)) * (lambdaV / (lambdaV + muV))
-  # equilibria for SV and EV
-  SV <- (IV*IV2D + ((EV2D*IV*IV2D) / EV2IV)) / SV2EV
-  EV -> (IV*IV2D)/EV2IV
+  # (some of) the equilibrium values for state variables
+  SV <- EV <- PL <- NV <- 0
 
-  # jump probabilities
-  SV2ALL <- (1 - exp(-(lambdaV + muV)*dt))
-  P2SV <- (1 - exp(-(muP + (1/durPL))*dt)) * ((1/durPL) / ((1/durPL) + muP))
-  # equilibria for P
-  PL <- (2*SV*SV2ALL) / P2SV
+  with(theta,{
 
-  # equilibria total vector population
-  NV <- SV + EV + IV
+    # jump probabilities
+    IV2D <- 1 - exp(-muV*dt)
+    EV2D <- (1 - exp(-((1/durEV) + muV)*dt)) * (muV / ((1/durEV) + muV))
+    EV2IV <- (1 - exp(-((1/durEV) + muV)*dt)) * ((1/durEV) / ((1/durEV) + muV))
+    SV2EV <- (1 - exp(-(lambdaV + muV)*dt)) * (lambdaV / (lambdaV + muV))
+    # equilibria for SV and EV
+    SV <<- (IV*IV2D + ((EV2D*IV*IV2D) / EV2IV)) / SV2EV
+    EV <<- (IV*IV2D)/EV2IV
+
+    # jump probabilities
+    SV2ALL <- (1 - exp(-(lambdaV + muV)*dt))
+    P2SV <- (1 - exp(-(muPL + (1/durPL))*dt)) * ((1/durPL) / ((1/durPL) + muPL))
+    # equilibria for P
+    PL <<- (2*SV*SV2ALL) / P2SV
+
+    # equilibria total vector population
+    NV <<- SV + EV + IV
+
+  })
 
   # use nloptr to solve the remaining 3 nonlinear equations (deltaEL,deltaLL,deltaPL) for (EL,LL,K)
 
   # inequality constraints:
   # K > EL
   # K > LL
+  # EL > LL
   # positivity for all variables
 
   # objective fn: minimize SSE
@@ -135,10 +143,46 @@ calc_eq <- function(theta,dt,IV,lambdaV){
   if(any(cons_g(approx) < 0)){
     stop("initial values do not respect constraints!")
   }
-
-  opt <- nloptr::auglag(x0 = approx, fn = obj_f, gr = grad_f, lower = rep(0,3), upper = rep(Inf,3),
-    hin = cons_g, hinjac = jac_g, heq = NULL, heqjac = NULL, localsolver = c("LBFGS"),
-    localtol = 1e-8, ineq2local = FALSE, nl.info = FALSE)
-
-  return(opt)
+  
+  # first try constrOptim
+  ui <- matrix(c(1,0,0,
+                 0,1,0,
+                 0,0,1,
+                 1,-1,0),
+               byrow = T,nrow = 4,ncol = 3)
+  ci <- rep(0,4)
+  
+  # from many starting points
+  nstart <- 1e3
+  # starts <- matrix(rnorm(n = nstart,mean = approx,sd = approx*0.1),nrow = nstart,ncol = 3,byrow = T)
+  starts <- replicate(n = nstart,expr = {rnorm(n = 3,mean = approx,sd = approx*0.1)},simplify = FALSE)
+  
+  control <- list(trace=6,maxit=1e3,reltol=1e-10)
+  opt <-  mclapply(X = starts,FUN = function(start){
+    constrOptim(theta = start,f = obj_f,grad = grad_f,
+                ui = ui,ci = ci, method = "Nelder-Mead",
+                control=control,outer.eps = 1e-6,outer.iterations = 2e2)
+  },mc.cores = 4)
+  
+  min <- which.min(sapply(opt,function(x){x$value}))
+  # opt <- nloptr::auglag(x0 = approx, fn = obj_f, gr = grad_f, lower = rep(0,3), upper = rep(Inf,3),
+  #   hin = cons_g, hinjac = jac_g, heq = NULL, heqjac = NULL, localsolver = c("LBFGS"),
+  #   localtol = 1e-8, ineq2local = FALSE, nl.info = FALSE)
+    
+  # nloptr.print.options( opts.user = list(print_level = 2) )
+  # ops <- nloptr::isres(x0 = approx,fn = obj_f,lower = rep(0,3),upper = rep(Inf,3),
+  #                      hin = cons_g,heq = NULL,pop.size = 1e3,xtol_rel = 1e-10,nl.info = TRUE)
+  
+  # return(opt[[min]])
+  out <- list(
+    SV_eq = SV,
+    EV_eq = EV,
+    PL_eq = PL,
+    LL_eq = opt[[min]]$par[2],
+    EL_eq = opt[[min]]$par[1],
+    K_eq = opt[[min]]$par[3],
+    NV_eq = NV,
+    opt_min = opt[[min]]
+  )
 }
+
