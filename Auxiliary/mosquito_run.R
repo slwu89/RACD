@@ -393,8 +393,10 @@ ggplot() +
   geom_line(data=plot_datIV_ct,aes(x=time,y=IV),color="firebrick4") +
   geom_ribbon(data=plot_datIV_ct,aes(x=time,ymin=IV_l,ymax=IV_h),alpha=0.35,fill="firebrick4") +
   # correct
-  geom_line(data=plot_datEV_dt,aes(x=time,y=EV),color="dodgerblue3") +
-  geom_ribbon(data=plot_datEV_dt,aes(x=time,ymin=EV_l,ymax=EV_h),alpha=0.35,fill="dodgerblue3") +
-  geom_line(data=plot_datIV_dt,aes(x=time,y=IV),color="firebrick3") +
-  geom_ribbon(data=plot_datIV_dt,aes(x=time,ymin=IV_l,ymax=IV_h),alpha=0.35,fill="firebrick3") +
+  geom_line(data=plot_datEV_dt,aes(x=time,y=EV),color="dodgerblue2") +
+  geom_ribbon(data=plot_datEV_dt,aes(x=time,ymin=EV_l,ymax=EV_h),alpha=0.35,fill="dodgerblue2") +
+  geom_line(data=plot_datIV_dt,aes(x=time,y=IV),color="firebrick2") +
+  geom_ribbon(data=plot_datIV_dt,aes(x=time,ymin=IV_l,ymax=IV_h),alpha=0.35,fill="firebrick2") +
+  ylab("Counts") +
+  xlab("Time") +
   theme_bw()
