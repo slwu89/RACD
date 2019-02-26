@@ -364,7 +364,7 @@ node$EV <- EV_eq
 node$IV <- IV_eq
 
 tmax <- 250
-dt <- 0.05
+dt <- 0.5
 time <- seq(from=1,to=tmax,by=dt)
 
 # sampling grid
@@ -428,7 +428,7 @@ node$IV <- IV_eq
 theta2$K <- eq$K_eq
 
 tmax <- 250
-dt <- 0.05
+dt <- 0.5
 time <- seq(from=1,to=tmax,by=dt)
 
 # sampling grid

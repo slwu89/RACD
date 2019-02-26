@@ -249,8 +249,8 @@ theta <- list(
 	## Intervention parameters (variable):
 	ITNcov = 0.5, # ITN coverage
 	IRScov = 0, # IRS coverave
-	time_ITN_on = 50, # When ITNs are applied (days)
-	time_IRS_on = 50, # When IRS is applied (days)
+	time_ITN_on = 1e3, # When ITNs are applied (days)
+	time_IRS_on = 1e3, # When IRS is applied (days)
 
 	## Species-specific parameters:
 	## An. gambiae:
@@ -419,7 +419,7 @@ mean(sample_pop_t[,"IV"])
 
 nruns <- 100
 tmax <- 250
-dt <- 0.05
+dt <- 0.5
 time <- seq(from=1,to=tmax,by=dt)
 
 # sampling grid
@@ -468,7 +468,7 @@ for(i in 1:nruns){
 
     }
   }
-  
+
   setTxtProgressBar(pb,i)
 }
 
@@ -478,6 +478,100 @@ for(i in 1:nruns){
 
 mean_pops <- apply(X = sample_pop,MARGIN = c(1,2),FUN = mean)
 
+mean_SV <- rowMeans(sample_pop["SV",,])
+mean_EV <- rowMeans(sample_pop["EV",,])
+mean_IV <- rowMeans(sample_pop["IV",,])
+
+quant_SV <- apply(X = sample_pop["SV",,],MARGIN = 1,FUN = function(x){
+  quantile(x,probs = c(0.05,0.95))
+})
+quant_EV <- apply(X = sample_pop["EV",,],MARGIN = 1,FUN = function(x){
+  quantile(x,probs = c(0.05,0.95))
+})
+quant_IV <- apply(X = sample_pop["IV",,],MARGIN = 1,FUN = function(x){
+  quantile(x,probs = c(0.05,0.95))
+})
+
+plot_datEV <- data.frame(time=tsamp,EV=mean_EV,EV_l=quant_EV[1,],EV_h=quant_EV[2,])
+plot_datIV <- data.frame(time=tsamp,IV=mean_IV,IV_l=quant_IV[1,],IV_h=quant_IV[2,])
+
+library(ggplot2)
+
+ggplot() +
+  geom_line(data=plot_datEV,aes(x=time,y=EV),color="steelblue") +
+  geom_ribbon(data=plot_datEV,aes(x=time,ymin=EV_l,ymax=EV_h),alpha=0.35,fill="steelblue") +
+  geom_line(data=plot_datIV,aes(x=time,y=IV),color="firebrick3") +
+  geom_ribbon(data=plot_datIV,aes(x=time,ymin=IV_l,ymax=IV_h),alpha=0.35,fill="firebrick3") +
+  theme_bw()
+
+
+################################################################################
+# run ensemble of simulations (with better equilibrium)
+################################################################################
+
+# test our numerical/analytic "exact" equilibria
+dt <- 0.5
+eq <- calc_eq(theta = theta1,dt = dt,IV = IV_eq,lambdaV = lambdaV)
+theta2 <- theta1
+theta2$K <- eq$K_eq
+
+# ensemble parameters
+nruns <- 100
+tmax <- 250
+dt <- 0.5
+time <- seq(from=1,to=tmax,by=dt)
+
+# sampling grid
+tsamp <- c(0,seq(from=10,to = tmax,by = 1))
+sample_pop <- array(0,dim=c(6,length(tsamp),nruns),dimnames=list(c("EL","LL","PL","SV","EV","IV"),paste0(tsamp),paste0(1:nruns)))
+
+
+pb <- txtProgressBar(min = 1,max = nruns)
+for(i in 1:nruns){
+
+  sample_grid <- tsamp
+
+  # make the node
+  node <- make_node()
+  node$EL <- as.integer(eq$EL_eq)
+  node$LL <- as.integer(eq$LL_eq)
+  node$PL <- as.integer(eq$PL_eq)
+  node$SV <- as.integer(eq$SV_eq)
+  node$EV <- as.integer(eq$EV_eq)
+  node$IV <- as.integer(IV_eq)
+
+  # record output
+  sample_pop["EL",1,i] <- node$EL
+  sample_pop["LL",1,i] <- node$LL
+  sample_pop["PL",1,i] <- node$PL
+  sample_pop["SV",1,i] <- node$SV
+  sample_pop["EV",1,i] <- node$EV
+  sample_pop["IV",1,i] <- node$IV
+  sample_grid <- sample_grid[-1]
+
+  for(t in 1:length(time)){
+
+    # euler step
+    euler_step(node = node,pars = theta2,tnow = time[t],dt = dt)
+
+    # sample the population (done at the very end of the time-step, because its not part of the dynamics)
+    if(time[t] == sample_grid[1]){
+
+      sample_pop["EL",as.character(sample_grid[1]),i] <- node$EL
+      sample_pop["LL",as.character(sample_grid[1]),i] <- node$LL
+      sample_pop["PL",as.character(sample_grid[1]),i] <- node$PL
+      sample_pop["SV",as.character(sample_grid[1]),i] <- node$SV
+      sample_pop["EV",as.character(sample_grid[1]),i] <- node$EV
+      sample_pop["IV",as.character(sample_grid[1]),i] <- node$IV
+      sample_grid <- sample_grid[-1]
+
+    }
+  }
+
+  setTxtProgressBar(pb,i)
+}
+
+# plot the output
 mean_SV <- rowMeans(sample_pop["SV",,])
 mean_EV <- rowMeans(sample_pop["EV",,])
 mean_IV <- rowMeans(sample_pop["IV",,])
