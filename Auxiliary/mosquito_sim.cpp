@@ -41,6 +41,14 @@ public:
   /* simulation */
   void euler_step(const double tnow, const double dt);
 
+  /* accessors */
+  T get_EL(){return EL;}
+  T get_LL(){return LL;}
+  T get_PL(){return PL;}
+  T get_SV(){return SV;}
+  T get_EV(){return EV;}
+  T get_IV(){return IV;}
+
 private:
 
   /* new eggs are generated from a conditionally independent Poisson process */
@@ -332,4 +340,43 @@ inline void mosquito_habitat<double>::euler_step(const double tnow, const double
   EV = EV_transitions[0] + SV_transitions[2];
   IV = IV_transitions[0] + EV_transitions[2];
 
+};
+
+// [[Rcpp::export]]
+std::vector<double> test_time(const double tmax, const double dt){
+  std::vector<double> time((int)tmax/dt-1,0.0);
+  std::generate( time.begin(), time.end(),[t = 1.0-dt,dt] () mutable { return t += dt; } );
+  return time;
+};
+
+// [[Rcpp::export]]
+Rcpp::NumericMatrix test_deterministic(const double tmax, const double dt, const double EL_, const double LL_, const double PL_, const double SV_, const double EV_, const double IV_, const double K_, const Rcpp::List pars_, const Rcpp::List int_pars_){
+
+  /* grid of times to simulate */
+  std::vector<double> time((int)tmax/dt-1,0.0);
+  std::generate( time.begin(), time.end(),[t = 1.0-dt,dt] () mutable { return t += dt; } );
+
+  /* output */
+  Rcpp::NumericMatrix out(time.size(),6);
+  Rcpp::colnames(out) = Rcpp::CharacterVector::create("EL", "LL", "PL", "SV", "EV", "IV");
+  
+  /* the node */
+  mosquito_habitat<double>* node = new mosquito_habitat<double>(EL_,LL_,PL_,SV_,EV_,IV_,K_,pars_,int_pars_);
+
+  /* run simulation */
+  for(size_t t=0; t<time.size(); t++){
+    
+    node->euler_step(time[t],dt);
+    
+    out.at(t,0) = node->get_EL();
+    out.at(t,1) = node->get_LL();
+    out.at(t,2) = node->get_PL();
+    out.at(t,3) = node->get_SV();
+    out.at(t,4) = node->get_EV();
+    out.at(t,5) = node->get_IV();
+    
+  }
+
+  delete node;
+  return out;
 };
