@@ -229,62 +229,62 @@ euler_step <- function(node,pars,tnow,dt){
   })
 }
 
-## Model parameters:
-theta <- list(
-	## Mosquito life cycle parameters:
-	beta = 21.19, # Number of eggs laid per day by female mosquito
-	muEL = 0.034, # Early larval instar daily mortality
-	muLL = 0.035, # Late larval instar daily mortality
-	muPL = 0.25, # Pupal daily mortality
-	durEL = 6.64, # Duration of early instar stage
-	durLL = 3.72, # Duration of late instar stage
-	durPL = 0.64, # Duration of pupal stage
-	durEV = 10, # Duration of latent period in mosquito (days)
-	gamma = 13.25, # Effect of density-dependence on late instars relative to early instars
-	tau1 = 0.68, # Time spent foraging for a blood meal at 0% ITN coverage
-	tau2 = 2.32, # Time spent resting and ovipositing by a mosquito
-
-	## Intervention parameters (variable):
-	ITNcov = 0.5, # ITN coverage
-	IRScov = 0.5, # IRS coverave
-	time_ITN_on = 1e3, # When ITNs are applied (days)
-	time_IRS_on = 1e3, # When IRS is applied (days)
-
-	## Species-specific parameters:
-	## An. gambiae:
-	muV = 1/7.6, # Adult mosquito daily mortality
-	Q0 = 0.92, # Human blood index
-	phiB = 0.89, # Proportion of bites on a person while they are in bed
-	phiI = 0.97, # Proportion of bites on a person while they are indoors
-	rITN = 0.56, # Probability of mosquito repeating a feeding attempt due to IRS
-	sITN = 0.03, # Probability of mosquito feeding and surviving in presence of ITNs
-	rIRS = 0.60, # Probability of mosquito repeating a feeding attempt due to IRS
-	sIRS = 0, # Probability of mosquito feeding and surviving in presence of IRS
-
-	## An. arabiensis:
-	# muV = 1/7.6, # Adult mosquito daily mortality
-	# Q0 = 0.71, # Human blood index
-	# phiB = 0.90, # Proportion of bites on a person while they are in bed
-	# phiI = 0.96, # Proportion of bites on a person while they are indoors
-	# rITN = 0.48, # Probability of mosquito repeating a feeding attempt due to IRS
-	# sITN = 0.39, # Probability of mosquito feeding and surviving in presence of ITNs
-	# rIRS = 0.60, # Probability of mosquito repeating a feeding attempt due to IRS
-	# sIRS = 0, # Probability of mosquito feeding and surviving in presence of IRS
-
-	## An. funestus:
-	# muV = 1/8.9, # Adult mosquito daily mortality
-	# Q0 = 0.94, # Human blood index
-	# phiB = 0.90, # Proportion of bites on a person while they are in bed
-	# phiI = 0.98, # Proportion of bites on a person while they are indoors
-	# rITN = 0.56, # Probability of mosquito repeating a feeding attempt due to IRS
-	# sITN = 0.03, # Probability of mosquito feeding and surviving in presence of ITNs
-	# rIRS = 0.63, # Probability of mosquito repeating a feeding attempt due to IRS
-	# sIRS = 0, # Probability of mosquito feeding and surviving in presence of IRS
-
-	## Additional transmission parameters:
-	f0 = 1/3, # Daily biting rate by mosquitoes on animals and humans
-	epsilon0 = 10/365, # Daily entomological inolculation rate
-	iH_eq = 0.45, # Equilibrium malaria prevalence in humans
-	NH_eq = 200, # Equilibrium human population size
-	bV = 0.15 # Probability of transmission from human to vector per infectious bite
-)
+# ## Model parameters:
+# theta <- list(
+# 	## Mosquito life cycle parameters:
+# 	beta = 21.19, # Number of eggs laid per day by female mosquito
+# 	muEL = 0.034, # Early larval instar daily mortality
+# 	muLL = 0.035, # Late larval instar daily mortality
+# 	muPL = 0.25, # Pupal daily mortality
+# 	durEL = 6.64, # Duration of early instar stage
+# 	durLL = 3.72, # Duration of late instar stage
+# 	durPL = 0.64, # Duration of pupal stage
+# 	durEV = 10, # Duration of latent period in mosquito (days)
+# 	gamma = 13.25, # Effect of density-dependence on late instars relative to early instars
+# 	tau1 = 0.68, # Time spent foraging for a blood meal at 0% ITN coverage
+# 	tau2 = 2.32, # Time spent resting and ovipositing by a mosquito
+# 
+# 	## Intervention parameters (variable):
+# 	ITNcov = 0.5, # ITN coverage
+# 	IRScov = 0.5, # IRS coverave
+# 	time_ITN_on = 1e3, # When ITNs are applied (days)
+# 	time_IRS_on = 1e3, # When IRS is applied (days)
+# 
+# 	## Species-specific parameters:
+# 	## An. gambiae:
+# 	muV = 1/7.6, # Adult mosquito daily mortality
+# 	Q0 = 0.92, # Human blood index
+# 	phiB = 0.89, # Proportion of bites on a person while they are in bed
+# 	phiI = 0.97, # Proportion of bites on a person while they are indoors
+# 	rITN = 0.56, # Probability of mosquito repeating a feeding attempt due to IRS
+# 	sITN = 0.03, # Probability of mosquito feeding and surviving in presence of ITNs
+# 	rIRS = 0.60, # Probability of mosquito repeating a feeding attempt due to IRS
+# 	sIRS = 0, # Probability of mosquito feeding and surviving in presence of IRS
+# 
+# 	## An. arabiensis:
+# 	# muV = 1/7.6, # Adult mosquito daily mortality
+# 	# Q0 = 0.71, # Human blood index
+# 	# phiB = 0.90, # Proportion of bites on a person while they are in bed
+# 	# phiI = 0.96, # Proportion of bites on a person while they are indoors
+# 	# rITN = 0.48, # Probability of mosquito repeating a feeding attempt due to IRS
+# 	# sITN = 0.39, # Probability of mosquito feeding and surviving in presence of ITNs
+# 	# rIRS = 0.60, # Probability of mosquito repeating a feeding attempt due to IRS
+# 	# sIRS = 0, # Probability of mosquito feeding and surviving in presence of IRS
+# 
+# 	## An. funestus:
+# 	# muV = 1/8.9, # Adult mosquito daily mortality
+# 	# Q0 = 0.94, # Human blood index
+# 	# phiB = 0.90, # Proportion of bites on a person while they are in bed
+# 	# phiI = 0.98, # Proportion of bites on a person while they are indoors
+# 	# rITN = 0.56, # Probability of mosquito repeating a feeding attempt due to IRS
+# 	# sITN = 0.03, # Probability of mosquito feeding and surviving in presence of ITNs
+# 	# rIRS = 0.63, # Probability of mosquito repeating a feeding attempt due to IRS
+# 	# sIRS = 0, # Probability of mosquito feeding and surviving in presence of IRS
+# 
+# 	## Additional transmission parameters:
+# 	f0 = 1/3, # Daily biting rate by mosquitoes on animals and humans
+# 	epsilon0 = 10/365, # Daily entomological inolculation rate
+# 	iH_eq = 0.45, # Equilibrium malaria prevalence in humans
+# 	NH_eq = 200, # Equilibrium human population size
+# 	bV = 0.15 # Probability of transmission from human to vector per infectious bite
+# )

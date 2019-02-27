@@ -27,6 +27,71 @@ source(here("mosquito_equilibria.R"))
 
 
 ###############################################################################
+# Parameters
+###############################################################################
+
+## Model parameters:
+theta <- list(
+  ## Mosquito life cycle parameters:
+  beta = 21.19, # Number of eggs laid per day by female mosquito
+  muEL = 0.034, # Early larval instar daily mortality
+  muLL = 0.035, # Late larval instar daily mortality
+  muPL = 0.25, # Pupal daily mortality
+  durEL = 6.64, # Duration of early instar stage
+  durLL = 3.72, # Duration of late instar stage
+  durPL = 0.64, # Duration of pupal stage
+  durEV = 10, # Duration of latent period in mosquito (days)
+  gamma = 13.25, # Effect of density-dependence on late instars relative to early instars
+  tau1 = 0.68, # Time spent foraging for a blood meal at 0% ITN coverage
+  tau2 = 2.32, # Time spent resting and ovipositing by a mosquito
+  
+  ## Intervention parameters (variable):
+  ITNcov = 0.5, # ITN coverage
+  IRScov = 0.25, # IRS coverave
+  time_ITN_on = 250, # When ITNs are applied (days)
+  time_IRS_on = 500, # When IRS is applied (days)
+  
+  ## Species-specific parameters:
+  ## An. gambiae:
+  muV = 1/7.6, # Adult mosquito daily mortality
+  Q0 = 0.92, # Human blood index
+  phiB = 0.89, # Proportion of bites on a person while they are in bed
+  phiI = 0.97, # Proportion of bites on a person while they are indoors
+  rITN = 0.56, # Probability of mosquito repeating a feeding attempt due to IRS
+  sITN = 0.03, # Probability of mosquito feeding and surviving in presence of ITNs
+  rIRS = 0.60, # Probability of mosquito repeating a feeding attempt due to IRS
+  sIRS = 0, # Probability of mosquito feeding and surviving in presence of IRS
+  
+  ## An. arabiensis:
+  # muV = 1/7.6, # Adult mosquito daily mortality
+  # Q0 = 0.71, # Human blood index
+  # phiB = 0.90, # Proportion of bites on a person while they are in bed
+  # phiI = 0.96, # Proportion of bites on a person while they are indoors
+  # rITN = 0.48, # Probability of mosquito repeating a feeding attempt due to IRS
+  # sITN = 0.39, # Probability of mosquito feeding and surviving in presence of ITNs
+  # rIRS = 0.60, # Probability of mosquito repeating a feeding attempt due to IRS
+  # sIRS = 0, # Probability of mosquito feeding and surviving in presence of IRS
+  
+  ## An. funestus:
+  # muV = 1/8.9, # Adult mosquito daily mortality
+  # Q0 = 0.94, # Human blood index
+  # phiB = 0.90, # Proportion of bites on a person while they are in bed
+  # phiI = 0.98, # Proportion of bites on a person while they are indoors
+  # rITN = 0.56, # Probability of mosquito repeating a feeding attempt due to IRS
+  # sITN = 0.03, # Probability of mosquito feeding and surviving in presence of ITNs
+  # rIRS = 0.63, # Probability of mosquito repeating a feeding attempt due to IRS
+  # sIRS = 0, # Probability of mosquito feeding and surviving in presence of IRS
+  
+  ## Additional transmission parameters:
+  f0 = 1/3, # Daily biting rate by mosquitoes on animals and humans
+  epsilon0 = 10/365, # Daily entomological inolculation rate
+  iH_eq = 0.45, # Equilibrium malaria prevalence in humans
+  NH_eq = 200, # Equilibrium human population size
+  bV = 0.15 # Probability of transmission from human to vector per infectious bite
+)
+
+
+###############################################################################
 # deterministic approximation
 ###############################################################################
 
@@ -66,12 +131,12 @@ node$SV <- SV_eq
 node$EV <- EV_eq
 node$IV <- IV_eq
 
-tmax <- 500
+tmax <- 1e3
 dt <- 1
 time <- seq(from=1,to=tmax,by=dt)
 
 # sampling grid
-sample_grid <- tsamp <- c(0,seq(from=10,to = tmax,by = 1))
+sample_grid <- tsamp <- c(0,seq(from=10,to = tmax,by = dt))
 sample_pop <- matrix(0,nrow=6,ncol=length(sample_grid),dimnames=list(c("EL","LL","PL","SV","EV","IV"),paste0(sample_grid)))
 
 sample_pop["EL",1] <- node$EL
@@ -125,7 +190,7 @@ node$IV <- IV_eq
 theta_eq$K <- eq_dt$K_eq
 
 # sampling grid
-sample_grid <- tsamp <- c(0,seq(from=10,to = tmax,by = 1))
+sample_grid <- tsamp <- c(0,seq(from=10,to = tmax,by = dt))
 sample_pop <- matrix(0,nrow=6,ncol=length(sample_grid),dimnames=list(c("EL","LL","PL","SV","EV","IV"),paste0(sample_grid)))
 
 sample_pop["EL",1] <- node$EL
@@ -204,7 +269,7 @@ theta_eq <- c(theta,K=K,lambdaV=lambdaV)
 
 # ensemble run parameters
 nruns <- 100
-tmax <- 500
+tmax <- 1e3
 dt <- 1
 time <- seq(from=1,to=tmax,by=dt)
 
@@ -373,6 +438,11 @@ mean_SV_dt <- rowMeans(sample_pop_dt["SV",,])
 mean_EV_dt <- rowMeans(sample_pop_dt["EV",,])
 mean_IV_dt <- rowMeans(sample_pop_dt["IV",,])
 
+traj_EV_dt <- melt(sample_pop_dt["EV",,])
+colnames(traj_EV_dt) <- c("time","run","count")
+traj_IV_dt <- melt(sample_pop_dt["IV",,])
+colnames(traj_IV_dt) <- c("time","run","count")
+
 quant_SV_dt <- apply(X = sample_pop_dt["SV",,],MARGIN = 1,FUN = function(x){
   quantile(x,probs = c(0.05,0.95))
 })
@@ -399,4 +469,12 @@ ggplot() +
   geom_ribbon(data=plot_datIV_dt,aes(x=time,ymin=IV_l,ymax=IV_h),alpha=0.35,fill="firebrick2") +
   ylab("Counts") +
   xlab("Time") +
+  theme_bw()
+
+# show individual trajectories
+ggplot() +
+  geom_line(data=plot_datEV_dt,aes(x=time,y=EV),color="dodgerblue2") +
+  geom_line(data=plot_datIV_dt,aes(x=time,y=IV),color="firebrick2") +
+  geom_line(data=traj_EV_dt,aes(x=time,y=count),color="dodgerblue2",alpha=0.25) +
+  geom_line(data=traj_IV_dt,aes(x=time,y=count),color="firebrick2",alpha=0.25) +
   theme_bw()
