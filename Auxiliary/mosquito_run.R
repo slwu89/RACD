@@ -44,13 +44,13 @@ theta <- list(
   gamma = 13.25, # Effect of density-dependence on late instars relative to early instars
   tau1 = 0.68, # Time spent foraging for a blood meal at 0% ITN coverage
   tau2 = 2.32, # Time spent resting and ovipositing by a mosquito
-  
+
   ## Intervention parameters (variable):
   ITNcov = 0.5, # ITN coverage
   IRScov = 0.25, # IRS coverave
   time_ITN_on = 250, # When ITNs are applied (days)
   time_IRS_on = 500, # When IRS is applied (days)
-  
+
   ## Species-specific parameters:
   ## An. gambiae:
   muV = 1/7.6, # Adult mosquito daily mortality
@@ -61,7 +61,7 @@ theta <- list(
   sITN = 0.03, # Probability of mosquito feeding and surviving in presence of ITNs
   rIRS = 0.60, # Probability of mosquito repeating a feeding attempt due to IRS
   sIRS = 0, # Probability of mosquito feeding and surviving in presence of IRS
-  
+
   ## An. arabiensis:
   # muV = 1/7.6, # Adult mosquito daily mortality
   # Q0 = 0.71, # Human blood index
@@ -71,7 +71,7 @@ theta <- list(
   # sITN = 0.39, # Probability of mosquito feeding and surviving in presence of ITNs
   # rIRS = 0.60, # Probability of mosquito repeating a feeding attempt due to IRS
   # sIRS = 0, # Probability of mosquito feeding and surviving in presence of IRS
-  
+
   ## An. funestus:
   # muV = 1/8.9, # Adult mosquito daily mortality
   # Q0 = 0.94, # Human blood index
@@ -81,7 +81,7 @@ theta <- list(
   # sITN = 0.03, # Probability of mosquito feeding and surviving in presence of ITNs
   # rIRS = 0.63, # Probability of mosquito repeating a feeding attempt due to IRS
   # sIRS = 0, # Probability of mosquito feeding and surviving in presence of IRS
-  
+
   ## Additional transmission parameters:
   f0 = 1/3, # Daily biting rate by mosquitoes on animals and humans
   epsilon0 = 10/365, # Daily entomological inolculation rate
