@@ -17,7 +17,7 @@
 
 #include <iostream>
 #include <vector>
-// #include <unordered_map>
+#include <unordered_map>
 
 #include <math.h>
 
@@ -27,7 +27,7 @@ class mosquito_habitat {
 public:
 
   /* constructor & destructor */
-  mosquito_habitat();
+  mosquito_habitat(const T EL_, const T LL_, const T PL_, const T SV_, const T EV_, const T IV_, const double K_, const Rcpp::List pars_, const Rcpp::List int_pars_);
   ~mosquito_habitat();
 
   /* delete all copy semantics */
@@ -39,7 +39,7 @@ public:
   mosquito_habitat& operator=(mosquito_habitat&&);
 
   /* simulation */
-  void euler_step(const double dt);
+  void euler_step(const double tnow, const double dt);
 
 private:
 
@@ -78,18 +78,40 @@ private:
   T   EV;
   T   IV;
 
+  /* carrying capacity */
   double K;
 
   /* parameters */
-  static std::unordered_map<std::string, double> pars;
+  std::unordered_map<std::string, double> pars;
 
-  /* intervention parameters */
+  /* intervention parameters (site-specific) */
+  std::unordered_map<std::string, double> int_pars;
 
 };
 
 /* constructor */
 template <typename T>
-mosquito_habitat<T>::mosquito_habitat() : {};
+mosquito_habitat<T>::mosquito_habitat(const T EL_, const T LL_, const T PL_, const T SV_, const T EV_, const T IV_, const double K_, const Rcpp::List pars_, const Rcpp::List int_pars_) :
+  EL_probs{0,0,0}, EL_transitions{0,0,0},
+  LL_probs{0,0,0}, LL_transitions{0,0,0},
+  PL_probs{0,0,0,0}, PL_transitions{0,0,0,0},
+  SV_probs{0,0,0}, SV_transitions{0,0,0},
+  EV_probs{0,0,0}, EV_transitions{0,0,0},
+  IV_probs{0,0}, IV_transitions{0,0},
+  EL(EL_), LL(LL_), PL(PL_), SV(SV_), EV(EV_), IV(IV_), K(K_)
+{
+  /* initialize biological parameters */
+  Rcpp::CharacterVector pars_names = pars_.names();
+  for(size_t i=0; i<pars_.length(); i++){
+    pars.emplace(Rcpp::as<std::string>(pars_names[i]), Rcpp::as<double>(pars_[i]));
+  }
+
+  /* initialize intervention parameters */
+  Rcpp::CharacterVector int_pars_names = int_pars_.names();
+  for(size_t i=0; i<int_pars_.length(); i++){
+    int_pars.emplace(Rcpp::as<std::string>(int_pars_names[i]), Rcpp::as<double>(int_pars_[i]));
+  }
+};
 
 /* destructor */
 template <typename T>
@@ -103,10 +125,9 @@ template <typename T> mosquito_habitat<T>&
 mosquito_habitat<T>::operator=(mosquito_habitat&& rhs) = default;
 
 
-
 /* stochastic Euler-step */
 template <>
-inline void mosquito_habitat::euler_step<int>(const double dt){
+inline void mosquito_habitat<int>::euler_step(const double tnow, const double dt){
 
   /* ########################################
   # INTERVENTION-DEPENDENT PARAMETERS
@@ -143,11 +164,50 @@ inline void mosquito_habitat::euler_step<int>(const double dt){
 
 /* deterministic Euler-step */
 template <>
-inline void mosquito_habitat::euler_step<int>(const double dt){
+inline void mosquito_habitat<double>::euler_step(const double tnow, const double dt){
 
   /* ########################################
   # INTERVENTION-DEPENDENT PARAMETERS
   ######################################## */
+
+  /* MOVE THESE TO PRE-SIMULATION CALCULATIONS IN PKG */
+  double delta = 1.0/(pars["tau1"]+pars["tau2"]); /* Inverse of gonotrophic cycle without ITNs/IRS */
+  double e_ov = pars["beta"]*(exp(pars["muV"]/delta)-1.0)/pars["muV"]; /* Number of eggs per oviposition per mosquito */
+
+  /* Derived parameters which depend on intervention status */
+  double ITNcov_t = 0.0;
+  if(tnow > int_pars["time_ITN_on"]){
+    ITNcov_t = int_pars["ITNcov"];
+  }
+  double IRScov_t = 0.0;
+  if(tnow > int_pars["time_IRS_on"]){
+    IRScov_t = int_pars["IRScov"];
+  }
+
+  /* zCom: Probability of a mosquito being repelled from an ITN or IRS-treated house */
+  double c0 = 1.0 - ITNcov_t - IRScov_t + ITNcov_t*IRScov_t;
+  double cITN = ITNcov_t - ITNcov_t*IRScov_t;
+  double cIRS = IRScov_t - ITNcov_t*IRScov_t;
+  double cCom = ITNcov_t*IRScov_t;
+  double rCom = pars["rIRS"] + (1.0-pars["rIRS"])*pars["rITN"];
+  double sCom = (1.0-pars["rIRS"])*pars["sITN"]*pars["sIRS"];
+  double zCom = pars["Q0"]*cITN*pars["phiB"]*pars["rITN"] + pars["Q0"]*cIRS*pars["phiI"]*pars["rIRS"] + pars["Q0"]*cCom*(pars["phiI"]-pars["phiB"])*pars["rIRS"] + pars["Q0"]*cCom*pars["phiB"]*rCom;
+
+  /* deltaCom: Inverse of gonotrophic cycle length with ITNs & IRS */
+  double deltaCom = 1.0/(pars["tau1"]/(1-zCom) + pars["tau2"]);
+
+  /* wCom: Probability that a surviving mosquito succeeds in feeding during a single attempt */
+  double wCom = 1.0 - pars["Q0"] + pars["Q0"]*c0 + pars["Q0"]*cITN*(1.0-pars["phiB"]+pars["phiB"]*pars["sITN"]) + pars["Q0"]*cIRS*(1.0-pars["phiI"]+pars["phiI"]*pars["sIRS"]) + pars["Q0"]*cCom*((pars["phiI"]-pars["phiB"])*pars["sIRS"] + 1.0-pars["phiI"] + pars["phiB"]*sCom);
+
+  /* muVCom: Female mosquito death rate in presence of ITNs & IRS */
+  double p10 = exp(-pars["muV"]*pars["tau1"]);
+  double p1Com = p10*wCom/(1.0 - zCom*p10);
+  double p2 = exp(-pars["muV"]*pars["tau2"]);
+  double pCom = pow(p1Com*p2,deltaCom);
+  double muVCom = -log(pCom);
+
+  /* betaCom: Eggs laid per day by female mosquitoes in presence of ITNs & IRS */
+  double betaCom = e_ov*muVCom/(exp(muVCom/deltaCom) - 1.0);
 
   /* ########################################
   # EARLY-STAGE LARVAL INSTARS (EL)
@@ -158,8 +218,8 @@ inline void mosquito_habitat::euler_step<int>(const double dt){
   EL_new = (betaCom * NV * dt);
 
   /* instantaneous hazards for EL */
-  double haz_EL_mort <- pars["muEL"]*(1 + ((EL+LL)/K));
-  double haz_EL_2LL <- 1.0 / pars["durEL"];
+  double haz_EL_mort = pars["muEL"]*(1 + ((EL+LL)/K));
+  double haz_EL_2LL = 1.0 / pars["durEL"];
 
   /* jump probabilities */
   EL_probs[0] = exp(-(haz_EL_mort + haz_EL_2LL)*dt);
@@ -186,48 +246,90 @@ inline void mosquito_habitat::euler_step<int>(const double dt){
 
   /* jump sizes */
   LL_transitions[0] = LL * LL_probs[0];
-  LL_transitions[1] = LL * LL_probs[]1;
-  LL_transitions[2] = LL * LL_probs[]2;
+  LL_transitions[1] = LL * LL_probs[1];
+  LL_transitions[2] = LL * LL_probs[2];
 
   /* ########################################
-  # INTERVENTION-DEPENDENT PARAMETERS
+  # PUPAE (PL)
   ######################################## */
 
-  /* ########################################
-  # INTERVENTION-DEPENDENT PARAMETERS
-  ######################################## */
+  /* instantaneous hazards for PL */
+  double haz_PL_mort = pars["muPL"];
+  double haz_PL_2SV_F = (1/pars["durPL"])*0.5;
+  double haz_PL_2SV_M = (1/pars["durPL"])*0.5;
+
+  /* jump probabilities */
+  PL_probs[0] = exp(-(haz_PL_mort + haz_PL_2SV_F + haz_PL_2SV_M)*dt);
+  PL_probs[1] = (1 - PL_probs[0])*(haz_PL_mort / (haz_PL_mort + haz_PL_2SV_F + haz_PL_2SV_M)); /* death */
+  PL_probs[2] = (1 - PL_probs[0])*(haz_PL_2SV_F / (haz_PL_mort + haz_PL_2SV_F + haz_PL_2SV_M)); /* to susceptible female */
+  PL_probs[3] = (1 - PL_probs[0])*(haz_PL_2SV_M / (haz_PL_mort + haz_PL_2SV_F + haz_PL_2SV_M)); /* to susceptible males */
+
+  /* jump sizes */
+  PL_transitions[0] = PL * PL_probs[0];
+  PL_transitions[1] = PL * PL_probs[1];
+  PL_transitions[2] = PL * PL_probs[2];
+  PL_transitions[3] = PL * PL_probs[3];
 
   /* ########################################
-  # INTERVENTION-DEPENDENT PARAMETERS
+  # SUSCEPTIBLE VECTORS (SV)
   ######################################## */
 
+  /* instantaneous hazards for SV */
+  double haz_SV_mort =  muVCom;
+  double haz_SV_inf = pars["lambdaV"];
+
+  /* jump probabilities */
+  SV_probs[0] = exp(-(haz_SV_mort + haz_SV_inf)*dt);
+  SV_probs[1] = (1 - SV_probs[0])*(haz_SV_mort / (haz_SV_mort + haz_SV_inf)); /* death */
+  SV_probs[2] = (1 - SV_probs[0])*(haz_SV_inf / (haz_SV_mort + haz_SV_inf)); /* to incubating */
+
+  /* jump sizes */
+  SV_transitions[0] = SV * SV_probs[0];
+  SV_transitions[1] = SV * SV_probs[1];
+  SV_transitions[2] = SV * SV_probs[2];
+
   /* ########################################
-  # INTERVENTION-DEPENDENT PARAMETERS
+  # INCUBATING VECTORS (EV)
   ######################################## */
+
+  /* instantaneous hazards for EV */
+  double haz_EV_mort =  muVCom;
+  double haz_EV_inc = 1/pars["durEV"];
+
+  /* jump probabilities */
+  EV_probs[0] = exp(-(haz_EV_mort + haz_EV_inc)*dt);
+  EV_probs[1] = (1 - EV_probs[0])*(haz_EV_mort / (haz_EV_mort + haz_EV_inc)); /* death */
+  EV_probs[2] = (1 - EV_probs[0])*(haz_EV_inc / (haz_EV_mort + haz_EV_inc)); /* to infectious */
+
+  /* jump sizes */
+  EV_transitions[0] = EV * EV_probs[0];
+  EV_transitions[1] = EV * EV_probs[1];
+  EV_transitions[2] = EV * EV_probs[2];
+
+  /* ########################################
+  # INFECTIOUS VECTORS (IV)
+  ######################################## */
+
+  /* instantaneous hazards for IV */
+  double haz_IV_mort = muVCom;
+
+  /* jump probabilities */
+  IV_probs[0] = exp(-haz_IV_mort*dt);
+  IV_probs[1] = (1 - IV_probs[0]);
+
+  /* jump sizes */
+  IV_transitions[0] = IV * IV_probs[0];
+  IV_transitions[1] = IV * IV_probs[1];
+
+  /* ########################################
+  # UPDATE POPULATION
+  ######################################## */
+
+  EL = EL_transitions[0] + EL_new;
+  LL = LL_transitions[0] + EL_transitions[2];
+  PL = PL_transitions[0] + LL_transitions[2];
+  SV = SV_transitions[0] + PL_transitions[2];
+  EV = EV_transitions[0] + SV_transitions[2];
+  IV = IV_transitions[0] + EV_transitions[2];
 
 };
-
-
-
-
-// template <typename T>
-// class summary_base {
-// public:
-//   summary_base();               /* constructor */
-//   virtual ~summary_base() = 0;  /* pure virtual destructor */
-//
-//   /*
-//    * all summary classes must return a SEXP upon request (when the simulation is done)
-//    * that will be returned to R
-//    * (child classes inherit 'interface-only')
-//    */
-//   virtual SEXP output() = 0;
-//
-//   /* delete all copy semantics */
-//   summary_base(const summary_base&) = delete;
-//   summary_base& operator=(const summary_base&) = delete;
-//
-//   /* default move semantics */
-//   summary_base(summary_base&&);
-//   summary_base& operator=(summary_base&&);
-// };
