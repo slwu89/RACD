@@ -12,6 +12,7 @@
 */
 
 #include "RACD-PRNG.hpp"
+#include <algorithm>
 
 /* constructor & destructor */
 prng::prng(const uint_least32_t seed) : rng(seed) {
@@ -52,6 +53,58 @@ int prng::get_rbinom(const int& n, const double& p){
   std::binomial_distribution<int>rbinom(n,p);
   return rbinom(rng);
 };
+
+/* multinomial (from: arXiv:1611.00532) */
+void prng::get_rmultinom(int size, const std::vector<double>& prob, std::vector<int>& out, double switchover){
+
+  /* zero out input before filling */
+  std::fill(out.begin(), out.end(), 0);
+
+  double pprob(0.0);
+  double cprob(0.0);
+  unsigned int pidx(0);
+  while(size > 0)
+  {
+    pprob += prob[pidx];
+    while(((pprob - cprob) * size / (1.0 - cprob)) < switchover)
+    {
+      cprob += get_beta_1_b(size) * (1.0 - cprob);
+      while(pprob < cprob)
+        pprob += prob[++pidx];
+      if(out.size() == pidx)
+        out[pidx] = 1;
+      else
+        out[pidx] += 1;
+      size--;
+      if(size == 0)
+        break;
+    }
+    if(size == 0)
+      break;
+    double p = (pprob-cprob)/(1.0-cprob);
+    int nrtaken(0);
+    if(p >= 1.){
+      nrtaken = size;
+    } else {
+      if(p > 0.){
+        std::binomial_distribution<int> rbinom(size, p);
+        nrtaken = rbinom(rng);
+      }
+    }
+    if(nrtaken > 0)
+    {
+      if(out.size() == pidx)
+        out[pidx] = nrtaken;
+      else
+        out[pidx] += nrtaken;
+    }
+    size -= nrtaken;
+    pidx++;
+    cprob = pprob;
+  }
+
+};
+
 
 /* resample template type T x 'size' times */
 template<typename T>

@@ -45,10 +45,14 @@ public:
   double                                 get_runif();
   double                                 get_rexp(const double& rate);
   double                                 get_rlnorm(const double& meanlog, const double& sdlog);
+  double                                 get_beta_1_b(const double b){return 1.0 - pow(runif(rng), 1.0/b);};
 
   /* discrete random variate sampling */
   int                                    get_rpois(const double& lambda);
   int                                    get_rbinom(const int& n, const double& p);
+
+  /* multivariate discrete sampling */
+  void                                  get_rmultinom(int size, const std::vector<double>& prob, std::vector<int>& out, double switchover = 1.0);
 
   /* resample template type T x 'size' times */
   template<typename T>
