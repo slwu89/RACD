@@ -572,6 +572,8 @@ mean_SV_cpp <- rowMeans(sample_pop_cpp[,"SV",])
 mean_EV_cpp <- rowMeans(sample_pop_cpp[,"EV",])
 mean_IV_cpp <- rowMeans(sample_pop_cpp[,"IV",])
 
+traj_SV_cpp <- melt(sample_pop_cpp[,"SV",])
+colnames(traj_SV_cpp) <- c("time","run","count")
 traj_EV_cpp <- melt(sample_pop_cpp[,"EV",])
 colnames(traj_EV_cpp) <- c("time","run","count")
 traj_IV_cpp <- melt(sample_pop_cpp[,"IV",])
@@ -606,8 +608,9 @@ ggplot() +
   theme_bw()
 
 ggplot() +
-  geom_line(data=traj_EV_dt,aes(x=time,y=count),color="dodgerblue2",alpha=0.25) +
-  geom_line(data=traj_IV_dt,aes(x=time,y=count),color="firebrick2",alpha=0.25) +
-  geom_line(data=traj_EV_cpp,aes(x=time,y=count),linetype=2,color="dodgerblue4",alpha=0.25) +
-  geom_line(data=traj_IV_cpp,aes(x=time,y=count),linetype=2,color="firebrick4",alpha=0.25) +
+  # geom_line(data=traj_EV_dt,aes(x=time,y=count),color="dodgerblue2",alpha=0.25) +
+  # geom_line(data=traj_IV_dt,aes(x=time,y=count),color="firebrick2",alpha=0.25) +
+  geom_line(data=traj_SV_cpp,aes(x=time,y=count,group=run),linetype=1,color="mediumpurple3",alpha=0.1) +
+  geom_line(data=traj_EV_cpp,aes(x=time,y=count,group=run),linetype=1,color="dodgerblue4",alpha=0.1) +
+  geom_line(data=traj_IV_cpp,aes(x=time,y=count,group=run),linetype=1,color="firebrick4",alpha=0.1) +
   theme_bw()
