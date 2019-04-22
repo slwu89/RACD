@@ -29,6 +29,12 @@ make_node <- function(){
   node$PL_transitions <- rep(0,4)
   node$PL_transitions <- setNames(node$PL_transitions,c("PL","D","SV_F","SV_M"))
 
+  # probabilities & transitions for males
+  node$NM_probs <- rep(0,2)
+  node$NM_probs <- setNames(node$NM_probs,c("NM","D"))
+  node$NM_transitions <- rep(0,2)
+  node$NM_transitions <- setNames(node$NM_transitions,c("NM","D"))
+
   # probabilities & transitions for susceptible vectors
   node$SV_probs <- rep(0,3)
   node$SV_probs <- setNames(node$SV_probs,c("SV","D","EV"))
@@ -51,6 +57,7 @@ make_node <- function(){
   node$EL <- 0
   node$LL <- 0
   node$PL <- 0
+  node$NM <- 0
   node$SV <- 0
   node$EV <- 0
   node$IV <- 0
@@ -170,6 +177,21 @@ euler_step <- function(node,pars,tnow,dt){
     node$PL_transitions[["SV_M"]] <- node$PL * node$PL_probs[["SV_M"]]
 
     ########################################
+    # MALES (NM)
+    ########################################
+
+    # instantaneous hazards for NM
+    haz_NM_mort <- muV
+
+    # jump probabilities
+    node$NM_probs[["NM"]] <- exp(-haz_NM_mort*dt)
+    node$NM_probs[["D"]] <- (1 - node$NM_probs[["NM"]])
+
+    # jump sizes
+    node$NM_transitions[["NM"]] <- node$NM * node$NM_probs[["NM"]]
+    node$NM_transitions[["D"]] <- node$NM * node$NM_probs[["D"]]
+
+    ########################################
     # SUSCEPTIBLE VECTORS (SV)
     ########################################
 
@@ -227,6 +249,7 @@ euler_step <- function(node,pars,tnow,dt){
     node$EL <- node$EL_transitions[["EL"]] + node$EL_new
     node$LL <- node$LL_transitions[["LL"]] + node$EL_transitions[["LL"]]
     node$PL <- node$PL_transitions[["PL"]] + node$LL_transitions[["PL"]]
+    node$NM <- node$NM_transitions[["NM"]] + node$PL_transitions[["SV_M"]]
     node$SV <- node$SV_transitions[["SV"]] + node$PL_transitions[["SV_F"]]
     node$EV <- node$EV_transitions[["EV"]] + node$SV_transitions[["EV"]]
     node$IV <- node$IV_transitions[["IV"]] + node$EV_transitions[["IV"]]
