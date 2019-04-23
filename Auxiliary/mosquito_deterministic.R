@@ -120,11 +120,16 @@ euler_step <- function(node,pars,tnow,dt){
     betaCom <- e_ov*muVCom/(exp(muVCom/deltaCom) - 1)
     
     
-    # table s2.2
-    w_IRS <- (1 - phiI) + (phiI*(1 - rIRS)*sIRS)
-    w_ITN <- (1 - phiB) + (phiB*sITN)
-    w_Com <- (1 - phiI) + (phiB*(1 - rIRS)*sITN*sIRS) + ((phiI - phiB)*(1 - rIRS)*sIRS)
-    W_Com <- (1 - Q0) + (Q0*c0) + (Q0*cITN*w_ITN) + (Q0*cIRS*w_IRS) + (Q0*cCom*w_Com)
+    # # table s2.2
+    # w_IRS <- (1 - phiI) + (phiI*(1 - rIRS)*sIRS)
+    # w_ITN <- (1 - phiB) + (phiB*sITN)
+    # w_Com <- (1 - phiI) + (phiB*(1 - rIRS)*sITN*sIRS) + ((phiI - phiB)*(1 - rIRS)*sIRS)
+    # W_Com <- (1 - Q0) + (Q0*c0) + (Q0*cITN*w_ITN) + (Q0*cIRS*w_IRS) + (Q0*cCom*w_Com)
+    # 
+    # z_IRS <- phiI*rIRS
+    # z_ITN <- phiB*rITN
+    # z_Com <- phiB*(1-rIRS)*rITN + phiI*rIRS
+    # Z_Com <- Q0*(cIRS*z_IRS + cITN*z_ITN + cCom*z_Com)
 
     ########################################
     # EARLY-STAGE LARVAL INSTARS (EL)

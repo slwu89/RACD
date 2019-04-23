@@ -43,7 +43,7 @@ public:
   mosquito_habitat& operator=(mosquito_habitat&&);
 
   /* simulation */
-  void EIR();
+  void feeding_cycle();
   void euler_step(const double tnow, const double dt);
 
   /* accessors */

@@ -63,6 +63,8 @@ public:
   /* one simulation run */
   // void                                      simulation(const int tMax);
 
+  int                                       get_tNow(){return tNow;}
+
   /* daily simulation */
   void                                      one_day();
 

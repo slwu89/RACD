@@ -37,6 +37,7 @@ human::human(const int humanID_,
         IB(IB_), ID(ID_), ICA(ICA_), ICM(ICM_),
         bitingHet(bitingHet_), epsilon(epsilon_), lambda(lambda_), phi(phi_),
         prDetectAMic(prDetectAMic_), prDetectAPCR(prDetectAPCR_), prDetectUPCR(prDetectUPCR_),
+        ITN(false), ITNoff(2E16),
         house_ptr(house_ptr_)
 {
 
@@ -82,6 +83,9 @@ void human::one_day(const int tNow){
   mortality(tNow);
 
   if(alive){
+
+    /* update effectiveness of interventions */
+    update_intervention(tNow);
 
     /* compartment transitions */
     compartment_funs.at(state)(tNow);
@@ -465,3 +469,19 @@ void human::infectiousness_U(){
 void human::infectiousness_P(){
   c = 0;
 };
+
+
+/* ################################################################################
+#   Interventions
+################################################################################ */
+
+void human::update_intervention(const int tNow){
+  if(ITN && tNow > ITNoff){
+    ITN = false;
+  }
+}
+
+void human::apply_ITN(){
+  ITN = true;
+  ITNoff = R::rexp(house_ptr->village_ptr->param_ptr->at("ITNduration"));
+}

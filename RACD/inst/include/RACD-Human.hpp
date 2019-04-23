@@ -66,6 +66,17 @@ public:
   /* daily simulation */
   void                            one_day(const int tNow);
 
+  /* mosquito encounter probabilities */
+  double                          get_w(); /* P(successful feeding) */
+  double                          get_y(); /* P(biting) */
+  double                          get_z(); /* P(repelled) */
+
+  /* interventions */
+  void                            update_intervention(const int tNow);
+
+  void                            apply_ITN();
+  bool                            has_ITN(){return ITN;};
+
 private:
 
   /* hash table of pointers to member functions */
@@ -118,6 +129,10 @@ private:
   double                          prDetectAMic; /* q: probability of asymptomatic infection detected by microscopy */
   double                          prDetectAPCR; /* probability of detection by PCR for A (patent) asymptomatic */
   double                          prDetectUPCR; /* probability of detection by PCR for U (subpatent) asymptomatic */
+
+  /* interventions */
+  bool                            ITN;
+  double                          ITNoff;
 
   house*                          house_ptr; /* raw pointer ok because house lifespan > human lifespan in memory */
 };

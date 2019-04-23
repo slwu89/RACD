@@ -3,7 +3,7 @@ stochastic simulation of reactive case detection for p. falciparum
 
 * RACD is an R package that implements the individual based model in C++11/14 (requires C++11/14 compatible compiler). It can be installed from github with `devtools::install_github(repo = "slwu89/RACD",subdir = "RACD")`
 
-We are currently working to extend the RACD package to include mosquito dynamics (a standalone mosquito simulator can be found in Auxiliary folder). 
+We are currently working to extend the RACD package to include mosquito dynamics (a standalone mosquito simulator can be found in Auxiliary folder).
 
 ## RACD Work Queue (from JM)
 1. Calculate mosquito population size required to generate required EIR - DONE
@@ -21,3 +21,18 @@ We are currently working to extend the RACD package to include mosquito dynamics
   * https://www.ncbi.nlm.nih.gov/pubmed/20711482/
 * Vector Model:
   * https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-4-153
+
+## RACD Parameters
+
+New and changed parameters from initial version of model
+
+### Main simulation
+
+  * IRSduration: IRS works until it doesn't (has eff=1 until an exp RV w/lambda=1/IRSduration turns it off)
+  * ITNduration: same
+
+### Entomological
+
+## Possible Optimizations
+
+for humans: compartment_funs, infectiousness_funs should be static class members initialized once for all people

@@ -43,10 +43,11 @@ mosquito_habitat::~mosquito_habitat(){};
 
 
 /* ################################################################################
- * send out bites to houses (EIR)
+ * feeding_cycle: calculate all M->H and H->M relevant quantities (EIR,FOI,etc)
+ * and account for dependence on interventions in entomological parameters
 ################################################################################ */
 
-void mosquito_habitat::EIR(){
+void mosquito_habitat::feeding_cycle(){
 
   double inf_bites = HBR*IV; /* total num. of infectious bites */
 

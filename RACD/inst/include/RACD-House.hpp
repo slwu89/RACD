@@ -57,6 +57,9 @@ public:
   double                                    get_EIR(){return EIR;};
   void                                      set_EIR(const double e){ EIR = e;};
 
+  bool                                      has_IRS();
+  void                                      apply_IRS();
+
   village* const                            village_ptr; /* raw pointer ok because village lifespan > house lifespan */
 
 private:
@@ -65,7 +68,11 @@ private:
   double                                    psi; /* relative risk */
   double                                    EIR; /* the total EIR at this house */
 
+  bool                                      IRS; /* does this house have IRS */
+  double                                    IRSoff;
+
   human_vector                              humans; /* people here */
+  std::vector<double>                       pi; /* biting weight on humans */
 };
 
 #endif
