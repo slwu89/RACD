@@ -119,8 +119,8 @@
 //
 //   /* parameters */
 //   double epsilon = epsilon0*zeta*(1 - rho*exp(-time/a0))*psi; /*EIR at age a*/
-//   // double b = b0*(b1 + ((1-b1)/(1 + std::pow((y[0]/IB0),kappaB)))); /*mosquito to human transmission efficiency*/
-//   double lambda = epsilon*b0*(b1 + ((1.0-b1)/(1.0 + std::pow((IB/IB0),kappaB)))); /*force of infection at age a*/
+//   // double b = b0*(b1 + ((1-b1)/(1 + pow((y[0]/IB0),kappaB)))); /*mosquito to human transmission efficiency*/
+//   double lambda = epsilon*b0*(b1 + ((1.0-b1)/(1.0 + pow((IB/IB0),kappaB)))); /*force of infection at age a*/
 //
 //   ydot[0] = epsilon/(epsilon*uB + 1.0) - IB/durB;
 //   ydot[1] = lambda/(lambda*uD + 1.0) - ID/durD;

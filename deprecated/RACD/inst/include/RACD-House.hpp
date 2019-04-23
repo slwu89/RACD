@@ -41,7 +41,7 @@ class house {
 public:
 
   /* constructor */
-  house(const int houseID_, const double psi_, village* const village_ptr_);
+  house(const int houseID_, const double psi_, const double x_, const double y_, village* village_ptr_);
 
   /* destructor */
   ~house();
@@ -53,17 +53,18 @@ public:
   int                                       get_houseID(){ return houseID; };
   double                                    get_psi(){ return psi; };
   human_vector&                             get_humans(){ return humans; };
+  double                                    get_x(){ return x; };
+  double                                    get_y(){ return y; };
 
-  double                                    get_EIR(){return EIR;};
-  void                                      set_EIR(const double e){ EIR = e;};
-
-  village* const                            village_ptr; /* raw pointer ok because village lifespan > house lifespan */
+  village*                                  village_ptr; /* raw pointer ok because village lifespan > house lifespan */
 
 private:
 
   int                                       houseID; /* ID */
   double                                    psi; /* relative risk */
-  double                                    EIR; /* the total EIR at this house */
+
+  double                                    x; /* longitude */
+  double                                    y; /* latitude */
 
   human_vector                              humans; /* people here */
 };

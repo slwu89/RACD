@@ -19,7 +19,9 @@
 #include "RACD-Village.hpp"
 #include "RACD-House.hpp"
 #include "RACD-Human.hpp"
-#include "RACD-Mosquito.hpp"
+#include "RACD-Parameters.hpp"
+#include "RACD-PRNG.hpp"
+#include "RACD-Logger.hpp"
 
 
 /* iterative mean: Knuth, The Art of Computer Programming Vol 2, section 4.2.2 */
@@ -39,27 +41,62 @@ inline double iter_mean(const std::vector<double>& array){
 ###################################################################### */
 
 /* constructor */
-village::village(const Rcpp::List& theta, const Rcpp::IntegerVector& mosy, const Rcpp::List& mosy_theta) :
+village::village(const uint_least32_t seed, const Rcpp::NumericVector& theta) :
+
+  /* initialize utility classes */
+  prng_ptr(std::make_unique<prng>(seed)),
+  logger_ptr(std::make_unique<logger>()),
+  param_ptr(std::make_unique<parameters>(
+    Rcpp::as<double>(theta["epsilon0"]),
+    Rcpp::as<double>(theta["fT"]),
+    Rcpp::as<int>(theta["dE"]),
+    Rcpp::as<int>(theta["dT"]),
+    Rcpp::as<int>(theta["dD"]),
+    Rcpp::as<int>(theta["dA"]),
+    Rcpp::as<int>(theta["dU"]),
+    Rcpp::as<int>(theta["dP"]),
+    Rcpp::as<double>(theta["cD"]),
+    Rcpp::as<double>(theta["cT"]),
+    Rcpp::as<double>(theta["cU"]),
+    Rcpp::as<double>(theta["gammaI"]),
+    Rcpp::as<double>(theta["rho"]),
+    Rcpp::as<double>(theta["a0"]),
+    Rcpp::as<double>(theta["sigma2"]),
+    Rcpp::as<double>(theta["d1"]),
+    Rcpp::as<double>(theta["dID"]),
+    Rcpp::as<double>(theta["ID0"]),
+    Rcpp::as<double>(theta["kappaD"]),
+    Rcpp::as<double>(theta["uD"]),
+    Rcpp::as<double>(theta["aD"]),
+    Rcpp::as<double>(theta["fD0"]),
+    Rcpp::as<double>(theta["gammaD"]),
+    Rcpp::as<double>(theta["alphaA"]),
+    Rcpp::as<double>(theta["alphaU"]),
+    Rcpp::as<double>(theta["b0"]),
+    Rcpp::as<double>(theta["b1"]),
+    Rcpp::as<double>(theta["dB"]),
+    Rcpp::as<double>(theta["IB0"]),
+    Rcpp::as<double>(theta["kappaB"]),
+    Rcpp::as<double>(theta["uB"]),
+    Rcpp::as<double>(theta["phi0"]),
+    Rcpp::as<double>(theta["phi1"]),
+    Rcpp::as<double>(theta["dC"]),
+    Rcpp::as<double>(theta["IC0"]),
+    Rcpp::as<double>(theta["kappaC"]),
+    Rcpp::as<double>(theta["uC"]),
+    Rcpp::as<double>(theta["PM"]),
+    Rcpp::as<double>(theta["dM"]),
+    Rcpp::as<double>(theta["rW"]),
+    Rcpp::as<double>(theta["rP"]),
+    Rcpp::as<double>(theta["meanAge"]),
+    Rcpp::as<int>(theta["N"]))
+  ),
 
   /* initialize data members */
-  mosquito(std::make_unique<mosquito_habitat>(Rcpp::as<int>(mosy["EL"]),
-                                              Rcpp::as<int>(mosy["LL"]),
-                                              Rcpp::as<int>(mosy["PL"]),
-                                              Rcpp::as<int>(mosy["SV"]),
-                                              Rcpp::as<int>(mosy["EV"]),
-                                              Rcpp::as<int>(mosy["IV"]),
-                                              Rcpp::as<double>(mosy["K"]),
-                                              mosy_theta)),
   tNow(0),
+  run_id(1),
   max_humanID(0)
 {
-
-  /* initialize parameters */
-  Rcpp::CharacterVector theta_names = theta.names();
-  for(size_t i=0; i<theta.length(); i++){
-    param_ptr->emplace(Rcpp::as<std::string>(theta_names[i]), Rcpp::as<double>(theta[i]));
-  }
-
   #ifdef DEBUG_RACD
   std::cout << "village ctor being called at " << this << std::endl;
   #endif
@@ -87,6 +124,8 @@ void village::initialize(const Rcpp::List &humansR, const Rcpp::List &housesR){
     houses.emplace_back(std::make_unique<house>(
       int(i),
       Rcpp::as<double>(Rcpp::as<Rcpp::List>(housesR[i])["psi"]),
+      Rcpp::as<double>(Rcpp::as<Rcpp::List>(housesR[i])["x"]),
+      Rcpp::as<double>(Rcpp::as<Rcpp::List>(housesR[i])["y"]),
       this
     ));
   }
@@ -99,6 +138,9 @@ void village::initialize(const Rcpp::List &humansR, const Rcpp::List &housesR){
     int id = max_humanID;
     double age = Rcpp::as<double>(Rcpp::as<Rcpp::List>(humansR[i])["age"]);
     std::string state = Rcpp::as<std::string>(Rcpp::as<Rcpp::List>(humansR[i])["state"]);
+
+    /* log human's initial state */
+    logger_ptr->get_log() << std::to_string(id) << "," << state << ",0," << std::to_string(age) << "\n";
 
     /* put them in their house */
     houses[house]->add_human(std::make_unique<human>(
@@ -134,25 +176,25 @@ void village::initialize(const Rcpp::List &humansR, const Rcpp::List &housesR){
  # Simulation methods
 ###################################################################### */
 
-// /* one simulation run */
-// void village::simulation(const int tMax){
-//
-//   Progress pb(tMax,true);
-//
-//   /* run simulation */
-//   while(tNow < tMax){
-//
-//     if(tNow % 10 == 0){
-//       Rcpp::checkUserInterrupt();
-//     }
-//
-//     one_day();
-//     pb.increment();
-//
-//     tNow++;
-//   }
-//
-// };
+/* one simulation run */
+void village::simulation(const int tMax){
+
+  Progress pb(tMax,true);
+
+  /* run simulation */
+  while(tNow < tMax){
+
+    if(tNow % 20 == 0){
+      Rcpp::checkUserInterrupt();
+    }
+
+    one_day();
+    pb.increment();
+
+    tNow++;
+  }
+
+};
 
 
 /* daily simulation */
@@ -182,24 +224,28 @@ void village::births(){
   }
 
   /* number of births */
-  double mu = param_ptr->at("mu");
-  int numNewBirths = R::rbinom(N,mu);
+  double mu = param_ptr->get_mu();
+  int numNewBirths = prng_ptr->get_rbinom(N,mu);
 
   if(numNewBirths>0){
 
     /* ICM for newborns is function of ICA levels of 18-22 yr old women */
     double meanICA18_22 = 0.0;
     int t = 1;
+    // std::vector<double> ICA18_22;
     for(auto &hh : houses){
       for(auto &h : hh->get_humans()){
         double age = h->get_age();
         if(age >= 18 && age < 22){
+          // ICA18_22.push_back(h->get_ICA());
           /* iterative mean: Knuth, The Art of Computer Programming Vol 2, section 4.2.2 */
           meanICA18_22 += (h->get_ICA() - meanICA18_22) / t;
           ++t;
         }
       }
     }
+
+    // double meanICA18_22 = iter_mean(ICA18_22);
 
     /* assign newborns to smallest houses */
     for(size_t i=0; i<numNewBirths; i++){
@@ -213,35 +259,38 @@ void village::births(){
       size_t hh_ix = std::distance(hhSize.begin(), it);
 
       /* fixed parameters */
-      double sigma2 = param_ptr->at("sigma2");
-      double PM = param_ptr->at("PM");
-      double epsilon0 = param_ptr->at("epsilon0");
-      double rho = param_ptr->at("rho");
+      double sigma2 = param_ptr->get_sigma2();
+      double PM = param_ptr->get_PM();
+      double epsilon0 = param_ptr->get_epsilon0();
+      double rho = param_ptr->get_rho();
       double psi = houses[hh_ix]->get_psi();
-      double b0 = param_ptr->at("b0");
-      double phi0 = param_ptr->at("phi0");
-      double phi1 = param_ptr->at("phi1");
-      double IC0 = param_ptr->at("IC0");
-      double kappaC = param_ptr->at("kappaC");
+      double b0 = param_ptr->get_b0();
+      double phi0 = param_ptr->get_phi0();
+      double phi1 = param_ptr->get_phi1();
+      double IC0 = param_ptr->get_IC0();
+      double kappaC = param_ptr->get_kappaC();
 
       /* human i's parameters */
       int humanID = max_humanID;
       double age = 0;
       bool alive = 1;
       /* house in hh_ix */
-      double bitingHet = R::rlnorm(-sigma2/2,sqrt(sigma2));
+      double bitingHet = prng_ptr->get_rlnorm(-sigma2/2,sqrt(sigma2));
       double IB = 0;
       double ID = 0;
       double ICA = 0;
       double ICM = PM * meanICA18_22;
       double epsilon = epsilon0 * bitingHet * (1-rho) * psi;
       double lambda = epsilon * b0;
-      double phi = phi0 * (phi1 + ((1 - phi1)/(1 + std::pow((PM*meanICA18_22/IC0),kappaC))));
+      double phi = phi0 * (phi1 + ((1 - phi1)/(1 + pow((PM*meanICA18_22/IC0),kappaC))));
       double prDetectAMic = 1;
       double prDetectAPCR = 1;
       double prDetectUPCR = 1;
       std::string state = "S";
       int daysLatent = 0;
+
+      /* logging */
+      logger_ptr->get_log() << std::to_string(humanID) << ",Birth," << std::to_string(tNow) << "," + std::to_string(age) << "\n";
 
       /* add human i to their house */
       houses[hh_ix]->add_human(std::make_unique<human>(humanID,age,alive,state,daysLatent,IB,ID,ICA,ICM,bitingHet,epsilon,lambda,phi,prDetectAMic,prDetectAPCR,prDetectUPCR,houses[hh_ix].get()));

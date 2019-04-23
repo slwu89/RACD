@@ -18,10 +18,12 @@
 #include <Rcpp.h>
 
 /* RACD includes */
+#include "RACD-Parameters.hpp"
+#include "RACD-PRNG.hpp"
 #include "RACD-Human.hpp"
 #include "RACD-House.hpp"
 #include "RACD-Village.hpp"
-#include "RACD-Mosquito.hpp"
+#include "RACD-Logger.hpp"
 
 //' RACD Simulation Model
 //'
@@ -51,15 +53,19 @@
 //'
 //' @export
 // [[Rcpp::export]]
-void RACD_Simulation(const int tMax, const Rcpp::List &theta, const Rcpp::List& human, const Rcpp::IntegerVector& mosy, const Rcpp::List& mosy_theta, const Rcpp::List& house){
+void RACD_Simulation(const int tMax, const Rcpp::NumericVector &theta, const Rcpp::List& human, const Rcpp::List& house, const uint_least32_t seed, const std::string& outfile){
 
   /* construct village */
-  std::unique_ptr<village> village_ptr(std::make_unique<village>(theta,mosy,mosy_theta));
+  std::unique_ptr<village> village_ptr(std::make_unique<village>(seed,theta));
+
+  /* initialize logging */
+  village_ptr->logger_ptr->open_log(outfile);
+  village_ptr->logger_ptr->get_log() << "HumanID,Event,Time,Age\n";
 
   /* initialize objects */
   village_ptr->initialize(human,house);
 
-  // /* run simulation */
-  // village_ptr->simulation(tMax);
+  /* run simulation */
+  village_ptr->simulation(tMax);
 
 };

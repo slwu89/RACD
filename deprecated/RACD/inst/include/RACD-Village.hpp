@@ -20,16 +20,14 @@
 
 /* C++ includes */
 #include <memory>
-#include <unordered_map>
-#include <string>
 #include <vector>
 #include <iostream>
 #include <math.h> /* sqrt */
 
 /* Rcpp includes */
 #include <Rcpp.h>
-// #include <progress.hpp>
-// #include <progress_bar.hpp>
+#include <progress.hpp>
+#include <progress_bar.hpp>
 
 // #include "DEBUG.hpp"
 
@@ -37,10 +35,10 @@
 class house;
 using house_ptr = std::unique_ptr<house>;
 
-using parameters = std::unordered_map<std::string,double>;
-
-class mosquito_habitat;
-using mosy_ptr = std::unique_ptr<mosquito_habitat>;
+/* forward declare utility classes */
+class prng;
+class logger;
+class parameters;
 
 
 /* ######################################################################
@@ -52,7 +50,7 @@ class village {
 public:
 
   /* constructor & destructor */
-  village(const Rcpp::List& theta, const Rcpp::IntegerVector& mosy, const Rcpp::List& mosy_theta);
+  village(const uint_least32_t seed, const Rcpp::NumericVector& theta);
   ~village();
 
   /* initialize objects */
@@ -61,7 +59,7 @@ public:
   /* Simulation Methods */
 
   /* one simulation run */
-  // void                                      simulation(const int tMax);
+  void                                      simulation(const int tMax);
 
   /* daily simulation */
   void                                      one_day();
@@ -71,14 +69,15 @@ public:
   void                                      deaths();
 
   /* utility classes */
+  std::unique_ptr<prng>                     prng_ptr;
+  std::unique_ptr<logger>                   logger_ptr;
   std::unique_ptr<parameters>               param_ptr;
-
-  mosy_ptr                                  mosquito;
 
 private:
 
   /* time */
   int                                       tNow;
+  size_t                                    run_id;
 
   /* keep track of all human IDs */
   int                                       max_humanID;
