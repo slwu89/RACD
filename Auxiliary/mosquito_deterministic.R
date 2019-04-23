@@ -70,7 +70,7 @@ make_node <- function(){
 # CTMC system (competing hazards)
 euler_step <- function(node,pars,tnow,dt){
   with(pars,{
-
+    
     ########################################
     # INTERVENTION-DEPENDENT PARAMETERS
     ########################################
@@ -88,6 +88,10 @@ euler_step <- function(node,pars,tnow,dt){
       IRScov_t <- pars$IRScov
     } else {
       IRScov_t <- 0
+    }
+    
+    if(IRScov_t > 0 & ITNcov_t > 0){
+      browser()
     }
 
     # zCom: Probability of a mosquito being repelled from an ITN or IRS-treated house:
@@ -114,6 +118,13 @@ euler_step <- function(node,pars,tnow,dt){
 
     # betaCom: Eggs laid per day by female mosquitoes in presence of ITNs & IRS:
     betaCom <- e_ov*muVCom/(exp(muVCom/deltaCom) - 1)
+    
+    
+    # table s2.2
+    w_IRS <- (1 - phiI) + (phiI*(1 - rIRS)*sIRS)
+    w_ITN <- (1 - phiB) + (phiB*sITN)
+    w_Com <- (1 - phiI) + (phiB*(1 - rIRS)*sITN*sIRS) + ((phiI - phiB)*(1 - rIRS)*sIRS)
+    W_Com <- (1 - Q0) + (Q0*c0) + (Q0*cITN*w_ITN) + (Q0*cIRS*w_IRS) + (Q0*cCom*w_Com)
 
     ########################################
     # EARLY-STAGE LARVAL INSTARS (EL)

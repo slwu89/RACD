@@ -48,7 +48,7 @@ mosquito_habitat::~mosquito_habitat(){};
 
 void mosquito_habitat::EIR(){
 
-  double inf_bites = 0.0; /* total num. of infectious bites */
+  double inf_bites = HBR*IV; /* total num. of infectious bites */
 
 
 
@@ -83,7 +83,7 @@ void mosquito_habitat::euler_step(const double tnow, const double dt){
   double zCom = pars["Q0"]*cITN*pars["phiB"]*pars["rITN"] + pars["Q0"]*cIRS*pars["phiI"]*pars["rIRS"] + pars["Q0"]*cCom*(pars["phiI"]-pars["phiB"])*pars["rIRS"] + pars["Q0"]*cCom*pars["phiB"]*rCom;
 
   /* deltaCom: Inverse of gonotrophic cycle length with ITNs & IRS */
-  double deltaCom = 1.0/(pars["tau1"]/(1-zCom) + pars["tau2"]);
+  double deltaCom = 1.0/((pars["tau1"]/(1-zCom)) + pars["tau2"]);
 
   /* wCom: Probability that a surviving mosquito succeeds in feeding during a single attempt */
   double wCom = (1.0 - pars["Q0"]) + pars["Q0"]*c0 + pars["Q0"]*cITN*(1.0-pars["phiB"]+pars["phiB"]*pars["sITN"]) + pars["Q0"]*cIRS*(1.0-pars["phiI"]+pars["phiI"]*pars["sIRS"]) + pars["Q0"]*cCom*((pars["phiI"]-pars["phiB"])*pars["sIRS"] + 1.0-pars["phiI"] + pars["phiB"]*sCom);
