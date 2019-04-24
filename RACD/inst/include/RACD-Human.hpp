@@ -56,9 +56,10 @@ public:
   ~human();
 
   /* accessors */
+  int                             get_id(){return humanID;};
   double                          get_age(){ return age; };
   double                          get_ICA(){ return ICA; };
-  bool const&                     get_alive() const { return alive; };
+  bool                            get_alive() const { return alive; };
   double                          get_c(){ return c; };
 
   /* Simulation Methods */
@@ -67,6 +68,7 @@ public:
   void                            one_day(const int tNow);
 
   /* mosquito encounter probabilities */
+  double                          get_pi(); /* pi is my unnormalized biting weight */
   double                          get_w(); /* P(successful feeding) */
   double                          get_y(); /* P(biting) */
   double                          get_z(); /* P(repelled) */

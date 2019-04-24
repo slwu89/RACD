@@ -36,3 +36,8 @@ New and changed parameters from initial version of model
 ## Possible Optimizations
 
 for humans: compartment_funs, infectiousness_funs should be static class members initialized once for all people
+
+
+## to-do
+
+  * all simulation pars need to be in a single hash-table in the village class

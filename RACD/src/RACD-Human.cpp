@@ -382,7 +382,7 @@ void human::update_lambda(){
    double rho = house_ptr->village_ptr->param_ptr->at("rho");
    double IB0 = house_ptr->village_ptr->param_ptr->at("IB0");
    double kappaB = house_ptr->village_ptr->param_ptr->at("kappaB");
-   double psi = house_ptr->get_psi();
+   double psi = 1.0;
 
    epsilon = epsilon0 * bitingHet * (1 - rho * std::exp(-age/a0)) * psi;
    double b = b0*(b1 + ((1-b1)/(1 + std::pow((IB/IB0),kappaB))));
@@ -485,3 +485,122 @@ void human::apply_ITN(){
   ITN = true;
   ITNoff = R::rexp(house_ptr->village_ptr->param_ptr->at("ITNduration"));
 }
+
+
+/* ################################################################################
+#   mosquito encounter probabilities
+################################################################################ */
+
+/* individual biting weight */
+double human::get_pi(){
+  double rho = house_ptr->village_ptr->param_ptr->at("rho");
+  double a0 = house_ptr->village_ptr->param_ptr->at("a0");
+  return bitingHet * (1 - rho * std::exp(-age/a0));
+};
+
+/* probability of successful biting */
+double human::get_w(){
+  bool IRS = house_ptr->has_IRS();
+  /* none */
+  if(!ITN && !IRS){
+    return 1.0;
+  /* IRS only */
+  } else if(IRS && !ITN){
+
+    double phiI = house_ptr->village_ptr->param_ptr->at("phiI");
+    double rS = house_ptr->village_ptr->param_ptr->at("rIRS");
+    double sS = house_ptr->village_ptr->param_ptr->at("sIRS");
+
+    return (1.0 - phiI) + (phiI * (1 - rS) * sS);
+  /* ITN only */
+  } else if(!IRS && ITN){
+
+    double phiB = house_ptr->village_ptr->param_ptr->at("phiB");
+    double sN = house_ptr->village_ptr->param_ptr->at("sITN");
+
+    return (1.0 - phiB) + (phiB * sN);
+  /* IRS and ITN */
+  } else if(IRS && ITN){
+
+    double phiI = house_ptr->village_ptr->param_ptr->at("phiI");
+    double rS = house_ptr->village_ptr->param_ptr->at("rIRS");
+    double sS = house_ptr->village_ptr->param_ptr->at("sIRS");
+
+    double phiB = house_ptr->village_ptr->param_ptr->at("phiB");
+    double sN = house_ptr->village_ptr->param_ptr->at("sITN");
+
+    return (1.0 - phiI) + (phiB * (1 - rS) * sN * sS) + ((phiI - phiB) * (1 - rS) * sS);
+  } else {
+    Rcpp::stop("error: invalid combination of ITN/IRS");
+  }
+};
+
+/* probability of biting */
+double human::get_y(){
+  bool IRS = house_ptr->has_IRS();
+  /* none */
+  if(!ITN && !IRS){
+    return 1.0;
+  /* IRS only */
+  } else if(IRS && !ITN){
+
+    double phiI = house_ptr->village_ptr->param_ptr->at("phiI");
+    double rS = house_ptr->village_ptr->param_ptr->at("rIRS");
+
+    return (1.0 - phiI) + (phiI * (1 - rS));
+  /* ITN only */
+  } else if(!IRS && ITN){
+
+    double phiB = house_ptr->village_ptr->param_ptr->at("phiB");
+    double sN = house_ptr->village_ptr->param_ptr->at("sITN");
+
+    return (1.0 - phiB) + (phiB * sN);
+  /* IRS and ITN */
+  } else if(IRS && ITN){
+
+    double phiI = house_ptr->village_ptr->param_ptr->at("phiI");
+    double rS = house_ptr->village_ptr->param_ptr->at("rIRS");
+
+    double phiB = house_ptr->village_ptr->param_ptr->at("phiB");
+    double sN = house_ptr->village_ptr->param_ptr->at("sITN");
+
+    return (1.0 - phiI) + (phiB * (1 - rS) * sN) + ((phiI - phiB) * (1 - rS) );
+  } else {
+    Rcpp::stop("error: invalid combination of ITN/IRS");
+  }
+};
+
+/* probability of repellency*/
+double human::get_z(){
+  bool IRS = house_ptr->has_IRS();
+  /* none */
+  if(!ITN && !IRS){
+    return 0.0;
+  /* IRS only */
+  } else if(IRS && !ITN){
+
+    double phiI = house_ptr->village_ptr->param_ptr->at("phiI");
+    double rS = house_ptr->village_ptr->param_ptr->at("rIRS");
+
+    return phiI * rS;
+  /* ITN only */
+  } else if(!IRS && ITN){
+
+    double phiB = house_ptr->village_ptr->param_ptr->at("phiB");
+    double rN = house_ptr->village_ptr->param_ptr->at("rN");
+
+    return phiB * rN;
+  /* IRS and ITN */
+  } else if(IRS && ITN){
+
+    double phiI = house_ptr->village_ptr->param_ptr->at("phiI");
+    double rS = house_ptr->village_ptr->param_ptr->at("rIRS");
+
+    double phiB = house_ptr->village_ptr->param_ptr->at("phiB");
+    double rN = house_ptr->village_ptr->param_ptr->at("rN");
+
+    return (phiB * (1 - rS) * rN) + (phiI * rS);
+  } else {
+    Rcpp::stop("error: invalid combination of ITN/IRS");
+  }
+};

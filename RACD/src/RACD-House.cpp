@@ -17,7 +17,7 @@
 
 
 /* constructor */
-house::house(const int houseID_, const double psi_, village* const village_ptr_) : village_ptr(village_ptr_), houseID(houseID_), psi(psi_),
+house::house(const int houseID_, village* const village_ptr_) : village_ptr(village_ptr_), houseID(houseID_),
              EIR(0.0), IRS(false), IRSoff(2E16)
 {
   #ifdef DEBUG_RACD
@@ -34,16 +34,10 @@ house::~house(){
 
 /* interventions */
 bool house::has_IRS(){
-  if(!IRS){
-    return false;
-  } else {
-    if(village_ptr->get_tNow() > IRSoff){
-      IRS = false;
-      return false;
-    } else {
-      return true;
-    }
+  if(IRS && village_ptr->get_tNow() > IRSoff){
+    IRS = false;
   }
+  return IRS;
 }
 
 void house::apply_IRS(){
@@ -51,7 +45,23 @@ void house::apply_IRS(){
   IRSoff = R::rexp(village_ptr->param_ptr->at("IRSduration"));
 }
 
-/* add humans */
+/* humans */
 void house::add_human(human_ptr h){
-  humans.push_back(std::move(h));
+  // if this is a bug, pull out the ID first and pass to the std::pair obj
+  pi.emplace(h->get_id(),h->get_pi());
+  humans.emplace(h->get_id(),std::move(h));
+
+  /* normalize pi */
+  normalize_pi();
 };
+
+void house::normalize_pi(){
+  /* sum it */
+  const double pi_sum = std::accumulate(pi.begin(), pi.end(), 0.0,
+                                             [](const double previous, const auto& element)
+                                              { return previous + element.second; });
+  /* normalize it */
+  std::for_each(pi.begin(), pi.end(), [pi_sum](auto& element){
+    element.second /= pi_sum;
+  });
+}

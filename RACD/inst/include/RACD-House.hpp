@@ -20,6 +20,9 @@
 
 #include <memory>
 #include <utility>
+#include <unordered_map>
+#include <algorithm>
+#include <numeric> // for accumulate
 #include <vector>
 
 // #include "DEBUG.hpp"
@@ -27,7 +30,11 @@
 /* alias and forward declarations */
 class human;
 using human_ptr       = std::unique_ptr<human>;
-using human_vector    = std::vector<human_ptr>;
+
+using human_table     = std::unordered_map<int,human_ptr>;
+using human_pi        = std::unordered_map<int,double>;
+
+// using human_vector    = std::vector<human_ptr>;
 
 class village;
 
@@ -41,22 +48,24 @@ class house {
 public:
 
   /* constructor */
-  house(const int houseID_, const double psi_, village* const village_ptr_);
+  house(const int houseID_, village* const village_ptr_);
 
   /* destructor */
   ~house();
 
-  /* add humans */
+  /* humans */
   void                                      add_human(human_ptr h);
+  void                                      normalize_pi();
 
   /* accessors */
   int                                       get_houseID(){ return houseID; };
-  double                                    get_psi(){ return psi; };
-  human_vector&                             get_humans(){ return humans; };
+  human_table&                              get_humans(){ return humans; };
 
+  /* biting */
   double                                    get_EIR(){return EIR;};
   void                                      set_EIR(const double e){ EIR = e;};
 
+  /* interventions */
   bool                                      has_IRS();
   void                                      apply_IRS();
 
@@ -65,14 +74,13 @@ public:
 private:
 
   int                                       houseID; /* ID */
-  double                                    psi; /* relative risk */
-  double                                    EIR; /* the total EIR at this house */
+  double                                    EIR; /* the total # of infectious bites arriving at this house, today */
 
   bool                                      IRS; /* does this house have IRS */
   double                                    IRSoff;
 
-  human_vector                              humans; /* people here */
-  std::vector<double>                       pi; /* biting weight on humans */
+  human_table                               humans; /* people here */
+  human_pi                                  pi; /* biting weight on humans */
 };
 
 #endif
