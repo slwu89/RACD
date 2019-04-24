@@ -75,7 +75,10 @@ public:
   /* utility classes */
   std::unique_ptr<parameters>               param_ptr;
 
+  /* the landscape */
   mosy_ptr                                  mosquito;
+  std::vector<house_ptr>                    houses;
+
 
 private:
 
@@ -84,10 +87,6 @@ private:
 
   /* keep track of all human IDs */
   int                                       max_humanID;
-
-  /* houses */
-  std::vector<house_ptr>                    houses;
-  // std::vector<breedingSite_ptr>             breedingSites;
 
 };
 

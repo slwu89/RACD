@@ -33,10 +33,13 @@ house::~house(){
 };
 
 /* interventions */
-bool house::has_IRS(){
+void house::update_intervention(){
   if(IRS && village_ptr->get_tNow() > IRSoff){
     IRS = false;
   }
+};
+
+bool house::has_IRS(){
   return IRS;
 }
 

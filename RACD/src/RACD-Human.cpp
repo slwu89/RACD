@@ -59,6 +59,9 @@ human::human(const int humanID_,
   infectiousness_funs.emplace("U",std::bind(&human::infectiousness_U,this));
   infectiousness_funs.emplace("P",std::bind(&human::infectiousness_P,this));
 
+  /* initialize infectiousness */
+  infectiousness_funs.at(state)();
+
   #ifdef DEBUG_RACD
   std::cout << "human " << humanID << " being born at " << this << std::endl;
   #endif

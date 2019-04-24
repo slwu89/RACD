@@ -60,12 +60,15 @@ public:
   /* accessors */
   int                                       get_houseID(){ return houseID; };
   human_table&                              get_humans(){ return humans; };
+  double                                    get_pi(const int id){ return pi.at(id); };
 
   /* biting */
   double                                    get_EIR(){return EIR;};
   void                                      set_EIR(const double e){ EIR = e;};
 
   /* interventions */
+  void                                      update_intervention();
+
   bool                                      has_IRS();
   void                                      apply_IRS();
 

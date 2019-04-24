@@ -21,6 +21,7 @@
 #include <unordered_map>
 
 #include <math.h>
+#include <Rmath.h> // for rmultinom
 
 /* alias and forward declarations */
 class village;
@@ -43,7 +44,7 @@ public:
   mosquito_habitat& operator=(mosquito_habitat&&);
 
   /* simulation */
-  void feeding_cycle();
+  void feeding_cycle(const double dt);
   void euler_step(const double tnow, const double dt);
 
   /* accessors */
@@ -97,6 +98,21 @@ private:
 
   /* carrying capacity */
   double K;
+
+  /* outbound bites */
+  std::vector<int>    EIR_out;
+
+  /* feeding cycle vital rates */
+  double W; // P(successful feed)
+  double Z; // P(repelled w/out feed)
+  double f; // feeding rate
+  double mu; // death rate
+  double p1; // P(survive foraging)
+  double p2; // P(survive ovipositing)
+  double Q; // proportion of successful bites on humans
+  double a; // HBR
+  double lambdaV; // FOI on mosy
+  double beta; // eggs/day/mosquito 
 
   /* parameters */
   std::unordered_map<std::string, double> pars;

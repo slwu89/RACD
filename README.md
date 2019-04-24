@@ -33,6 +33,8 @@ New and changed parameters from initial version of model
 
 ### Entomological
 
+  * eggOV: Number of eggs per oviposition per mosquito (w/0 interventions)
+
 ## Possible Optimizations
 
 for humans: compartment_funs, infectiousness_funs should be static class members initialized once for all people

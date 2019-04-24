@@ -13,6 +13,8 @@
 
 #include "RACD-Mosquito.hpp"
 #include "RACD-Village.hpp"
+#include "RACD-House.hpp"
+#include "RACD-Human.hpp"
 
 /* ################################################################################
  * basic methods needed
@@ -28,7 +30,8 @@ mosquito_habitat::mosquito_habitat(const int EL_, const int LL_, const int PL_, 
   SV_probs{0,0,0}, SV_transitions{0,0,0},
   EV_probs{0,0,0}, EV_transitions{0,0,0},
   IV_probs{0,0}, IV_transitions{0,0},
-  EL(EL_), LL(LL_), PL(PL_), SV(SV_), EV(EV_), IV(IV_), K(K_)
+  EL(EL_), LL(LL_), PL(PL_), SV(SV_), EV(EV_), IV(IV_), K(K_),
+  EIR_out(psiR.size(),0)
 {
   /* initialize biological parameters */
   Rcpp::CharacterVector pars_names = pars_.names();
@@ -47,11 +50,63 @@ mosquito_habitat::~mosquito_habitat(){};
  * and account for dependence on interventions in entomological parameters
 ################################################################################ */
 
-void mosquito_habitat::feeding_cycle(){
+void mosquito_habitat::feeding_cycle(const double dt){
 
-  double inf_bites = HBR*IV; /* total num. of infectious bites */
+  /* constants */
+  double Q0 = village_ptr->param_ptr->at("Q0");
+  double tau1 = village_ptr->param_ptr->at("tau1");
+  double tau2 = village_ptr->param_ptr->at("tau2");
+  double muV = village_ptr->param_ptr->at("muV");
+  double eggOV = village_ptr->param_ptr->at("eggOV");
 
+  /* quantities from all humans */
+  double ww = 0.0;
+  double zz = 0.0;
+  double cc = 0.0;
+  double psi_h = 0.0;
+  size_t i = 0;
+  int id = 0;
+  for(auto &house : village_ptr->houses){
+    psi_h = psi.at(i);
+    for(auto &h : house->get_humans()){
+      id = h.second->get_id();
+      ww += (psi_h * house->get_pi(id) * h.second->get_w());
+      zz += (psi_h * house->get_pi(id) * h.second->get_z());
+      cc += (psi_h * house->get_pi(id) * h.second->get_w() * h.second->get_c());
+    }
+    i++;
+  }
 
+  /* P(successful feed) */
+  W = (1.0 - Q0) + (Q0*ww);
+
+  /* P(repelled w/out feed) */
+  Z = Q0*zz;
+
+  /* feeding rate */
+  f = 1./((tau1/(1.0 - Z)) + tau2);
+
+  /* survival */
+  double p10 = std::exp(-muV*tau1);
+  p1 = p10*W/(1.0 - Z*p10);
+  p2 = std::exp(-muV*tau2);
+  mu = -f*std::log(p1*p1);
+
+  /* proportion of successful bites on humans & HBR */
+  Q = 1.0 - ((1.0 - Q0)/W);
+  a = f*Q;
+
+  /* distribute EIR to houses */
+  size_t nhouse = village_ptr->houses.size();
+  double lambda = a*IV;
+  int bites = R::rpois(lambda*dt);
+  rmultinom(bites,psi.data(),nhouse,EIR_out.data());
+
+  /* calculate FOI (h->m) */
+  lambdaV = a*cc;
+
+  /* calculate egg laying rate */
+  beta = eggOV*mu/(std::exp(mu/f) - 1.0);
 
 };
 
@@ -62,46 +117,17 @@ void mosquito_habitat::feeding_cycle(){
 
 void mosquito_habitat::euler_step(const double tnow, const double dt){
 
-  /* ########################################
-  # INTERVENTION-DEPENDENT PARAMETERS
-  ######################################## */
+  double muEL = village_ptr->param_ptr->at("muEL");
+  double durEL = village_ptr->param_ptr->at("durEL");
 
-  /* MOVE THESE TO PRE-SIMULATION CALCULATIONS IN PKG */
-  double delta = 1.0/(pars["tau1"]+pars["tau2"]); /* Inverse of gonotrophic cycle without ITNs/IRS */
-  double e_ov = pars["beta"]*(std::exp(pars["muV"]/delta)-1.0)/pars["muV"]; /* Number of eggs per oviposition per mosquito */
+  double gamma = village_ptr->param_ptr->at("gamma");
+  double muLL = village_ptr->param_ptr->at("muLL");
+  double durLL = village_ptr->param_ptr->at("durLL");
 
-  /* NO INTERVENTIONS NOW */
-  double ITNcov_t = 0.0;
-  double IRScov_t = 0.0;
+  double muPL = village_ptr->param_ptr->at("muPL");
+  double durPL = village_ptr->param_ptr->at("durPL");
 
-  /* zCom: Probability of a mosquito being repelled from an ITN or IRS-treated house */
-  double c0 = 1.0 - ITNcov_t - IRScov_t + ITNcov_t*IRScov_t;
-  double cITN = ITNcov_t - ITNcov_t*IRScov_t;
-  double cIRS = IRScov_t - ITNcov_t*IRScov_t;
-  double cCom = ITNcov_t*IRScov_t;
-  double rCom = pars["rIRS"] + (1.0-pars["rIRS"])*pars["rITN"];
-  double sCom = (1.0-pars["rIRS"])*pars["sITN"]*pars["sIRS"];
-  double zCom = pars["Q0"]*cITN*pars["phiB"]*pars["rITN"] + pars["Q0"]*cIRS*pars["phiI"]*pars["rIRS"] + pars["Q0"]*cCom*(pars["phiI"]-pars["phiB"])*pars["rIRS"] + pars["Q0"]*cCom*pars["phiB"]*rCom;
-
-  /* deltaCom: Inverse of gonotrophic cycle length with ITNs & IRS */
-  double deltaCom = 1.0/((pars["tau1"]/(1-zCom)) + pars["tau2"]);
-
-  /* wCom: Probability that a surviving mosquito succeeds in feeding during a single attempt */
-  double wCom = (1.0 - pars["Q0"]) + pars["Q0"]*c0 + pars["Q0"]*cITN*(1.0-pars["phiB"]+pars["phiB"]*pars["sITN"]) + pars["Q0"]*cIRS*(1.0-pars["phiI"]+pars["phiI"]*pars["sIRS"]) + pars["Q0"]*cCom*((pars["phiI"]-pars["phiB"])*pars["sIRS"] + 1.0-pars["phiI"] + pars["phiB"]*sCom);
-
-  /* muVCom: Female mosquito death rate in presence of ITNs & IRS */
-  double p10 = std::exp(-pars["muV"]*pars["tau1"]);
-  double p1Com = p10*wCom/(1.0 - zCom*p10);
-  double p2 = std::exp(-pars["muV"]*pars["tau2"]);
-  double pCom = std::pow(p1Com*p2,deltaCom);
-  double muVCom = -std::log(pCom);
-
-  /* betaCom: Eggs laid per day by female mosquitoes in presence of ITNs & IRS */
-  double betaCom = e_ov*muVCom/(std::exp(muVCom/deltaCom) - 1.0);
-
-  /* HBR: page 6 SI: Protocol S2 of "Reducing Plasmodium falciparum Malaria Transmission in Africa: A Model-Based Evaluation of Intervention Strategies" */
-  double Q = 1.0 - ((1.0 - pars["Q0"]) / wCom); /* proportion of successful bites on humans */
-  double HBR = Q*deltaCom;
+  double durEV = village_ptr->param_ptr->at("durEV");
 
   /* ########################################
   # EARLY-STAGE LARVAL INSTARS (EL)
@@ -109,11 +135,11 @@ void mosquito_habitat::euler_step(const double tnow, const double dt){
 
   /* inbound oviposition to EL */
   int NV = SV + EV + IV;
-  EL_new = R::rpois(betaCom * NV * dt);
+  EL_new = R::rpois(beta * NV * dt);
 
   /* instantaneous hazards for EL */
-  double haz_EL_mort = pars["muEL"]*(1 + ((EL+LL)/K));
-  double haz_EL_2LL = 1.0 / pars["durEL"];
+  double haz_EL_mort = muEL*(1 + ((EL+LL)/K));
+  double haz_EL_2LL = 1.0 / durEL;
 
   /* jump probabilities */
   EL_probs[0] = std::exp(-(haz_EL_mort + haz_EL_2LL)*dt);
@@ -128,8 +154,8 @@ void mosquito_habitat::euler_step(const double tnow, const double dt){
   ######################################## */
 
   /* instantaneous hazards for LL */
-  double haz_LL_mort = pars["muLL"]*(1.0 + pars["gamma"]*((EL+LL)/K));
-  double haz_LL_2PL = 1.0 / pars["durLL"];
+  double haz_LL_mort = muLL*(1.0 + gamma*((EL+LL)/K));
+  double haz_LL_2PL = 1.0 / durLL;
 
   /* jump probabilities */
   LL_probs[0] = std::exp(-(haz_LL_mort + haz_LL_2PL)*dt);
@@ -144,9 +170,9 @@ void mosquito_habitat::euler_step(const double tnow, const double dt){
   ######################################## */
 
   /* instantaneous hazards for PL */
-  double haz_PL_mort = pars["muPL"];
-  double haz_PL_2SV_F = (1/pars["durPL"])*0.5;
-  double haz_PL_2SV_M = (1/pars["durPL"])*0.5;
+  double haz_PL_mort = muPL;
+  double haz_PL_2SV_F = (1/durPL)*0.5;
+  double haz_PL_2SV_M = (1/durPL)*0.5;
 
   /* jump probabilities */
   PL_probs[0] = std::exp(-(haz_PL_mort + haz_PL_2SV_F + haz_PL_2SV_M)*dt);
@@ -162,8 +188,8 @@ void mosquito_habitat::euler_step(const double tnow, const double dt){
   ######################################## */
 
   /* instantaneous hazards for SV */
-  double haz_SV_mort =  muVCom;
-  double haz_SV_inf = pars["lambdaV"];
+  double haz_SV_mort =  mu;
+  double haz_SV_inf = lambdaV;
 
   /* jump probabilities */
   SV_probs[0] = std::exp(-(haz_SV_mort + haz_SV_inf)*dt);
@@ -178,8 +204,8 @@ void mosquito_habitat::euler_step(const double tnow, const double dt){
   ######################################## */
 
   /* instantaneous hazards for EV */
-  double haz_EV_mort =  muVCom;
-  double haz_EV_inc = 1/pars["durEV"];
+  double haz_EV_mort =  mu;
+  double haz_EV_inc = 1/durEV;
 
   /* jump probabilities */
   EV_probs[0] = std::exp(-(haz_EV_mort + haz_EV_inc)*dt);
@@ -194,7 +220,7 @@ void mosquito_habitat::euler_step(const double tnow, const double dt){
   ######################################## */
 
   /* instantaneous hazards for IV */
-  double haz_IV_mort = muVCom;
+  double haz_IV_mort = mu;
 
   /* jump probabilities */
   IV_probs[0] = std::exp(-haz_IV_mort*dt);

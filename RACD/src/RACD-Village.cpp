@@ -160,8 +160,9 @@ void village::one_day(){
 
   /* run daily simulation for all humans */
   for(auto &hh : houses){
+    hh->update_intervention();
     for(auto &h : hh->get_humans()){
-      h->one_day(tNow);
+      h.second->one_day(tNow);
     }
   }
 
@@ -192,10 +193,10 @@ void village::births(){
     int t = 1;
     for(auto &hh : houses){
       for(auto &h : hh->get_humans()){
-        double age = h->get_age();
+        double age = h.second->get_age();
         if(age >= 18 && age < 22){
           /* iterative mean: Knuth, The Art of Computer Programming Vol 2, section 4.2.2 */
-          meanICA18_22 += (h->get_ICA() - meanICA18_22) / t;
+          meanICA18_22 += (h.second->get_ICA() - meanICA18_22) / t;
           ++t;
         }
       }
@@ -217,7 +218,8 @@ void village::births(){
       double PM = param_ptr->at("PM");
       double epsilon0 = param_ptr->at("epsilon0");
       double rho = param_ptr->at("rho");
-      double psi = houses[hh_ix]->get_psi();
+      // double psi = houses[hh_ix]->get_psi();
+      double psi = 1.0;
       double b0 = param_ptr->at("b0");
       double phi0 = param_ptr->at("phi0");
       double phi1 = param_ptr->at("phi1");
