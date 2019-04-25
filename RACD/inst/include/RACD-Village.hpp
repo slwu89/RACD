@@ -28,8 +28,6 @@
 
 /* Rcpp includes */
 #include <Rcpp.h>
-// #include <progress.hpp>
-// #include <progress_bar.hpp>
 
 // #include "DEBUG.hpp"
 
@@ -52,7 +50,7 @@ class village {
 public:
 
   /* constructor & destructor */
-  village(const Rcpp::List& theta, const Rcpp::IntegerVector& mosy, const Rcpp::List& mosy_theta);
+  village(const Rcpp::List& theta, const Rcpp::IntegerVector& mosy);
   ~village();
 
   /* initialize objects */
@@ -63,6 +61,8 @@ public:
   /* one simulation run */
   // void                                      simulation(const int tMax);
 
+  /* time */
+  int                                       tNow;
   int                                       get_tNow(){return tNow;}
 
   /* daily simulation */
@@ -79,14 +79,16 @@ public:
   mosy_ptr                                  mosquito;
   std::vector<house_ptr>                    houses;
 
+  /* track output */
+  void                                      track_human_state(Rcpp::IntegerMatrix& out);
+  void                                      track_mosquito_state(Rcpp::IntegerMatrix& out);
 
 private:
-
-  /* time */
-  int                                       tNow;
-
   /* keep track of all human IDs */
   int                                       max_humanID;
+
+  /* for output */
+  Rcpp::IntegerVector human_state;
 
 };
 

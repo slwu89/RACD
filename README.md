@@ -5,7 +5,7 @@ stochastic simulation of reactive case detection for p. falciparum
 
 We are currently working to extend the RACD package to include mosquito dynamics (a standalone mosquito simulator can be found in Auxiliary folder).
 
-## RACD Work Queue (from JM)
+<!-- ## RACD Work Queue (from JM)
 1. Calculate mosquito population size required to generate required EIR - DONE
 2. Link vector model to human model in malaria IBM (see MalariaODEVectorsOnlyMay30.R, reference https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-4-153) - IN PROGRESS
 3. Incorporate targeted interventions (all 3 interventions: RACD, etc.) - NEED TO HEAR FROM MICHELLE
@@ -13,7 +13,7 @@ We are currently working to extend the RACD package to include mosquito dynamics
 5. Incorporate possibility for seasonality in mosquito numbers - NOT YET (easy though, just implement forcing on K)
 6. Validate human model - HOW TO VALIDATE?
 7. Make sure that functions all make sense - NOTHING YET
-8. Validate modified treatment node in human model - NOT SURE WHAT THIS MEANS
+8. Validate modified treatment node in human model - NOT SURE WHAT THIS MEANS -->
 
 ## RACD References
 * Human Model:
@@ -35,12 +35,13 @@ New and changed parameters from initial version of model
 
   * eggOV: Number of eggs per oviposition per mosquito (w/0 interventions)
 
-## Possible Optimizations
+## To-do
 
-for humans: compartment_funs, infectiousness_funs should be static class members initialized once for all people
+  - [ ] all simulation pars need to be in a single hash-table in the village class
+  - [x] if its possible to have empty houses, we need to renormalize the Psi vector to give them probabiltiy 0, since all bites are conditioned on the bite going at least _somewhere_
+  - [ ] in main sim loop, don't simulate empty houses
+  - [ ] very low priority: compartment/infectiousness fn's could be `static`, and also use lambdas for callbacks.
 
+## Classes
 
-## to-do
-
-  * all simulation pars need to be in a single hash-table in the village class
-  * if its possible to have empty houses, we need to renormalize the Psi vector to give them probabiltiy 0, since all bites are conditioned on the bite going at least _somewhere_
+### Human

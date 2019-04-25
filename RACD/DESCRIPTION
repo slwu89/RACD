@@ -10,5 +10,5 @@ Description: One paragraph description of what the package does as one
 License: GPL (>= 2)
 Imports: Rcpp (>= 0.12.14), RcppProgress, deSolve
 LinkingTo: Rcpp, RcppProgress
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.1
 SystemRequirements: C++14

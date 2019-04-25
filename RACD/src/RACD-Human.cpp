@@ -511,7 +511,7 @@ void human::get_bitten(const int eps){
     double b = b0*(b1 + ((1-b1)/(1 + std::pow((IB/IB0),kappaB))));
 
     epsilon = eps;
-    lambda = std::max(eps*b,1.);
+    lambda = std::min(eps*b,1.);
     // lambda = (int)R::rbinom((double) eps, b);
   }
 }

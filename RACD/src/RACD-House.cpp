@@ -17,7 +17,7 @@
 
 
 /* constructor */
-house::house(const int houseID_, village* const village_ptr_) : village_ptr(village_ptr_), houseID(houseID_),
+house::house(const int houseID_, village* const village_ptr_) : houseID(houseID_), village_ptr(village_ptr_),
              EIR(0.0), IRS(false), IRSoff(2E16)
 {
   #ifdef DEBUG_RACD
@@ -32,7 +32,11 @@ house::~house(){
   #endif
 };
 
-/* interventions */
+
+/* ######################################################################
+ # interventions
+###################################################################### */
+
 void house::update_intervention(){
   if(IRS && village_ptr->get_tNow() > IRSoff){
     IRS = false;
@@ -48,7 +52,11 @@ void house::apply_IRS(){
   IRSoff = R::rexp(village_ptr->param_ptr->at("IRSduration"));
 }
 
-/* humans */
+
+/* ######################################################################
+ # biting
+###################################################################### */
+
 void house::distribute_EIR(){
 
   // DEBUG
@@ -97,7 +105,13 @@ void house::add_human(human_ptr h){
   // humans.emplace(h->get_id(),std::move(h));
 };
 
+/* pi: changes for each person as they age, so need to constantly renormalize */
 void house::normalize_pi(){
+
+  /* new individual weights */
+  for(size_t k=0; k<humans.size(); k++){
+    pi[k] = humans[k]->get_pi();
+  }
 
   /* sum it */
   const double pi_sum = std::accumulate(pi.begin(), pi.end(), 0.0,
@@ -107,15 +121,17 @@ void house::normalize_pi(){
   std::for_each(pi.begin(), pi.end(), [pi_sum](double& element){
     element /= pi_sum;
   });
-  /* bop it */
-
-  // /* sum it */
-  // const double pi_sum = std::accumulate(pi.begin(), pi.end(), 0.0,
-  //                                            [](const double previous, const auto& element)
-  //                                             { return previous + element.second; });
-  // /* normalize it */
-  // std::for_each(pi.begin(), pi.end(), [pi_sum](auto& element){
-  //   element.second /= pi_sum;
-  // });
-  // /* bop it */
 }
+
+
+/* ######################################################################
+ # output
+###################################################################### */
+
+Rcpp::IntegerVector house::output_states(){
+  Rcpp::IntegerVector states(6);
+  for(auto& h : humans){
+    states(state2col.at(h->get_state())) += 1;
+  }
+  return states;
+};

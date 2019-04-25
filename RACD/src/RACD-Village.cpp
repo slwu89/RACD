@@ -39,7 +39,7 @@ inline double iter_mean(const std::vector<double>& array){
 ###################################################################### */
 
 /* constructor */
-village::village(const Rcpp::List& theta, const Rcpp::IntegerVector& mosy, const Rcpp::List& mosy_theta) :
+village::village(const Rcpp::List& theta, const Rcpp::IntegerVector& mosy) :
 
   /* initialize data members */
   mosquito(std::make_unique<mosquito_habitat>(Rcpp::as<int>(mosy["EL"]),
@@ -49,7 +49,9 @@ village::village(const Rcpp::List& theta, const Rcpp::IntegerVector& mosy, const
                                               Rcpp::as<int>(mosy["EV"]),
                                               Rcpp::as<int>(mosy["IV"]),
                                               Rcpp::as<double>(mosy["K"]),
-                                              mosy_theta)),
+                                              Rcpp::as<std::vector<double> >(mosy["psi"]),
+                                              this
+                                              )),
   tNow(0),
   max_humanID(0)
 {
@@ -86,7 +88,6 @@ void village::initialize(const Rcpp::List &humansR, const Rcpp::List &housesR){
   for(size_t i=0; i<housesR.size(); i++){
     houses.emplace_back(std::make_unique<house>(
       int(i),
-      Rcpp::as<double>(Rcpp::as<Rcpp::List>(housesR[i])["psi"]),
       this
     ));
   }
@@ -158,19 +159,25 @@ void village::initialize(const Rcpp::List &humansR, const Rcpp::List &housesR){
 /* daily simulation */
 void village::one_day(){
 
+  /* simulate mosquitos */
+  mosquito->feeding_cycle();
+  mosquito->euler_step(tNow);
+
   /* run daily simulation for all humans */
   for(auto &hh : houses){
 
     /* update house-based intervention */
     hh->update_intervention();
 
-    /* if there's people here, run their time-step */
-    if(!hh->humans.empty()){
+    /* dont simulate empty houses */
+    if(hh->humans.empty()){
+      continue;
+    }
 
-      hh->distribute_EIR();
-      for(auto &h : hh->humans){
-        h->one_day(tNow);
-      }
+    /* simulate humans */
+    hh->distribute_EIR();
+    for(auto &h : hh->humans){
+      h->one_day(tNow);
     }
   }
 
@@ -288,4 +295,27 @@ void village::deaths(){
 
   }
 
+};
+
+
+/* ######################################################################
+ # Simulation methods
+###################################################################### */
+
+/* track output: states */
+void village::track_human_state(Rcpp::IntegerMatrix& out){
+  human_state.fill(0);
+  for(auto& hh : houses){
+    human_state += hh->output_states();
+  }
+  out.row(tNow) = human_state;
+};
+
+void village::track_mosquito_state(Rcpp::IntegerMatrix& out){
+  out.at(tNow,0) = mosquito->get_EL();
+  out.at(tNow,1) = mosquito->get_LL();
+  out.at(tNow,2) = mosquito->get_PL();
+  out.at(tNow,3) = mosquito->get_SV();
+  out.at(tNow,4) = mosquito->get_EV();
+  out.at(tNow,5) = mosquito->get_IV();
 };

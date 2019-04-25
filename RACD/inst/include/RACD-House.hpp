@@ -24,6 +24,9 @@
 #include <numeric> // for accumulate
 #include <vector>
 
+#include <unordered_map>
+
+#include <Rcpp.h>
 #include <Rmath.h> // for rmultinom
 
 // #include "DEBUG.hpp"
@@ -37,6 +40,16 @@ using human_pi        = std::vector<double>;
 using human_id        = std::vector<int>;
 
 class village;
+
+/* for output */
+static const std::unordered_map<std::string,size_t> state2col = {
+  {"S",0},
+  {"T",1},
+  {"D",2},
+  {"A",3},
+  {"U",4},
+  {"P",5}
+};
 
 
 /* ######################################################################
@@ -76,6 +89,9 @@ public:
   bool                                      has_IRS();
   void                                      apply_IRS();
 
+  /* track output */
+  Rcpp::IntegerVector                       output_states();
+
   village* const                            village_ptr; /* raw pointer ok because village lifespan > house lifespan */
 
 private:
@@ -84,6 +100,9 @@ private:
 
   bool                                      IRS; /* does this house have IRS */
   double                                    IRSoff;
+
+  // /* for output */
+  // Rcpp::IntegerVector                       states;
 };
 
 #endif

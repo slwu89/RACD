@@ -61,6 +61,7 @@ public:
   double                          get_ICA(){ return ICA; };
   bool                            get_alive() const { return alive; };
   double                          get_c(){ return c; };
+  std::string                     get_state(){ return state; };
 
   /* Simulation Methods */
 

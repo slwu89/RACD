@@ -22,9 +22,9 @@
 
 /* constructor */
 mosquito_habitat::mosquito_habitat(const int EL_, const int LL_, const int PL_, const int SV_, const int EV_, const int IV_, const double K_,
-  const Rcpp::NumericVector& psiR, village* const village_ptr_) :
-  psiWeight(Rcpp::as<std::vector<double> >(psiR)),
-  psi(Rcpp::as<std::vector<double> >(psiR)), village_ptr(village_ptr_),
+  const std::vector<double>& psiR, village* const village_ptr_) :
+  psiWeight(psiR),
+  psi(psiR), village_ptr(village_ptr_),
   EL_probs{0,0,0}, EL_transitions{0,0,0},
   LL_probs{0,0,0}, LL_transitions{0,0,0},
   PL_probs{0,0,0,0}, PL_transitions{0,0,0,0},
@@ -44,7 +44,9 @@ mosquito_habitat::~mosquito_habitat(){};
  * and account for dependence on interventions in entomological parameters
 ################################################################################ */
 
-void mosquito_habitat::feeding_cycle(const double dt){
+void mosquito_habitat::feeding_cycle(){
+
+  const double dt = 1.0;
 
   /* psi: 0 prob to empty houses, renorm to be a probability vector */
   normalize_psi();
@@ -126,6 +128,7 @@ void mosquito_habitat::normalize_psi(){
     }
   }
 
+  /* renorm */
   if(renorm){
 
     /* zeros and Psis */
@@ -138,8 +141,6 @@ void mosquito_habitat::normalize_psi(){
       }
     }
 
-    /* renorm */
-
     /* sum it */
     const double psi_sum = std::accumulate(psi.begin(), psi.end(), 0.0,
                                                [](const double previous, const double element)
@@ -149,7 +150,8 @@ void mosquito_habitat::normalize_psi(){
       element /= psi_sum;
     });
 
-  } /* endif */
+  }
+  /* endif */
 };
 
 
@@ -157,7 +159,9 @@ void mosquito_habitat::normalize_psi(){
  * stochastic Euler step
 ################################################################################ */
 
-void mosquito_habitat::euler_step(const double tnow, const double dt){
+void mosquito_habitat::euler_step(const double tnow){
+
+  const double dt = 1.0;
 
   double muEL = village_ptr->param_ptr->at("muEL");
   double durEL = village_ptr->param_ptr->at("durEL");
