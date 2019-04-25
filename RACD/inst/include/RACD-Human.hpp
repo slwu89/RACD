@@ -67,7 +67,8 @@ public:
   /* daily simulation */
   void                            one_day(const int tNow);
 
-  /* mosquito encounter probabilities */
+  /* mosquito/biting encounter */
+  void                            get_bitten(const int eps); /* my daily recieved bites */
   double                          get_pi(); /* pi is my unnormalized biting weight */
   double                          get_w(); /* P(successful feeding) */
   double                          get_y(); /* P(biting) */
@@ -123,8 +124,8 @@ private:
   double                          ICM; /* maternal clinical immunity (reduces the probability of clinical disease, acquired maternally) */
 
   double                          bitingHet; /* zeta: baseline biting heterogeneity */
-  double                          epsilon; /* EIR */
-  double                          lambda; /* force of infection */
+  int                             epsilon; /* EIR: number of potentially infectious bites today */
+  double                          lambda; /* force of infection: number of infection events */
   double                          phi; /* probability of acquiring clinical disease */
   double                          c; /* infectiousness to mosquitoes */
 

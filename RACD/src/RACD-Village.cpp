@@ -160,9 +160,17 @@ void village::one_day(){
 
   /* run daily simulation for all humans */
   for(auto &hh : houses){
+
+    /* update house-based intervention */
     hh->update_intervention();
-    for(auto &h : hh->get_humans()){
-      h.second->one_day(tNow);
+
+    /* if there's people here, run their time-step */
+    if(!hh->humans.empty()){
+
+      hh->distribute_EIR();
+      for(auto &h : hh->humans){
+        h->one_day(tNow);
+      }
     }
   }
 
@@ -179,7 +187,7 @@ void village::births(){
   /* current population size */
   int N = 0;
   for(auto &hh : houses){
-    N += hh->get_humans().size();
+    N += hh->humans.size();
   }
 
   /* number of births */
@@ -192,11 +200,11 @@ void village::births(){
     double meanICA18_22 = 0.0;
     int t = 1;
     for(auto &hh : houses){
-      for(auto &h : hh->get_humans()){
-        double age = h.second->get_age();
+      for(auto &h : hh->humans){
+        double age = h->get_age();
         if(age >= 18 && age < 22){
           /* iterative mean: Knuth, The Art of Computer Programming Vol 2, section 4.2.2 */
-          meanICA18_22 += (h.second->get_ICA() - meanICA18_22) / t;
+          meanICA18_22 += (h->get_ICA() - meanICA18_22) / t;
           ++t;
         }
       }
@@ -208,7 +216,7 @@ void village::births(){
       /* find smallest house */
       std::vector<int> hhSize;
       for(auto &hh : houses){
-        hhSize.push_back(hh->get_humans().size());
+        hhSize.push_back(hh->humans.size());
       }
       auto it = std::min_element(hhSize.begin(), hhSize.end());
       size_t hh_ix = std::distance(hhSize.begin(), it);
@@ -261,9 +269,9 @@ void village::deaths(){
 
   for(auto &hh : houses){
 
-    auto it = std::find_if(hh->get_humans().begin(),hh->get_humans().end(), [&](human_ptr& h){ return !h->get_alive(); });
-    if(it!=hh->get_humans().end()){
-      hh->get_humans().erase(it);
+    auto it = std::find_if(hh->humans.begin(),hh->humans.end(), [&](human_ptr& h){ return !h->get_alive(); });
+    if(it!=hh->humans.end()){
+      hh->humans.erase(it);
     }
     it++;
 

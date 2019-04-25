@@ -65,14 +65,12 @@ void mosquito_habitat::feeding_cycle(const double dt){
   double cc = 0.0;
   double psi_h = 0.0;
   size_t i = 0;
-  int id = 0;
-  for(auto &house : village_ptr->houses){
+  for(auto& house : village_ptr->houses){
     psi_h = psi.at(i);
-    for(auto &h : house->get_humans()){
-      id = h.second->get_id();
-      ww += (psi_h * house->get_pi(id) * h.second->get_w());
-      zz += (psi_h * house->get_pi(id) * h.second->get_z());
-      cc += (psi_h * house->get_pi(id) * h.second->get_w() * h.second->get_c());
+    for(size_t k=0; k<house->humans.size(); k++){
+      ww += psi_h * house->pi[k] * house->humans[k]->get_w();
+      zz += psi_h * house->pi[k] * house->humans[k]->get_z();
+      cc += psi_h * house->pi[k] * house->humans[k]->get_w() * house->humans[k]->get_c();
     }
     i++;
   }
@@ -84,7 +82,7 @@ void mosquito_habitat::feeding_cycle(const double dt){
   Z = Q0*zz;
 
   /* feeding rate */
-  f = 1./((tau1/(1.0 - Z)) + tau2);
+  f = 1.0 / (tau1/(1.0 - Z) + tau2);
 
   /* survival */
   double p10 = std::exp(-muV*tau1);
@@ -101,6 +99,9 @@ void mosquito_habitat::feeding_cycle(const double dt){
   double lambda = a*IV;
   int bites = R::rpois(lambda*dt);
   rmultinom(bites,psi.data(),nhouse,EIR_out.data());
+  for(size_t i=0; i<nhouse; i++){
+    village_ptr->houses.at(i)->set_EIR(EIR_out[i]);
+  }
 
   /* calculate FOI (h->m) */
   lambdaV = a*cc;

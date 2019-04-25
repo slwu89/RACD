@@ -49,22 +49,74 @@ void house::apply_IRS(){
 }
 
 /* humans */
-void house::add_human(human_ptr h){
-  // if this is a bug, pull out the ID first and pass to the std::pair obj
-  pi.emplace(h->get_id(),h->get_pi());
-  humans.emplace(h->get_id(),std::move(h));
+void house::distribute_EIR(){
+
+  // DEBUG
+  if(pi.size() != id.size() || id.size() != humans.size()) {
+    Rcpp::Rcout << "error: size of id, pi, and humans vec is not all the same" << std::endl;
+  }
+  // DEBUG
 
   /* normalize pi */
   normalize_pi();
+
+  /* only partition out bites if there's (attempted) bites to give */
+  if(EIR > 0){
+    /* if there's only one person, they get all the bites */
+    if(humans.size() == 1){
+      humans.front()->get_bitten(EIR);
+
+    /* if there's multiple people, we have to partition bites accordingly */
+    } else {
+
+      /* rmultinom(int n, double* prob, int K, int* rN) */
+      size_t K = pi.size();
+      std::vector<int> EIR_2humans(K,0);
+      rmultinom(EIR, pi.data(), K, EIR_2humans.data());
+
+      /* sent the sampled bites to the human class */
+      for(size_t k=0; k<K; k++){
+        humans[k]->get_bitten(EIR_2humans[k]);
+      }
+
+    }
+  /* no bites showed up here */
+  } else {
+    for(auto& h : humans){
+      h->get_bitten(0);
+    }
+  }
+
+};
+
+void house::add_human(human_ptr h){
+  id.emplace_back(h->get_id());
+  pi.emplace_back(h->get_pi());
+  humans.emplace_back(std::move(h));
+  // // if this is a bug, pull out the ID first and pass to the std::pair obj
+  // pi.emplace(h->get_id(),h->get_pi());
+  // humans.emplace(h->get_id(),std::move(h));
 };
 
 void house::normalize_pi(){
+
   /* sum it */
   const double pi_sum = std::accumulate(pi.begin(), pi.end(), 0.0,
-                                             [](const double previous, const auto& element)
-                                              { return previous + element.second; });
+                                             [](const double previous, const double element)
+                                              { return previous + element; });
   /* normalize it */
-  std::for_each(pi.begin(), pi.end(), [pi_sum](auto& element){
-    element.second /= pi_sum;
+  std::for_each(pi.begin(), pi.end(), [pi_sum](double& element){
+    element /= pi_sum;
   });
+  /* bop it */
+
+  // /* sum it */
+  // const double pi_sum = std::accumulate(pi.begin(), pi.end(), 0.0,
+  //                                            [](const double previous, const auto& element)
+  //                                             { return previous + element.second; });
+  // /* normalize it */
+  // std::for_each(pi.begin(), pi.end(), [pi_sum](auto& element){
+  //   element.second /= pi_sum;
+  // });
+  // /* bop it */
 }

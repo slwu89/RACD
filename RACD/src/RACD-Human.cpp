@@ -491,8 +491,30 @@ void human::apply_ITN(){
 
 
 /* ################################################################################
-#   mosquito encounter probabilities
+#   mosquito/biting encounter
 ################################################################################ */
+
+/* my daily recieved bites */
+void human::get_bitten(const int eps){
+
+  /* no bites (yay!) */
+  if(eps == 0){
+    epsilon = 0;
+    lambda = 0.;
+  } else {
+
+    /* calc my b P(get inf | i get infectious bite) */
+    double b0 = house_ptr->village_ptr->param_ptr->at("b0");
+    double b1 = house_ptr->village_ptr->param_ptr->at("b1");
+    double IB0 = house_ptr->village_ptr->param_ptr->at("IB0");
+    double kappaB = house_ptr->village_ptr->param_ptr->at("kappaB");
+    double b = b0*(b1 + ((1-b1)/(1 + std::pow((IB/IB0),kappaB))));
+
+    epsilon = eps;
+    lambda = std::max(eps*b,1.);
+    // lambda = (int)R::rbinom((double) eps, b);
+  }
+}
 
 /* individual biting weight */
 double human::get_pi(){
