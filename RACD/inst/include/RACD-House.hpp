@@ -20,7 +20,6 @@
 
 #include <memory>
 #include <utility>
-#include <unordered_map>
 #include <algorithm>
 #include <numeric> // for accumulate
 #include <vector>
@@ -32,9 +31,6 @@
 /* alias and forward declarations */
 class human;
 using human_ptr       = std::unique_ptr<human>;
-
-// using human_table     = std::unordered_map<int,human_ptr>;
-// using human_pi        = std::unordered_map<int,double>;
 
 using human_vector    = std::vector<human_ptr>;
 using human_pi        = std::vector<double>;
@@ -64,13 +60,9 @@ public:
   /* accessors */
   int                                       get_houseID(){ return houseID; };
 
-
-  // human_table&                              get_humans(){ return humans; };
-  // double                                    get_pi(const int id){ return pi.at(id); };
-
-  /* the humans */
-  human_vector                                  humans; /* people here */
-  human_pi                                     pi; /* biting weight on humans */
+  /* humans */
+  human_vector                              humans; /* people here */
+  human_pi                                  pi; /* biting weight on humans */
   human_id                                  id; /* biting weight on humans */
 
   /* biting */

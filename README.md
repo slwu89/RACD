@@ -43,3 +43,4 @@ for humans: compartment_funs, infectiousness_funs should be static class members
 ## to-do
 
   * all simulation pars need to be in a single hash-table in the village class
+  * if its possible to have empty houses, we need to renormalize the Psi vector to give them probabiltiy 0, since all bites are conditioned on the bite going at least _somewhere_

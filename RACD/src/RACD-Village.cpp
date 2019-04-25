@@ -269,11 +269,22 @@ void village::deaths(){
 
   for(auto &hh : houses){
 
-    auto it = std::find_if(hh->humans.begin(),hh->humans.end(), [&](human_ptr& h){ return !h->get_alive(); });
-    if(it!=hh->humans.end()){
-      hh->humans.erase(it);
+    size_t h=0;
+    while(h<hh->humans.size()){
+      if(!hh->humans[h]->get_alive()){
+        hh->humans.erase(hh->humans.begin() + h);
+        hh->pi.erase(hh->pi.begin() + h);
+        hh->id.erase(hh->id.begin() + h);
+      } else {
+        h++;
+      }
     }
-    it++;
+
+    // auto it = std::find_if(hh->humans.begin(),hh->humans.end(), [&](human_ptr& h){ return !h->get_alive(); });
+    // if(it!=hh->humans.end()){
+    //   hh->humans.erase(it);
+    // }
+    // it++;
 
   }
 

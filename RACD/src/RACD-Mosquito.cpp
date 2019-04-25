@@ -98,9 +98,15 @@ void mosquito_habitat::feeding_cycle(const double dt){
   size_t nhouse = village_ptr->houses.size();
   double lambda = a*IV;
   int bites = R::rpois(lambda*dt);
-  rmultinom(bites,psi.data(),nhouse,EIR_out.data());
-  for(size_t i=0; i<nhouse; i++){
-    village_ptr->houses.at(i)->set_EIR(EIR_out[i]);
+  if(bites > 0){
+    rmultinom(bites,psi.data(),nhouse,EIR_out.data());
+    for(size_t i=0; i<nhouse; i++){
+      village_ptr->houses.at(i)->set_EIR(EIR_out[i]);
+    }
+  } else {
+    for(size_t i=0; i<nhouse; i++){
+      village_ptr->houses.at(i)->set_EIR(0);
+    }
   }
 
   /* calculate FOI (h->m) */
