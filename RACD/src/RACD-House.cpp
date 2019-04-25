@@ -65,7 +65,6 @@ void house::distribute_EIR(){
     /* if there's only one person, they get all the bites */
     if(humans.size() == 1){
       humans.front()->get_bitten(EIR);
-
     /* if there's multiple people, we have to partition bites accordingly */
     } else {
 

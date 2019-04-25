@@ -22,7 +22,8 @@
 
 /* constructor */
 mosquito_habitat::mosquito_habitat(const int EL_, const int LL_, const int PL_, const int SV_, const int EV_, const int IV_, const double K_,
-  const Rcpp::NumericVector& psiR, const Rcpp::List pars_, village* const village_ptr_) :
+  const Rcpp::NumericVector& psiR, village* const village_ptr_) :
+  psiWeight(Rcpp::as<std::vector<double> >(psiR)),
   psi(Rcpp::as<std::vector<double> >(psiR)), village_ptr(village_ptr_),
   EL_probs{0,0,0}, EL_transitions{0,0,0},
   LL_probs{0,0,0}, LL_transitions{0,0,0},
@@ -32,14 +33,7 @@ mosquito_habitat::mosquito_habitat(const int EL_, const int LL_, const int PL_, 
   IV_probs{0,0}, IV_transitions{0,0},
   EL(EL_), LL(LL_), PL(PL_), SV(SV_), EV(EV_), IV(IV_), K(K_),
   EIR_out(psiR.size(),0)
-{
-  /* initialize biological parameters */
-  Rcpp::CharacterVector pars_names = pars_.names();
-  for(size_t i=0; i<pars_.length(); i++){
-    pars.emplace(Rcpp::as<std::string>(pars_names[i]), Rcpp::as<double>(pars_[i]));
-  }
-
-};
+{};
 
 /* destructor */
 mosquito_habitat::~mosquito_habitat(){};
@@ -51,6 +45,9 @@ mosquito_habitat::~mosquito_habitat(){};
 ################################################################################ */
 
 void mosquito_habitat::feeding_cycle(const double dt){
+
+  /* psi: 0 prob to empty houses, renorm to be a probability vector */
+  normalize_psi();
 
   /* constants */
   double Q0 = village_ptr->param_ptr->at("Q0");
@@ -115,6 +112,44 @@ void mosquito_habitat::feeding_cycle(const double dt){
   /* calculate egg laying rate */
   beta = eggOV*mu/(std::exp(mu/f) - 1.0);
 
+};
+
+/* if any of the houses are empty, renormalize psi */
+void mosquito_habitat::normalize_psi(){
+
+  /* usually dont want to renormalize */
+  bool renorm = false;
+  for(auto& hh : village_ptr->houses){
+    if(hh->humans.empty()){
+      renorm = true;
+      break;
+    }
+  }
+
+  if(renorm){
+
+    /* zeros and Psis */
+    for(auto& hh : village_ptr->houses){
+      size_t k = hh->houseID;
+      if(hh->humans.empty()){
+        psi[k] = 0.0;
+      } else {
+        psi[k] = psiWeight[k];
+      }
+    }
+
+    /* renorm */
+
+    /* sum it */
+    const double psi_sum = std::accumulate(psi.begin(), psi.end(), 0.0,
+                                               [](const double previous, const double element)
+                                                { return previous + element; });
+    /* normalize it */
+    std::for_each(psi.begin(), psi.end(), [psi_sum](double& element){
+      element /= psi_sum;
+    });
+
+  } /* endif */
 };
 
 

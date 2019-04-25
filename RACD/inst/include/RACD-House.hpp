@@ -58,7 +58,7 @@ public:
   void                                      normalize_pi();
 
   /* accessors */
-  int                                       get_houseID(){ return houseID; };
+  int                                       houseID; /* ID */
 
   /* humans */
   human_vector                              humans; /* people here */
@@ -80,7 +80,6 @@ public:
 
 private:
 
-  int                                       houseID; /* ID */
   int                                       EIR; /* the total # of infectious bites arriving at this house, today */
 
   bool                                      IRS; /* does this house have IRS */

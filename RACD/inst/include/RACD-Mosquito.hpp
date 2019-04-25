@@ -18,7 +18,6 @@
 
 #include <iostream>
 #include <vector>
-#include <unordered_map>
 
 #include <math.h>
 #include <Rmath.h> // for rmultinom
@@ -32,7 +31,7 @@ public:
 
   /* constructor & destructor */
   mosquito_habitat(const int EL_, const int LL_, const int PL_, const int SV_, const int EV_, const int IV_, const double K_,
-    const Rcpp::NumericVector& psiR, const Rcpp::List pars_, village* const village_ptr_);
+    const Rcpp::NumericVector& psiR, village* const village_ptr_);
   ~mosquito_habitat();
 
   /* delete all copy semantics */
@@ -57,8 +56,11 @@ public:
 
 private:
 
-  /* default data members */
+  /* biting */
+  std::vector<double>         psiWeight; /* weights (assuming all houses have people, should still sum to 1) */
   std::vector<double>         psi; /* vector of biting distribution on houses */
+  void                        normalize_psi();
+
   village* const              village_ptr; /* raw pointer ok because house lifespan > human lifespan in memory */
 
   /* new eggs are generated from a conditionally independent Poisson process */
@@ -112,10 +114,7 @@ private:
   double Q; // proportion of successful bites on humans
   double a; // HBR
   double lambdaV; // FOI on mosy
-  double beta; // eggs/day/mosquito 
-
-  /* parameters */
-  std::unordered_map<std::string, double> pars;
+  double beta; // eggs/day/mosquito
 
 };
 
