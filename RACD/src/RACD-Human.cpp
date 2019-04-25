@@ -98,7 +98,7 @@ void human::one_day(const int tNow){
 
     /* update immunity */
     update_immunity();
-    update_lambda();
+    // update_lambda();
     update_phi();
     update_q();
 
@@ -372,26 +372,26 @@ void human::update_immunity(){
 
 };
 
-/* lambda */
-void human::update_lambda(){
-
-  /* Lambda (the force of infection) is calculated for each individual. It
-   * varies according to age and biting heterogeneity group:
-   */
-   double a0 = house_ptr->village_ptr->param_ptr->at("a0");
-   double epsilon0 = house_ptr->village_ptr->param_ptr->at("epsilon0");
-   double b0 = house_ptr->village_ptr->param_ptr->at("b0");
-   double b1 = house_ptr->village_ptr->param_ptr->at("b1");
-   double rho = house_ptr->village_ptr->param_ptr->at("rho");
-   double IB0 = house_ptr->village_ptr->param_ptr->at("IB0");
-   double kappaB = house_ptr->village_ptr->param_ptr->at("kappaB");
-   double psi = 1.0;
-
-   epsilon = epsilon0 * bitingHet * (1 - rho * std::exp(-age/a0)) * psi;
-   double b = b0*(b1 + ((1-b1)/(1 + std::pow((IB/IB0),kappaB))));
-   lambda = epsilon * b;
-
-};
+// /* lambda */
+// void human::update_lambda(){
+//
+//   /* Lambda (the force of infection) is calculated for each individual. It
+//    * varies according to age and biting heterogeneity group:
+//    */
+//    // double a0 = house_ptr->village_ptr->param_ptr->at("a0");
+//    // double epsilon0 = house_ptr->village_ptr->param_ptr->at("epsilon0");
+//    double b0 = house_ptr->village_ptr->param_ptr->at("b0");
+//    double b1 = house_ptr->village_ptr->param_ptr->at("b1");
+//    // double rho = house_ptr->village_ptr->param_ptr->at("rho");
+//    double IB0 = house_ptr->village_ptr->param_ptr->at("IB0");
+//    double kappaB = house_ptr->village_ptr->param_ptr->at("kappaB");
+//    // double psi = 1.0;
+//
+//    // epsilon = epsilon0 * bitingHet * (1 - rho * std::exp(-age/a0)) * psi;
+//    double b = b0*(b1 + ((1-b1)/(1 + std::pow((IB/IB0),kappaB))));
+//    lambda = epsilon * b;
+//
+// };
 
 /* phi */
 void human::update_phi(){

@@ -99,7 +99,7 @@ private:
   void                            mortality(const int tNow);      /* mortality */
   void                            ageing();                       /* ageing */
   void                            update_immunity();              /* immunity */
-  void                            update_lambda();                /* lambda: force of infection */
+  // void                            update_lambda();                /* lambda: force of infection */
   void                            update_phi();                   /* phi */
   void                            update_q();                     /* q (microscopy) */
 

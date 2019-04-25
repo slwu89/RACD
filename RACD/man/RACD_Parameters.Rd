@@ -14,7 +14,11 @@ RACD_Parameters(epsilon0 = 5/365, fT = 0.4, dE = 12, dT = 5,
   phi0 = 0.792, phi1 = 0.00074, dC = 30 * 365, IC0 = 18,
   kappaC = 2.37, uC = 6.06, PM = 0.774, dM = 67.7, rW = 0.723,
   rP = 0.342, meanAge = 17.4, N = 200, meanNumPeoplePerHouse = 6.5,
-  numHousesPerBreedingSite = 5)
+  numHousesPerBreedingSite = 5, beta = 21.19, muEL = 0.034,
+  muLL = 0.035, muPL = 0.25, durEL = 6.64, durLL = 3.72,
+  durPL = 0.64, durEV = 10, gamma = 13.25, tau1 = 0.68,
+  tau2 = 2.32, muV = 1/7.6, Q0 = 0.92, phiB = 0.89, phiI = 0.97,
+  rITN = 0.56, sITN = 0.03, rIRS = 0.6, sIRS = 0)
 }
 \arguments{
 \item{epsilon0}{Mean EIR for adults (per day)}
