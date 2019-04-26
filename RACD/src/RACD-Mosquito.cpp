@@ -131,7 +131,7 @@ void mosquito_habitat::normalize_psi(){
   /* renorm */
   if(renorm){
 
-    /* zeros and Psis */
+    /* zeros and Psi's */
     for(auto& hh : village_ptr->houses){
       size_t k = hh->houseID;
       if(hh->humans.empty()){
