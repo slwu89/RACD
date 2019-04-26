@@ -20,14 +20,14 @@
 
 /* C++ includes */
 #include <memory>
+#include <unordered_map>
+#include <string>
 #include <vector>
 #include <iostream>
 #include <math.h> /* sqrt */
 
 /* Rcpp includes */
 #include <Rcpp.h>
-#include <progress.hpp>
-#include <progress_bar.hpp>
 
 // #include "DEBUG.hpp"
 
@@ -35,10 +35,10 @@
 class house;
 using house_ptr = std::unique_ptr<house>;
 
-/* forward declare utility classes */
-class prng;
-class logger;
-class parameters;
+using parameters = std::unordered_map<std::string,double>;
+
+class mosquito_habitat;
+using mosy_ptr = std::unique_ptr<mosquito_habitat>;
 
 
 /* ######################################################################
@@ -50,7 +50,7 @@ class village {
 public:
 
   /* constructor & destructor */
-  village(const uint_least32_t seed, const Rcpp::NumericVector& theta);
+  village(const Rcpp::List& theta, const Rcpp::IntegerVector& mosy);
   ~village();
 
   /* initialize objects */
@@ -59,7 +59,11 @@ public:
   /* Simulation Methods */
 
   /* one simulation run */
-  void                                      simulation(const int tMax);
+  // void                                      simulation(const int tMax);
+
+  /* time */
+  int                                       tNow;
+  int                                       get_tNow(){return tNow;}
 
   /* daily simulation */
   void                                      one_day();
@@ -69,22 +73,22 @@ public:
   void                                      deaths();
 
   /* utility classes */
-  std::unique_ptr<prng>                     prng_ptr;
-  std::unique_ptr<logger>                   logger_ptr;
   std::unique_ptr<parameters>               param_ptr;
 
+  /* the landscape */
+  mosy_ptr                                  mosquito;
+  std::vector<house_ptr>                    houses;
+
+  /* track output */
+  void                                      track_human_state(Rcpp::IntegerMatrix& out);
+  void                                      track_mosquito_state(Rcpp::IntegerMatrix& out);
+
 private:
-
-  /* time */
-  int                                       tNow;
-  size_t                                    run_id;
-
   /* keep track of all human IDs */
   int                                       max_humanID;
 
-  /* houses */
-  std::vector<house_ptr>                    houses;
-  // std::vector<breedingSite_ptr>             breedingSites;
+  /* for output */
+  Rcpp::IntegerVector human_state;
 
 };
 

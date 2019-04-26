@@ -28,7 +28,7 @@
 #' }
 #'
 #' @export
-RACD_Simulation <- function(tMax, theta, human, house, seed, outfile) {
-    invisible(.Call('_RACD_RACD_Simulation', PACKAGE = 'RACD', tMax, theta, human, house, seed, outfile))
+RACD_Simulation <- function(tMax, theta, human, mosy, house) {
+    .Call('_RACD_RACD_Simulation', PACKAGE = 'RACD', tMax, theta, human, mosy, house)
 }
 

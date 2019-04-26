@@ -731,7 +731,7 @@ malaria_ibm <- function(theta, numIter) {
 				indiv[[j]]$age <- indiv[[j]]$age + (1/365)
 			}
 		}
-
+		
 		## Immunity:
 		# Update values for:
 		# 1. Pre-erythrocytic immunity (IB, reduces the probability of infection

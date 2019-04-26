@@ -17,13 +17,14 @@
 /* Rcpp includes */
 #include <Rcpp.h>
 
+#include <progress.hpp>
+#include <progress_bar.hpp>
+
 /* RACD includes */
-#include "RACD-Parameters.hpp"
-#include "RACD-PRNG.hpp"
 #include "RACD-Human.hpp"
 #include "RACD-House.hpp"
 #include "RACD-Village.hpp"
-#include "RACD-Logger.hpp"
+#include "RACD-Mosquito.hpp"
 
 //' RACD Simulation Model
 //'
@@ -53,19 +54,42 @@
 //'
 //' @export
 // [[Rcpp::export]]
-void RACD_Simulation(const int tMax, const Rcpp::NumericVector &theta, const Rcpp::List& human, const Rcpp::List& house, const uint_least32_t seed, const std::string& outfile){
+Rcpp::List RACD_Simulation(const int tMax, const Rcpp::List &theta, const Rcpp::List& human, const Rcpp::IntegerVector& mosy, const Rcpp::List& house){
+
+  /* output */
+  Rcpp::IntegerMatrix state_out(tMax,6);
+  Rcpp::colnames(state_out) = Rcpp::CharacterVector::create("S","T","D","A","U","P");
+
+  Rcpp::IntegerMatrix mosy_out(tMax,6);
+  Rcpp::colnames(mosy_out) = Rcpp::CharacterVector::create("EL","LL","PL","SV","EV","IV");
 
   /* construct village */
-  std::unique_ptr<village> village_ptr(std::make_unique<village>(seed,theta));
-
-  /* initialize logging */
-  village_ptr->logger_ptr->open_log(outfile);
-  village_ptr->logger_ptr->get_log() << "HumanID,Event,Time,Age\n";
+  std::unique_ptr<village> village_ptr(std::make_unique<village>(theta,mosy));
 
   /* initialize objects */
   village_ptr->initialize(human,house);
 
   /* run simulation */
-  village_ptr->simulation(tMax);
+  Progress pb(tMax,true);
+  while(village_ptr->tNow < tMax){
 
+    if(village_ptr->tNow % 2 == 0){
+      Rcpp::checkUserInterrupt();
+    }
+
+    village_ptr->one_day();
+
+    /* track output */
+    village_ptr->track_human_state(state_out);
+    village_ptr->track_mosquito_state(mosy_out);
+
+    /* increment time */
+    pb.increment();
+    village_ptr->tNow++;
+  }
+
+  return Rcpp::List::create(
+    Rcpp::Named("H_state") = state_out,
+    Rcpp::Named("M_state") = mosy_out
+  );
 };

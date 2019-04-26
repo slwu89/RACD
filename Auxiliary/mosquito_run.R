@@ -184,6 +184,7 @@ node <- make_node()
 node$EL <- eq_dt$EL_eq
 node$LL <- eq_dt$LL_eq
 node$PL <- eq_dt$PL_eq
+node$NM <- sum(eq_dt$SV_eq,eq_dt$EV_eq,IV_eq)
 node$SV <- eq_dt$SV_eq
 node$EV <- eq_dt$EV_eq
 node$IV <- IV_eq
@@ -192,11 +193,12 @@ theta_eq$K <- eq_dt$K_eq
 
 # sampling grid
 sample_grid <- tsamp <- c(0,seq(from=1,to = tmax,by = dt))
-sample_pop <- matrix(0,nrow=6,ncol=length(sample_grid),dimnames=list(c("EL","LL","PL","SV","EV","IV"),paste0(sample_grid)))
+sample_pop <- matrix(0,nrow=7,ncol=length(sample_grid),dimnames=list(c("EL","LL","PL","NM","SV","EV","IV"),paste0(sample_grid)))
 
 sample_pop["EL",1] <- node$EL
 sample_pop["LL",1] <- node$LL
 sample_pop["PL",1] <- node$PL
+sample_pop["NM",1] <- node$NM
 sample_pop["SV",1] <- node$SV
 sample_pop["EV",1] <- node$EV
 sample_pop["IV",1] <- node$IV
@@ -215,6 +217,7 @@ for(t in 1:length(time)){
     sample_pop["EL",as.character(sample_grid[1])] <- node$EL
     sample_pop["LL",as.character(sample_grid[1])] <- node$LL
     sample_pop["PL",as.character(sample_grid[1])] <- node$PL
+    sample_pop["NM",as.character(sample_grid[1])] <- node$NM
     sample_pop["SV",as.character(sample_grid[1])] <- node$SV
     sample_pop["EV",as.character(sample_grid[1])] <- node$EV
     sample_pop["IV",as.character(sample_grid[1])] <- node$IV
@@ -224,8 +227,12 @@ for(t in 1:length(time)){
   setTxtProgressBar(pb = pb,value = t)
 }
 
-dat_dt <- data.frame(time=tsamp,SV=sample_pop["SV",],EV=sample_pop["EV",],IV=sample_pop["IV",])
+dat_dt <- data.frame(time=tsamp,NM=sample_pop["NM",],SV=sample_pop["SV",],EV=sample_pop["EV",],IV=sample_pop["IV",])
 dat_dt <- melt(dat_dt,"time")
+
+ggplot(data=dat_dt) + 
+  geom_line(aes(x=time,y=value,color=variable)) +
+  theme_bw()
 
 dat_comb <- merge(dat_ct,dat_dt,by=c("time","variable"),suffixes = c("ct","dt"))
 dat_comb <- melt(dat_comb,id.vars=c("time","variable"),measure.vars = c("valuect","valuedt"))

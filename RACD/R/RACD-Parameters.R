@@ -128,8 +128,36 @@ RACD_Parameters <- function(
 
   ## Geographic parameters:
   meanNumPeoplePerHouse = 6.5, # Mean number of people per house (from Misungu data set)
-  numHousesPerBreedingSite = 5
+  numHousesPerBreedingSite = 5,
+
+  # ENTO PARS
+  ## Mosquito life cycle parameters:
+  beta = 21.19, # Number of eggs laid per day by female mosquito
+  muEL = 0.034, # Early larval instar daily mortality
+  muLL = 0.035, # Late larval instar daily mortality
+  muPL = 0.25, # Pupal daily mortality
+  durEL = 6.64, # Duration of early instar stage
+  durLL = 3.72, # Duration of late instar stage
+  durPL = 0.64, # Duration of pupal stage
+  durEV = 10, # Duration of latent period in mosquito (days)
+  gamma = 13.25, # Effect of density-dependence on late instars relative to early instars
+  tau1 = 0.68, # Time spent foraging for a blood meal at 0% ITN coverage
+  tau2 = 2.32, # Time spent resting and ovipositing by a mosquito
+
+  muV = 1/7.6, # Adult mosquito daily mortality
+  Q0 = 0.92, # Human blood index
+  phiB = 0.89, # Proportion of bites on a person while they are in bed
+  phiI = 0.97, # Proportion of bites on a person while they are indoors
+  rITN = 0.56, # Probability of mosquito repeating a feeding attempt due to IRS
+  sITN = 0.03, # Probability of mosquito feeding and surviving in presence of ITNs
+  rIRS = 0.60, # Probability of mosquito repeating a feeding attempt due to IRS
+  sIRS = 0 # Probability of mosquito feeding and surviving in presence of IRS
+
 ){
+
+  delta <- 1 / (tau1+tau2)
+  eggOV <- beta*(exp(muV/delta)-1.0)/muV
+
   return(
     c(
       epsilon0 = epsilon0,
@@ -176,7 +204,30 @@ RACD_Parameters <- function(
       meanAge = meanAge,
       N = N,
       meanNumPeoplePerHouse = meanNumPeoplePerHouse,
-      numHousesPerBreedingSite = numHousesPerBreedingSite
+      numHousesPerBreedingSite = numHousesPerBreedingSite,
+
+      # ENTO
+      beta = beta,
+      muEL = muEL,
+      muLL = muLL,
+      muPL = muPL,
+      durEL = durEL,
+      durLL = durLL,
+      durPL = durPL,
+      durEV = durEV,
+      gamma = gamma,
+      tau1 = tau1,
+      tau2 = tau2,
+
+      muV = muV,
+      Q0 = Q0,
+      phiB = phiB,
+      phiI = phiI,
+      rITN = rITN,
+      sITN = sITN,
+      rIRS = rIRS,
+      sIRS = sIRS,
+      eggOV = eggOV
     )
   )
 }

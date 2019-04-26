@@ -128,7 +128,7 @@ void derivs_infection(int *neq, double *t, double *y, double *ydot, double *yout
   /* parameters */
   double ICM = initICA20 * exp(-time/dM); /*maternally-inherited antibodies*/
   double epsilon = epsilon0*zeta*(1 - rho*exp(-time/a0))*psi; /*EIR at age a*/
-  // double b = b0*(b1 + ((1-b1)/(1 + pow((y[6]/IB0),kappaB)))); /*mosquito to human transmission efficiency*/
+  // double b = b0*(b1 + ((1-b1)/(1 + std::pow((y[6]/IB0),kappaB)))); /*mosquito to human transmission efficiency*/
   double lambda = epsilon*b0*(b1 + ((1-b1)/(1 + pow((IB/IB0),kappaB)))); /*force of infection at age a*/
   double phi = phi0*(phi1 + ((1 - phi1)/(1 + pow(((ICA + ICM)/IC0),kappaC)))); /* probability to acquire clinical disease if infected */
 

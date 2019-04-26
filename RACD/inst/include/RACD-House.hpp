@@ -20,16 +20,36 @@
 
 #include <memory>
 #include <utility>
+#include <algorithm>
+#include <numeric> // for accumulate
 #include <vector>
+
+#include <unordered_map>
+
+#include <Rcpp.h>
+#include <Rmath.h> // for rmultinom
 
 // #include "DEBUG.hpp"
 
 /* alias and forward declarations */
 class human;
 using human_ptr       = std::unique_ptr<human>;
+
 using human_vector    = std::vector<human_ptr>;
+using human_pi        = std::vector<double>;
+using human_id        = std::vector<int>;
 
 class village;
+
+/* for output */
+static const std::unordered_map<std::string,size_t> state2col = {
+  {"S",0},
+  {"T",1},
+  {"D",2},
+  {"A",3},
+  {"U",4},
+  {"P",5}
+};
 
 
 /* ######################################################################
@@ -41,32 +61,48 @@ class house {
 public:
 
   /* constructor */
-  house(const int houseID_, const double psi_, const double x_, const double y_, village* village_ptr_);
+  house(const int houseID_, village* const village_ptr_);
 
   /* destructor */
   ~house();
 
-  /* add humans */
+  /* humans */
   void                                      add_human(human_ptr h);
+  void                                      normalize_pi();
 
   /* accessors */
-  int                                       get_houseID(){ return houseID; };
-  double                                    get_psi(){ return psi; };
-  human_vector&                             get_humans(){ return humans; };
-  double                                    get_x(){ return x; };
-  double                                    get_y(){ return y; };
+  int                                       houseID; /* ID */
 
-  village*                                  village_ptr; /* raw pointer ok because village lifespan > house lifespan */
+  /* humans */
+  human_vector                              humans; /* people here */
+  human_pi                                  pi; /* biting weight on humans */
+  human_id                                  id; /* biting weight on humans */
+
+  /* biting */
+  void                                      distribute_EIR();
+  int                                       get_EIR(){return EIR;};
+  void                                      set_EIR(const int e){ EIR = e;};
+
+  /* interventions */
+  void                                      update_intervention();
+
+  bool                                      has_IRS();
+  void                                      apply_IRS();
+
+  /* track output */
+  Rcpp::IntegerVector                       output_states();
+
+  village* const                            village_ptr; /* raw pointer ok because village lifespan > house lifespan */
 
 private:
 
-  int                                       houseID; /* ID */
-  double                                    psi; /* relative risk */
+  int                                       EIR; /* the total # of infectious bites arriving at this house, today */
 
-  double                                    x; /* longitude */
-  double                                    y; /* latitude */
+  bool                                      IRS; /* does this house have IRS */
+  double                                    IRSoff;
 
-  human_vector                              humans; /* people here */
+  // /* for output */
+  // Rcpp::IntegerVector                       states;
 };
 
 #endif
