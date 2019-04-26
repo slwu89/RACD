@@ -138,10 +138,25 @@ jac_g <- function(x){
 }
 
 
-# calculate equilibrium values for state variables (and K)
-# from given FOI on mosquitoes and IV
-# (these are obtainable from solving human equations at equilibrium)
-calc_eq <- function(theta,dt,IV,lambdaV,sd=0.25){
+#' Exact (discrete-time) Equilibrium for Mosquito Model
+#'
+#' Using approximate solutions from \code{\link[RACD]{RACD_approx_equilibrium}} as starting point(s)
+#' use constrained numerical optimization to find equilibrium solutions of (EL, LL, K)
+#' from a given force of infection on mosquitoes and size of infected vector population,
+#' which are obtainable from solving the human model at equilibrium.
+#' Starting values for the optimzation are found by using Latin Hypercube Sampling
+#' in a box around the approximate solutions.
+#'
+#' @param theta named vector of parameters (see \code{\link{RACD_Parameters}})
+#' @param dt size of time-step
+#' @param IV number of infectious vectors at equilibrum
+#' @param lambdaV equilibrium force of infection on mosquitos
+#' @param sd size of box around approximate value is (x +- x*sd)
+#' @param nstart number of starting points for optimization
+#' @param cores number of cores to evaluate optimization on
+#'
+#' @export
+RACD_mosq_equilibrium <- function(theta,dt,IV,lambdaV,sd=0.25,nstart=1e3,cores=4){
 
   # get approximate values from the continuous-time model
   approx <- approx_equilibrium(theta,lambdaV,IV)
@@ -197,8 +212,6 @@ calc_eq <- function(theta,dt,IV,lambdaV,sd=0.25){
   ci <- rep(0,4) # k
 
   # from many starting points
-  nstart <- 1e3
-
   mins <- approx - (approx*sd)
   maxs <- approx + (approx*sd)
   starts <- as.list(data.frame(t(lhs::randomLHS(n = nstart,k = p))))
@@ -206,12 +219,12 @@ calc_eq <- function(theta,dt,IV,lambdaV,sd=0.25){
     qunif(p = x,min = mins,max = maxs)
   })
 
-  control <- list(trace=6,maxit=1e3,reltol=1e-10)
+  control <- list(trace=0,maxit=1e3,reltol=1e-10)
   opt <-  pbmcapply::pbmclapply(X = starts,FUN = function(start){
     constrOptim(theta = start,f = obj_f,grad = grad_f,
                 ui = ui,ci = ci, method = "Nelder-Mead",
                 control=control,outer.eps = 1e-6,outer.iterations = 2e2)
-  },mc.cores = 4)
+  },mc.cores = cores)
 
   min <- which.min(sapply(opt,function(x){x$value}))
 
