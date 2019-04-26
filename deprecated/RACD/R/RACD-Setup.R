@@ -133,6 +133,7 @@ RACD_Setup <- function(xy_h, xy_b, theta){
       IB <- initI[["IB"]]; ID <- initI[["ID"]]; ICA <- initI[["ICA"]]
       initI20 <- immune_initial(a=20, zeta=1, psi=1, theta=theta)
       ICM <- initI[["ICA"]] * exp(-a/dM)
+      # ICM <- initI20[["ICA"]] * exp(-a/dM)
       epsilon <- epsilon0 * zeta * (1 - rho * exp(-a/a0)) * psi
       b <- b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
       lambda <- epsilon*b

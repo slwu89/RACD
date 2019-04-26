@@ -19,7 +19,6 @@ Initialize initial conditions for the RACD simulation model
 \examples{
 \dontrun{
 library(RACD)
-library(RACDaux)
 library(tidyverse)
 library(spatstat)
 xy_h <- rpoispp(lambda = 100,win = owin(c(0,1),c(0,1)))

@@ -4,16 +4,17 @@
 \alias{RACD_Parameters}
 \title{Generate Parameters for RACD Model}
 \usage{
-RACD_Parameters(epsilon0 = 5/365, fT = 0.4, dE = 12, dT = 5, dD = 5,
-  dA = 200, dU = 110, dP = 25, cD = 0.068, cT = 0.32 * 0.068,
-  cU = 0.0062, gammaI = 1.82, rho = 0.85, a0 = 8, sigma2 = 1.67,
-  d1 = 0.161, dID = 10 * 365, ID0 = 1.58, kappaD = 0.477, uD = 9.45,
-  aD = 21.9, fD0 = 0.0071, gammaD = 4.81, alphaA = 0.757,
-  alphaU = 0.186, b0 = 0.59, b1 = 0.5, dB = 10 * 365, IB0 = 43.9,
-  kappaB = 2.16, uB = 7.2, phi0 = 0.792, phi1 = 0.00074, dC = 30 *
-  365, IC0 = 18, kappaC = 2.37, uC = 6.06, PM = 0.774, dM = 67.7,
-  rW = 0.723, rP = 0.342, meanAge = 17.4, N = 200,
-  meanNumPeoplePerHouse = 6.5, numHousesPerBreedingSite = 5)
+RACD_Parameters(epsilon0 = 5/365, fT = 0.4, dE = 12, dT = 5,
+  dD = 5, dA = 200, dU = 110, dP = 25, cD = 0.068, cT = 0.32 *
+  0.068, cU = 0.0062, gammaI = 1.82, rho = 0.85, a0 = 8,
+  sigma2 = 1.67, d1 = 0.161, dID = 10 * 365, ID0 = 1.58,
+  kappaD = 0.477, uD = 9.45, aD = 21.9, fD0 = 0.0071,
+  gammaD = 4.81, alphaA = 0.757, alphaU = 0.186, b0 = 0.59,
+  b1 = 0.5, dB = 10 * 365, IB0 = 43.9, kappaB = 2.16, uB = 7.2,
+  phi0 = 0.792, phi1 = 0.00074, dC = 30 * 365, IC0 = 18,
+  kappaC = 2.37, uC = 6.06, PM = 0.774, dM = 67.7, rW = 0.723,
+  rP = 0.342, meanAge = 17.4, N = 200, meanNumPeoplePerHouse = 6.5,
+  numHousesPerBreedingSite = 5)
 }
 \arguments{
 \item{epsilon0}{Mean EIR for adults (per day)}

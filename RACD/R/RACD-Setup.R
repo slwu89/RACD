@@ -45,13 +45,13 @@ RACD_Setup <- function(theta, psi, EIR){
 
     cat("generate population\n")
 
-    mu <- 1/(meanAge*365) # daily mortality st mean age does not change
-
+    # mu <- 1/(meanAge*365) # daily mortality st mean age does not change
     n_dwelling <- length(psi)
 
-    humans <- replicate(n = N,expr = {
-      list(age = rexp(n=1,rate=1/meanAge), alive = TRUE)
-    },simplify = FALSE)
+    # sample characteristics of each person
+    h_ages <- rexp(n=N,rate=1/meanAge)
+    h_alive <- rep(TRUE,N)
+    h_bitehet <- rlnorm(n=N,meanlog = -sigma2/2, sdlog = sqrt(sigma2))
 
     # assign the humans to houses roughly uniformly
     dwelling_size <- rmultinom(n=1,size = N,prob = rep(1,n_dwelling)
@@ -59,18 +59,19 @@ RACD_Setup <- function(theta, psi, EIR){
       dwelling_size <- rmultinom(n=1,size = N,prob = rep(1,n_dwelling)
     }
 
-    residence <- rep(1:n_dwelling,times=as.vector(dwelling_size))
-    for(i in 1:N){
-      humans[[i]]$house <- residence[i]
-    }
+    h_residence <- rep(1:n_dwelling,times=as.vector(dwelling_size))
+
+
+
 
     cat("begin calculating individual immune status\n")
     pb = txtProgressBar(min=1,max=N,initial = 1, style=3)
 
-    for(i in 1:N){
-      humans[[j]]$bitingHet <- rlnorm(n = 1, meanlog = -sigma2/2, sdlog = sqrt(sigma2))
-    }
 
+
+#     > mapply(FUN = function(...){
+# +     c(...)
+# + },x=x,y=y,SIMPLIFY = FALSE)
 
 
 
