@@ -21,12 +21,14 @@
 #' \dontrun{
 #' library(RACD)
 #' library(tidyverse)
+#' library(reshape2)
 #' theta <- RACD_Parameters(N=1e3)
 #' init <- RACD_Setup(theta)
-#' outfile = "/Users/slwu89/Desktop/log_trans.csv"
-#' RACD_Simulation(365*10,theta,init$humans,init$houses,123,outfile)
-#' state = RACDaux::RACD_StateVector(outfile)
-#' state %>% as.tibble %>% gather(state,value,-time) %>% ggplot(aes(x=time,y=value,color=state)) + geom_line() + theme_bw()
+#' out <- RACD_Simulation(365*10,theta,init$humans,init$houses,42)
+#' out <- as.data.frame(out)
+#' out$time <- as.integer(rownames(out))
+#' out <- melt(out,id.vars = "time")
+#' ggplot(data = out,aes(x=time,y=value,color=variable)) + geom_line()
 #' }
 #'
 #' @export
@@ -307,8 +309,8 @@ RACD_Setup <- function(theta){
 
     return(list(
       humans = indiv,
-      breedingSites = mapply(latHouse,longHouse,sigmaBreedingSite,FUN = function(x,y,z){list(x=x,y=y,sigma=z)},SIMPLIFY = FALSE),
-      houses = mapply(latBreedingSite,longBreedingSite,householdSize,psiHouse,FUN = function(x,y,z,w){list(x=x,y=y,size=z,psi=w)},SIMPLIFY = FALSE)
+      breedingSites = mapply(latBreedingSite,longBreedingSite,sigmaBreedingSite,FUN = function(x,y,z){list(x=x,y=y,sigma=z)},SIMPLIFY = FALSE),
+      houses = mapply(latHouse,longHouse,householdSize,psiHouse,FUN = function(x,y,z,w){list(x=x,y=y,size=z,psi=w)},SIMPLIFY = FALSE)
     ))
   # })
 }

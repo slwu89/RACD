@@ -5,10 +5,12 @@
 #########################################################################
 
 # Clear all stored parameters:
-rm(list=ls())
+rm(list=ls());gc()
 
 # Set working directory:
-setwd("C://Users/John/My Documents/Berkeley/MEI/MicroEpiModeling/")
+# setwd("C://Users/John/My Documents/Berkeley/MEI/MicroEpiModeling/")
+
+Rcpp::sourceCpp("/Users/slwu89/Desktop/git/RACD/Auxiliary/test-human/test-human.cpp")
 
 # Load required libraries:
 library(deSolve)
@@ -449,282 +451,287 @@ malaria_ibm <- function(theta, numIter) {
 		## Transitions from S compartment:
 		for (j in isS) {
 			if (indiv[[j]]$alive == 1) {
-				# Extract information for jth individual.
-				lambda <- indiv[[j]]$lambda
-
-				# Draw a random number between 1 and 0 for each susceptible
-				# individual.
-				randNum <- runif(1)
-
-				## Latent infection (S -> E):
-				# If the random number is less than lambda, that individual
-				# develops a latent infection (E) in the next time step.
-				if (randNum <= lambda) {
-					indiv[[j]]$state <- "E"
-					indiv[[j]]$daysLatent <- 1
-				}
+        S_compartment(indiv[[j]])
+				# # Extract information for jth individual.
+				# lambda <- indiv[[j]]$lambda
+        #
+				# # Draw a random number between 1 and 0 for each susceptible
+				# # individual.
+				# randNum <- runif(1)
+        #
+				# ## Latent infection (S -> E):
+				# # If the random number is less than lambda, that individual
+				# # develops a latent infection (E) in the next time step.
+				# if (randNum <= lambda) {
+				# 	indiv[[j]]$state <- "E"
+				# 	indiv[[j]]$daysLatent <- 1
+				# }
 			}
 		}
-		
-		# table(sapply(indiv,function(x){x$state}))
 
 		## Transitions from E compartment:
 		for (j in isE) {
 			if (indiv[[j]]$alive == 1) {
-				if (indiv[[j]]$daysLatent < dE) {
-					indiv[[j]]$daysLatent <- indiv[[j]]$daysLatent + 1
-				} else {
-					# Extract information for jth individual.
-					phi <- indiv[[j]]$phi
-
-					# Draw a random number between 1 and 0 for each
-					# latently-infected individual.
-					randNum <- runif(1)
-
-					## Treated clinical infection (E -> T):
-					# If the random number is less than phi*fT, that
-					# individual develops a treated clinical infection (T)
-					# in the next time step.
-					if (randNum <= phi*fT) {
-						indiv[[j]]$state <- "T"
-						indiv[[j]]$daysLatent <- 0
-
-						# Keep track of clinical incidence in different age groups:
-						clinIncAll[i] <- clinIncAll[i] + 1
-						if ((indiv[[j]]$age >= 2) & (indiv[[j]]$age < 10)) {
-							clinInc2_10[i] <- clinInc2_10[i] + 1
-						}
-						if (indiv[[j]]$age < 5) {
-							clinInc0_5[i] <- clinInc0_5[i] + 1
-						} else if ((indiv[[j]]$age >= 5) & (indiv[[j]]$age < 10)) {
-							clinInc5_10[i] <- clinInc5_10[i] + 1
-						} else if ((indiv[[j]]$age >= 10) & (indiv[[j]]$age < 15)) {
-							clinInc10_15[i] <- clinInc10_15[i] + 1
-						} else if (indiv[[j]]$age >= 15) {
-							clinInc15Plus[i] <- clinInc15Plus[i] + 1
-						}
-					}
-
-					## Untreated clinical infection (E -> D):
-					# If the random number is greater than phi*fT and less
-					# than phi, that individual develops an untreated
-					# clinical infection (D) in the next time step.
-					if ((randNum > phi*fT) & (randNum <= phi)) {
-						indiv[[j]]$state <- "D"
-						indiv[[j]]$daysLatent <- 0
-
-						# Keep track of clinical incidence in different age groups:
-						clinIncAll[i] <- clinIncAll[i] + 1
-						if ((indiv[[j]]$age >= 2) & (indiv[[j]]$age < 10)) {
-							clinInc2_10[i] <- clinInc2_10[i] + 1
-						}
-						if (indiv[[j]]$age < 5) {
-							clinInc0_5[i] <- clinInc0_5[i] + 1
-						} else if ((indiv[[j]]$age >= 5) & (indiv[[j]]$age < 10)) {
-							clinInc5_10[i] <- clinInc5_10[i] + 1
-						} else if ((indiv[[j]]$age >= 10) & (indiv[[j]]$age < 15)) {
-							clinInc10_15[i] <- clinInc10_15[i] + 1
-						} else if (indiv[[j]]$age >= 15) {
-							clinInc15Plus[i] <- clinInc15Plus[i] + 1
-						}
-					}
-
-					## Asymptomatic infection (E -> A):
-					# If the random number is greater than phi, that
-					# individual develops an asymptomatic infection (A) in
-					# the next time step.
-					if (randNum > phi) {
-						indiv[[j]]$state <- "A"
-						indiv[[j]]$daysLatent <- 0
-					}
-				}
+        E_compartment(indiv[[j]],dE,fT)
+				# if (indiv[[j]]$daysLatent < dE) {
+				# 	indiv[[j]]$daysLatent <- indiv[[j]]$daysLatent + 1
+				# } else {
+				# 	# Extract information for jth individual.
+				# 	phi <- indiv[[j]]$phi
+        #
+				# 	# Draw a random number between 1 and 0 for each
+				# 	# latently-infected individual.
+				# 	randNum <- runif(1)
+        #
+				# 	## Treated clinical infection (E -> T):
+				# 	# If the random number is less than phi*fT, that
+				# 	# individual develops a treated clinical infection (T)
+				# 	# in the next time step.
+				# 	if (randNum <= phi*fT) {
+				# 		indiv[[j]]$state <- "T"
+				# 		indiv[[j]]$daysLatent <- 0
+        #
+				# 		# Keep track of clinical incidence in different age groups:
+				# 		clinIncAll[i] <- clinIncAll[i] + 1
+				# 		if ((indiv[[j]]$age >= 2) & (indiv[[j]]$age < 10)) {
+				# 			clinInc2_10[i] <- clinInc2_10[i] + 1
+				# 		}
+				# 		if (indiv[[j]]$age < 5) {
+				# 			clinInc0_5[i] <- clinInc0_5[i] + 1
+				# 		} else if ((indiv[[j]]$age >= 5) & (indiv[[j]]$age < 10)) {
+				# 			clinInc5_10[i] <- clinInc5_10[i] + 1
+				# 		} else if ((indiv[[j]]$age >= 10) & (indiv[[j]]$age < 15)) {
+				# 			clinInc10_15[i] <- clinInc10_15[i] + 1
+				# 		} else if (indiv[[j]]$age >= 15) {
+				# 			clinInc15Plus[i] <- clinInc15Plus[i] + 1
+				# 		}
+				# 	}
+        #
+				# 	## Untreated clinical infection (E -> D):
+				# 	# If the random number is greater than phi*fT and less
+				# 	# than phi, that individual develops an untreated
+				# 	# clinical infection (D) in the next time step.
+				# 	if ((randNum > phi*fT) & (randNum <= phi)) {
+				# 		indiv[[j]]$state <- "D"
+				# 		indiv[[j]]$daysLatent <- 0
+        #
+				# 		# Keep track of clinical incidence in different age groups:
+				# 		clinIncAll[i] <- clinIncAll[i] + 1
+				# 		if ((indiv[[j]]$age >= 2) & (indiv[[j]]$age < 10)) {
+				# 			clinInc2_10[i] <- clinInc2_10[i] + 1
+				# 		}
+				# 		if (indiv[[j]]$age < 5) {
+				# 			clinInc0_5[i] <- clinInc0_5[i] + 1
+				# 		} else if ((indiv[[j]]$age >= 5) & (indiv[[j]]$age < 10)) {
+				# 			clinInc5_10[i] <- clinInc5_10[i] + 1
+				# 		} else if ((indiv[[j]]$age >= 10) & (indiv[[j]]$age < 15)) {
+				# 			clinInc10_15[i] <- clinInc10_15[i] + 1
+				# 		} else if (indiv[[j]]$age >= 15) {
+				# 			clinInc15Plus[i] <- clinInc15Plus[i] + 1
+				# 		}
+				# 	}
+        #
+				# 	## Asymptomatic infection (E -> A):
+				# 	# If the random number is greater than phi, that
+				# 	# individual develops an asymptomatic infection (A) in
+				# 	# the next time step.
+				# 	if (randNum > phi) {
+				# 		indiv[[j]]$state <- "A"
+				# 		indiv[[j]]$daysLatent <- 0
+				# 	}
+				# }
 			}
 		}
 
 		## Transitions from T compartment:
 		for (j in isT) {
 			if (indiv[[j]]$alive == 1) {
-				# Draw a random number between 1 and 0 for each treated individual.
-				randNum <- runif(1)
-
-				## Prophylactic protection (T -> P):
-				# If the random number is less than 1/dT, that individual enters the
-				# phase of prophylactic protection (P) in the next time step.
-				if (randNum <= (1/dT)) {
-					indiv[[j]]$state <- "P"
-				}
+        T_compartment(indiv[[j]],dT)
+				# # Draw a random number between 1 and 0 for each treated individual.
+				# randNum <- runif(1)
+        #
+				# ## Prophylactic protection (T -> P):
+				# # If the random number is less than 1/dT, that individual enters the
+				# # phase of prophylactic protection (P) in the next time step.
+				# if (randNum <= (1/dT)) {
+				# 	indiv[[j]]$state <- "P"
+				# }
 			}
 		}
 
 		## Transitions from D compartment:
 		for (j in isD) {
 			if (indiv[[j]]$alive == 1) {
-				# Draw a random number between 1 and 0 for each treated individual.
-				randNum <- runif(1)
-
-				## Progression from diseased to asymptomatic (D -> A):
-				# If the random number is less than 1/dD, that individual enters the
-				# phase of asymptomatic patent infection (A) in the next time step.
-				if (randNum <= (1/dD)) {
-					indiv[[j]]$state <- "A"
-				}
+        D_compartment(indiv[[j]], dD)
+				# # Draw a random number between 1 and 0 for each treated individual.
+				# randNum <- runif(1)
+        #
+				# ## Progression from diseased to asymptomatic (D -> A):
+				# # If the random number is less than 1/dD, that individual enters the
+				# # phase of asymptomatic patent infection (A) in the next time step.
+				# if (randNum <= (1/dD)) {
+				# 	indiv[[j]]$state <- "A"
+				# }
 			}
 		}
 
 		## Transitions from A compartment:
 		for (j in isA) {
 			if (indiv[[j]]$alive == 1) {
-				# Extract information for jth individual.
-				lambda <- indiv[[j]]$lambda
-				phi <- indiv[[j]]$phi
-
-				# Draw a random number between 1 and 0 for each susceptible
-				# individual.
-				randNum <- runif(1)
-
-				## Treated clinical infection (A -> T):
-				# If the random number is less than phi*fT*lambda, that
-				# individual develops a treated clinical infection (T) in
-				# the next time step.
-				if (randNum <= phi*fT*lambda) {
-					indiv[[j]]$state <- "T"
-
-					# Keep track of clinical incidence in different age groups:
-					clinIncAll[i] <- clinIncAll[i] + 1
-					if ((indiv[[j]]$age >= 2) & (indiv[[j]]$age < 10)) {
-						clinInc2_10[i] <- clinInc2_10[i] + 1
-					}
-					if (indiv[[j]]$age < 5) {
-						clinInc0_5[i] <- clinInc0_5[i] + 1
-					} else if ((indiv[[j]]$age >= 5) & (indiv[[j]]$age < 10)) {
-						clinInc5_10[i] <- clinInc5_10[i] + 1
-					} else if ((indiv[[j]]$age >= 10) & (indiv[[j]]$age < 15)) {
-						clinInc10_15[i] <- clinInc10_15[i] + 1
-					} else if (indiv[[j]]$age >= 15) {
-						clinInc15Plus[i] <- clinInc15Plus[i] + 1
-					}
-				}
-
-				## Untreated clinical infection (A -> D):
-				# If the random number is greater than phi*fT*lambda and
-				# less than phi*lambda, that individual develops an
-				# untreated clinical infection (D) in the next time step.
-				if ((randNum > phi*fT*lambda) & (randNum <= phi*lambda)) {
-					indiv[[j]]$state <- "D"
-
-					# Keep track of clinical incidence in different age groups:
-					clinIncAll[i] <- clinIncAll[i] + 1
-					if ((indiv[[j]]$age >= 2) & (indiv[[j]]$age < 10)) {
-						clinInc2_10[i] <- clinInc2_10[i] + 1
-					}
-					if (indiv[[j]]$age < 5) {
-						clinInc0_5[i] <- clinInc0_5[i] + 1
-					} else if ((indiv[[j]]$age >= 5) & (indiv[[j]]$age < 10)) {
-						clinInc5_10[i] <- clinInc5_10[i] + 1
-					} else if ((indiv[[j]]$age >= 10) & (indiv[[j]]$age < 15)) {
-						clinInc10_15[i] <- clinInc10_15[i] + 1
-					} else if (indiv[[j]]$age >= 15) {
-						clinInc15Plus[i] <- clinInc15Plus[i] + 1
-					}
-				}
-
-				## Progression to asymptomatic sub-patent infection (A -> U):
-				# If the random number is greater than phi*lambda and less
-				# than (phi*lambda + 1/dA), that individual develops an asymptomatic
-				# infection (A) in the next time step.
-				if ((randNum > phi*lambda) & (randNum <= (phi*lambda + (1/dA)))) {
-					indiv[[j]]$state <- "U"
-				}
+        A_compartment(indiv[[j]], dA, fT)
+				# # Extract information for jth individual.
+				# lambda <- indiv[[j]]$lambda
+				# phi <- indiv[[j]]$phi
+        #
+				# # Draw a random number between 1 and 0 for each susceptible
+				# # individual.
+				# randNum <- runif(1)
+        #
+				# ## Treated clinical infection (A -> T):
+				# # If the random number is less than phi*fT*lambda, that
+				# # individual develops a treated clinical infection (T) in
+				# # the next time step.
+				# if (randNum <= phi*fT*lambda) {
+				# 	indiv[[j]]$state <- "T"
+        #
+				# 	# Keep track of clinical incidence in different age groups:
+				# 	clinIncAll[i] <- clinIncAll[i] + 1
+				# 	if ((indiv[[j]]$age >= 2) & (indiv[[j]]$age < 10)) {
+				# 		clinInc2_10[i] <- clinInc2_10[i] + 1
+				# 	}
+				# 	if (indiv[[j]]$age < 5) {
+				# 		clinInc0_5[i] <- clinInc0_5[i] + 1
+				# 	} else if ((indiv[[j]]$age >= 5) & (indiv[[j]]$age < 10)) {
+				# 		clinInc5_10[i] <- clinInc5_10[i] + 1
+				# 	} else if ((indiv[[j]]$age >= 10) & (indiv[[j]]$age < 15)) {
+				# 		clinInc10_15[i] <- clinInc10_15[i] + 1
+				# 	} else if (indiv[[j]]$age >= 15) {
+				# 		clinInc15Plus[i] <- clinInc15Plus[i] + 1
+				# 	}
+				# }
+        #
+				# ## Untreated clinical infection (A -> D):
+				# # If the random number is greater than phi*fT*lambda and
+				# # less than phi*lambda, that individual develops an
+				# # untreated clinical infection (D) in the next time step.
+				# if ((randNum > phi*fT*lambda) & (randNum <= phi*lambda)) {
+				# 	indiv[[j]]$state <- "D"
+        #
+				# 	# Keep track of clinical incidence in different age groups:
+				# 	clinIncAll[i] <- clinIncAll[i] + 1
+				# 	if ((indiv[[j]]$age >= 2) & (indiv[[j]]$age < 10)) {
+				# 		clinInc2_10[i] <- clinInc2_10[i] + 1
+				# 	}
+				# 	if (indiv[[j]]$age < 5) {
+				# 		clinInc0_5[i] <- clinInc0_5[i] + 1
+				# 	} else if ((indiv[[j]]$age >= 5) & (indiv[[j]]$age < 10)) {
+				# 		clinInc5_10[i] <- clinInc5_10[i] + 1
+				# 	} else if ((indiv[[j]]$age >= 10) & (indiv[[j]]$age < 15)) {
+				# 		clinInc10_15[i] <- clinInc10_15[i] + 1
+				# 	} else if (indiv[[j]]$age >= 15) {
+				# 		clinInc15Plus[i] <- clinInc15Plus[i] + 1
+				# 	}
+				# }
+        #
+				# ## Progression to asymptomatic sub-patent infection (A -> U):
+				# # If the random number is greater than phi*lambda and less
+				# # than (phi*lambda + 1/dA), that individual develops an asymptomatic
+				# # infection (A) in the next time step.
+				# if ((randNum > phi*lambda) & (randNum <= (phi*lambda + (1/dA)))) {
+				# 	indiv[[j]]$state <- "U"
+				# }
 			}
 		}
 
 		## Transitions from U compartment:
 		for (j in isU) {
 			if (indiv[[j]]$alive == 1) {
-				# Extract information for jth individual.
-				lambda <- indiv[[j]]$lambda
-				phi <- indiv[[j]]$phi
-
-				# Draw a random number between 1 and 0 for each susceptible
-				# individual.
-				randNum <- runif(1)
-
-				## Treated clinical infection (U -> T):
-				# If the random number is less than phi*fT*lambda, that
-				# individual develops a treated clinical infection (T) in
-				# the next time step.
-				if (randNum <= phi*fT*lambda) {
-					indiv[[j]]$state <- "T"
-
-					# Keep track of clinical incidence in different age groups:
-					clinIncAll[i] <- clinIncAll[i] + 1
-					if ((indiv[[j]]$age >= 2) & (indiv[[j]]$age < 10)) {
-						clinInc2_10[i] <- clinInc2_10[i] + 1
-					}
-					if (indiv[[j]]$age < 5) {
-						clinInc0_5[i] <- clinInc0_5[i] + 1
-					} else if ((indiv[[j]]$age >= 5) & (indiv[[j]]$age < 10)) {
-						clinInc5_10[i] <- clinInc5_10[i] + 1
-					} else if ((indiv[[j]]$age >= 10) & (indiv[[j]]$age < 15)) {
-						clinInc10_15[i] <- clinInc10_15[i] + 1
-					} else if (indiv[[j]]$age >= 15) {
-						clinInc15Plus[i] <- clinInc15Plus[i] + 1
-					}
-				}
-
-				## Untreated clinical infection (U -> D):
-				# If the random number is greater than phi*fT*lambda and
-				# less than phi*lambda, that individual develops an
-				# untreated clinical infection (D) in the next time step.
-				if ((randNum > phi*fT*lambda) & (randNum <= phi*lambda)) {
-					indiv[[j]]$state <- "D"
-
-					# Keep track of clinical incidence in different age groups:
-					clinIncAll[i] <- clinIncAll[i] + 1
-					if ((indiv[[j]]$age >= 2) & (indiv[[j]]$age < 10)) {
-						clinInc2_10[i] <- clinInc2_10[i] + 1
-					}
-					if (indiv[[j]]$age < 5) {
-						clinInc0_5[i] <- clinInc0_5[i] + 1
-					} else if ((indiv[[j]]$age >= 5) & (indiv[[j]]$age < 10)) {
-						clinInc5_10[i] <- clinInc5_10[i] + 1
-					} else if ((indiv[[j]]$age >= 10) & (indiv[[j]]$age < 15)) {
-						clinInc10_15[i] <- clinInc10_15[i] + 1
-					} else if (indiv[[j]]$age >= 15) {
-						clinInc15Plus[i] <- clinInc15Plus[i] + 1
-					}
-				}
-
-				## Asymptomatic infection (U -> A):
-				# If the random number is greater than phi*lambda and
-				# less than lambda, that individual develops a patent
-				# asymptomatic infection (A) in the next time step.
-				if ((randNum > phi*lambda) & (randNum <= lambda)) {
-					indiv[[j]]$state <- "A"
-				}
-
-				## Progression to asymptomatic sub-patent infection (U -> S):
-				# If the random number is greater than lambda and less
-				# than (lambda + 1/dU), that individual returns to the susceptible
-				# state (S) in the next time step.
-				if ((randNum > lambda) & (randNum <= (lambda + (1/dU)))) {
-					indiv[[j]]$state <- "S"
-				}
+        U_compartment(indiv[[j]], dU, fT)
+				# # Extract information for jth individual.
+				# lambda <- indiv[[j]]$lambda
+				# phi <- indiv[[j]]$phi
+        #
+				# # Draw a random number between 1 and 0 for each susceptible
+				# # individual.
+				# randNum <- runif(1)
+        #
+				# ## Treated clinical infection (U -> T):
+				# # If the random number is less than phi*fT*lambda, that
+				# # individual develops a treated clinical infection (T) in
+				# # the next time step.
+				# if (randNum <= phi*fT*lambda) {
+				# 	indiv[[j]]$state <- "T"
+        #
+				# 	# Keep track of clinical incidence in different age groups:
+				# 	clinIncAll[i] <- clinIncAll[i] + 1
+				# 	if ((indiv[[j]]$age >= 2) & (indiv[[j]]$age < 10)) {
+				# 		clinInc2_10[i] <- clinInc2_10[i] + 1
+				# 	}
+				# 	if (indiv[[j]]$age < 5) {
+				# 		clinInc0_5[i] <- clinInc0_5[i] + 1
+				# 	} else if ((indiv[[j]]$age >= 5) & (indiv[[j]]$age < 10)) {
+				# 		clinInc5_10[i] <- clinInc5_10[i] + 1
+				# 	} else if ((indiv[[j]]$age >= 10) & (indiv[[j]]$age < 15)) {
+				# 		clinInc10_15[i] <- clinInc10_15[i] + 1
+				# 	} else if (indiv[[j]]$age >= 15) {
+				# 		clinInc15Plus[i] <- clinInc15Plus[i] + 1
+				# 	}
+				# }
+        #
+				# ## Untreated clinical infection (U -> D):
+				# # If the random number is greater than phi*fT*lambda and
+				# # less than phi*lambda, that individual develops an
+				# # untreated clinical infection (D) in the next time step.
+				# if ((randNum > phi*fT*lambda) & (randNum <= phi*lambda)) {
+				# 	indiv[[j]]$state <- "D"
+        #
+				# 	# Keep track of clinical incidence in different age groups:
+				# 	clinIncAll[i] <- clinIncAll[i] + 1
+				# 	if ((indiv[[j]]$age >= 2) & (indiv[[j]]$age < 10)) {
+				# 		clinInc2_10[i] <- clinInc2_10[i] + 1
+				# 	}
+				# 	if (indiv[[j]]$age < 5) {
+				# 		clinInc0_5[i] <- clinInc0_5[i] + 1
+				# 	} else if ((indiv[[j]]$age >= 5) & (indiv[[j]]$age < 10)) {
+				# 		clinInc5_10[i] <- clinInc5_10[i] + 1
+				# 	} else if ((indiv[[j]]$age >= 10) & (indiv[[j]]$age < 15)) {
+				# 		clinInc10_15[i] <- clinInc10_15[i] + 1
+				# 	} else if (indiv[[j]]$age >= 15) {
+				# 		clinInc15Plus[i] <- clinInc15Plus[i] + 1
+				# 	}
+				# }
+        #
+				# ## Asymptomatic infection (U -> A):
+				# # If the random number is greater than phi*lambda and
+				# # less than lambda, that individual develops a patent
+				# # asymptomatic infection (A) in the next time step.
+				# if ((randNum > phi*lambda) & (randNum <= lambda)) {
+				# 	indiv[[j]]$state <- "A"
+				# }
+        #
+				# ## Progression to asymptomatic sub-patent infection (U -> S):
+				# # If the random number is greater than lambda and less
+				# # than (lambda + 1/dU), that individual returns to the susceptible
+				# # state (S) in the next time step.
+				# if ((randNum > lambda) & (randNum <= (lambda + (1/dU)))) {
+				# 	indiv[[j]]$state <- "S"
+				# }
 			}
 		}
 
 		## Transitions from P compartment:
 		for (j in isP) {
 			if (indiv[[j]]$alive == 1) {
-				# Draw a random number between 1 and 0 for each treated individual.
-				randNum <- runif(1)
-
-				## Prophylactic protection (P -> S):
-				# If the random number is less than 1/dP, that individual returns to
-				# the susceptible state (S) in the next time step.
-				if (randNum <= (1/dP)) {
-					indiv[[j]]$state <- "S"
-				}
+        P_compartment(indiv[[j]], dP)
+				# # Draw a random number between 1 and 0 for each treated individual.
+				# randNum <- runif(1)
+        #
+				# ## Prophylactic protection (P -> S):
+				# # If the random number is less than 1/dP, that individual returns to
+				# # the susceptible state (S) in the next time step.
+				# if (randNum <= (1/dP)) {
+				# 	indiv[[j]]$state <- "S"
+				# }
 			}
 		}
 
@@ -747,50 +754,43 @@ malaria_ibm <- function(theta, numIter) {
 		#    probability of detection and reduces infectiousness to mosquitoes)
 		for (j in 1:N) {
 			if (indiv[[j]]$alive == 1) {
-				epsilon <- indiv[[j]]$epsilon
-				lambda <- indiv[[j]]$lambda
-				indiv[[j]]$IB <- indiv[[j]]$IB + (epsilon/(epsilon*uB + 1)) - (indiv[[j]]$IB)*(1/dB)
-				indiv[[j]]$ICA <- indiv[[j]]$ICA + (lambda/(lambda*uC + 1)) - (indiv[[j]]$ICA)*(1/dC)
-				indiv[[j]]$ICM <- indiv[[j]]$ICM - (indiv[[j]]$ICM)*(1/dM)
-				indiv[[j]]$ID <- indiv[[j]]$ID + (lambda/(lambda*uD + 1)) - (indiv[[j]]$ID)*(1/dID)
+				update_immunity(indiv[[j]],uB,uC,uD,dB,dC,dID,dM)
+				# epsilon <- indiv[[j]]$epsilon
+				# lambda <- indiv[[j]]$lambda
+				# indiv[[j]]$IB <- indiv[[j]]$IB + (epsilon/(epsilon*uB + 1)) - (indiv[[j]]$IB)*(1/dB)
+				# indiv[[j]]$ICA <- indiv[[j]]$ICA + (lambda/(lambda*uC + 1)) - (indiv[[j]]$ICA)*(1/dC)
+				# indiv[[j]]$ICM <- indiv[[j]]$ICM - (indiv[[j]]$ICM)*(1/dM)
+				# indiv[[j]]$ID <- indiv[[j]]$ID + (lambda/(lambda*uD + 1)) - (indiv[[j]]$ID)*(1/dID)
 			}
 		}
-		
-		# sapply(indiv,function(x){
-		#   c("IB"=x$IB,"ICA"=x$ICA,"ICM"=x$ICM,"ID"=x$ID)
-		# })
 
 		# Lambda (the force of infection) is calculated for each individual. It
 		# varies according to age and biting heterogeneity group:
 		for (j in 1:N) {
 			if (indiv[[j]]$alive == 1) {
-				zita <- indiv[[j]]$bitingHet
-				psi <- psiHouse[indiv[[j]]$house]
-				a <- indiv[[j]]$age
-				IB <- indiv[[j]]$IB
-				epsilon <- epsilon0 * zita * (1 - rho * exp(-a/a0)) * psi
-				b <- b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
-				indiv[[j]]$epsilon <- epsilon
-				indiv[[j]]$lambda <- epsilon*b
+				update_lambda(indiv[[j]],a0,epsilon0,b0,b1,rho,IB0,kappaB,psiHouse[indiv[[j]]$house])
+				# zita <- indiv[[j]]$bitingHet
+				# psi <- psiHouse[indiv[[j]]$house]
+				# a <- indiv[[j]]$age
+				# IB <- indiv[[j]]$IB
+				# epsilon <- epsilon0 * zita * (1 - rho * exp(-a/a0)) * psi
+				# b <- b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
+				# indiv[[j]]$epsilon <- epsilon
+				# indiv[[j]]$lambda <- epsilon*b
 			}
 		}
-		
-		# sapply(indiv,function(x){
-		#   c("epsilon"=x$epsilon,"lambda"=x$lambda)
-		# })
 
 		# Phi (the probability of acquiring clinical disease upon infection) is
 		# also calculated for each individual. It varies according to immune
 		# status:
 		for (j in 1:N) {
 			if (indiv[[j]]$alive == 1) {
-				ICA <- indiv[[j]]$ICA
-				ICM <- indiv[[j]]$ICM
-				indiv[[j]]$phi <- phi0 * (phi1 + ((1 - phi1)/(1 + ((ICA+ICM)/IC0)^kappaC)))
+				# ICA <- indiv[[j]]$ICA
+				# ICM <- indiv[[j]]$ICM
+				# indiv[[j]]$phi <- phi0 * (phi1 + ((1 - phi1)/(1 + ((ICA+ICM)/IC0)^kappaC)))
+				update_phi(indiv[[j]],phi0,phi1,IC0,kappaC)
 			}
 		}
-		
-		# sapply(indiv,function(x){x$phi})
 
 		# q (the probability that an asymptomatic infection is detected by
 		# microscopy) is also calculated for each individual, as well as the
@@ -799,17 +799,16 @@ malaria_ibm <- function(theta, numIter) {
 		# status:
 		for (j in 1:N) {
 			if (indiv[[j]]$alive == 1) {
-				a <- indiv[[j]]$age
-				ID <- indiv[[j]]$ID
-				fD <- 1 - ((1 - fD0)/(1 + (a/aD)^gammaD))
-				q <- d1 + ((1 - d1)/(1 + (fD*(ID/ID0)^kappaD)*fD))
-				indiv[[j]]$prDetectAMic <- q
-				indiv[[j]]$prDetectAPCR <- q^alphaA
-				indiv[[j]]$prDetectUPCR <- q^alphaU
+				update_q(indiv[[j]],fD0,aD,gammaD,d1,ID0,kappaD,alphaA,alphaU)
+				# a <- indiv[[j]]$age
+				# ID <- indiv[[j]]$ID
+				# fD <- 1 - ((1 - fD0)/(1 + (a/aD)^gammaD))
+				# q <- d1 + ((1 - d1)/(1 + (fD*(ID/ID0)^kappaD)*fD))
+				# indiv[[j]]$prDetectAMic <- q
+				# indiv[[j]]$prDetectAPCR <- q^alphaA
+				# indiv[[j]]$prDetectUPCR <- q^alphaU
 			}
 		}
-		
-		# sapply(indiv,function(x){x$prDetectUPCR})
 
 		# Incorporate new births at the end of the time step:
 		numNewBirths <- rbinom(n = 1, size = N, prob = mu)
@@ -870,12 +869,12 @@ malaria_ibm <- function(theta, numIter) {
 		# 		  y = seq(0, 1, length.out = ncol(riskMap)),
 		# 		  z= riskMap, drawlabels=FALSE, nlevels=numContours, lwd=2,
 		# 		  col=brewer.pal(numContours, "Blues"), axes=FALSE)
-		# 
+    #
 		# 	# 2. Plot breeding sites
 		# 	# for (j in 1:numBreedingSites) {
 		# 	#	points(longBreedingSite[j], latBreedingSite[j], col="red", lwd=3)
 		# 	# }
-		# 
+    #
 		# 	# 3. Plot houses
 		# 	houseEdgeSize <- 0.015
 		# 	for (j in 1:numHouses) {
@@ -883,7 +882,7 @@ malaria_ibm <- function(theta, numIter) {
 		# 		        y=c(latHouse[j]+houseEdgeSize/2, latHouse[j]-houseEdgeSize/2, latHouse[j]-houseEdgeSize/2, latHouse[j]+houseEdgeSize/2, latHouse[j]+houseEdgeSize),
 		# 			  col="brown", border="black", lwd=2)
 		# 	}
-		# 
+    #
 		# 	# 3. Plot T (green), D (red), A (orange), U (yellow) as they come
 		# 	#    up (around house):
 		# 	radCases <- 0.025
@@ -1206,5 +1205,5 @@ ggplot(sim1, aes(x = time, y = sim1, color = "Age group")) +
 ## Save simulation output:     ##
 #################################
 
-head(sim1)
-write.table(sim1,file="MalariaIBMsim.csv",sep=",",row.names=F,col.names=T)
+# head(sim1)
+# write.table(sim1,file="MalariaIBMsim.csv",sep=",",row.names=F,col.names=T)

@@ -21,7 +21,7 @@
 #include "RACD-Human.hpp"
 #include "RACD-Parameters.hpp"
 #include "RACD-PRNG.hpp"
-#include "RACD-Logger.hpp"
+// #include "RACD-Logger.hpp"
 
 
 /* iterative mean: Knuth, The Art of Computer Programming Vol 2, section 4.2.2 */
@@ -35,6 +35,17 @@ inline double iter_mean(const std::vector<double>& array){
   return avg;
 }
 
+/* lookup table for mapping human states to columns of output matrix */
+static const std::unordered_map<std::string,size_t> state2col = {
+  {"S",0},
+  {"E",1},
+  {"T",2},
+  {"D",3},
+  {"A",4},
+  {"U",5},
+  {"P",6},
+};
+
 
 /* ######################################################################
  # construtor & destructor
@@ -45,7 +56,7 @@ village::village(const uint_least32_t seed, const Rcpp::NumericVector& theta) :
 
   /* initialize utility classes */
   prng_ptr(std::make_unique<prng>(seed)),
-  logger_ptr(std::make_unique<logger>()),
+  // logger_ptr(std::make_unique<logger>()),
   param_ptr(std::make_unique<parameters>(
     Rcpp::as<double>(theta["epsilon0"]),
     Rcpp::as<double>(theta["fT"]),
@@ -140,7 +151,7 @@ void village::initialize(const Rcpp::List &humansR, const Rcpp::List &housesR){
     std::string state = Rcpp::as<std::string>(Rcpp::as<Rcpp::List>(humansR[i])["state"]);
 
     /* log human's initial state */
-    logger_ptr->get_log() << std::to_string(id) << "," << state << ",0," << std::to_string(age) << "\n";
+    // logger_ptr->get_log() << std::to_string(id) << "," << state << ",0," << std::to_string(age) << "\n";
 
     /* put them in their house */
     houses[house]->add_human(std::make_unique<human>(
@@ -177,12 +188,20 @@ void village::initialize(const Rcpp::List &humansR, const Rcpp::List &housesR){
 ###################################################################### */
 
 /* one simulation run */
-void village::simulation(const int tMax){
+void village::simulation(const int tMax, Rcpp::IntegerMatrix& state_out){
 
   Progress pb(tMax,true);
 
   /* run simulation */
   while(tNow < tMax){
+
+    // output
+    for(auto &hh : houses){
+      for(auto &h : hh->get_humans()){
+        size_t col = state2col.at(h->get_state());
+        state_out.at(tNow, col) += 1;
+      }
+    }
 
     if(tNow % 20 == 0){
       Rcpp::checkUserInterrupt();
@@ -290,7 +309,7 @@ void village::births(){
       int daysLatent = 0;
 
       /* logging */
-      logger_ptr->get_log() << std::to_string(humanID) << ",Birth," << std::to_string(tNow) << "," + std::to_string(age) << "\n";
+      // logger_ptr->get_log() << std::to_string(humanID) << ",Birth," << std::to_string(tNow) << "," + std::to_string(age) << "\n";
 
       /* add human i to their house */
       houses[hh_ix]->add_human(std::make_unique<human>(humanID,age,alive,state,daysLatent,IB,ID,ICA,ICM,bitingHet,epsilon,lambda,phi,prDetectAMic,prDetectAPCR,prDetectUPCR,houses[hh_ix].get()));

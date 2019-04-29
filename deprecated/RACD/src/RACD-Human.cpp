@@ -16,7 +16,7 @@
 #include "RACD-Village.hpp"
 #include "RACD-Parameters.hpp"
 #include "RACD-PRNG.hpp"
-#include "RACD-Logger.hpp"
+// #include "RACD-Logger.hpp"
 
 
 /* constructor */
@@ -118,7 +118,7 @@ void human::S_compartment(const int tNow){
   if(randNum <= lambda){
 
     /* logging */
-    house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",E," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
+    // house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",E," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
 
     /* simulation */
     state = "E";
@@ -146,7 +146,7 @@ void human::E_compartment(int tNow){
     if(randNum <= phi*fT){
 
       /* logging */
-      house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",T," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
+      // house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",T," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
 
       /* simulation  */
       state = "T";
@@ -158,10 +158,10 @@ void human::E_compartment(int tNow){
      * than phi, that individual develops an untreated
      * clinical infection (D) in the next time step.
      */
-     if((randNum > phi*fT) & (randNum <= phi)){
+     if((randNum > phi*fT) && (randNum <= phi)){
 
        /* logging */
-       house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",D," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
+       // house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",D," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
 
        /* simulation  */
        state = "D";
@@ -176,7 +176,7 @@ void human::E_compartment(int tNow){
       if(randNum > phi){
 
         /* logging */
-        house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",A," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
+        // house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",A," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
 
         /* simulation  */
         state = "A";
@@ -198,10 +198,10 @@ void human::T_compartment(const int tNow){
    * If the random number is less than 1/dT, that individual enters the
    * phase of prophylactic protection (P) in the next time step.
   */
-  if(randNum <= (1/dT)){
+  if(randNum <= (1.0/dT)){
 
     /* logging */
-    house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",P," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
+    // house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",P," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
 
     /* simulation  */
     state = "P";
@@ -221,10 +221,10 @@ void human::D_compartment(const int tNow){
    * If the random number is less than 1/dD, that individual enters the
    * phase of asymptomatic patent infection (A) in the next time step.
   */
-  if(randNum <= (1/dD)){
+  if(randNum <= (1.0/dD)){
 
     /* logging */
-    house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",A," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
+    // house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",A," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
 
     /* simulation  */
     state = "A";
@@ -250,7 +250,7 @@ void human::A_compartment(const int tNow){
   if(randNum <= phi*fT*lambda){
 
     /* logging */
-    house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",T," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
+    // house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",T," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
 
     /* simulation  */
     state = "T";
@@ -264,7 +264,7 @@ void human::A_compartment(const int tNow){
    if((randNum > phi*fT*lambda) && (randNum <= phi*lambda)){
 
      /* logging */
-     house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",D," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
+     // house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",D," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
 
      /* simulation  */
      state = "D";
@@ -275,10 +275,10 @@ void human::A_compartment(const int tNow){
     * than (phi*lambda + 1/dA), that individual develops sub-patent asymptomatic
     * infection (U) in the next time step.
     */
-    if((randNum > phi*lambda) && (randNum <= (phi*lambda + (1/dA)))) {
+    if((randNum > phi*lambda) && (randNum <= (phi*lambda + (1.0/dA)))) {
 
       /* logging */
-      house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",U," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
+      // house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",U," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
 
       /* simulation  */
       state = "U";
@@ -304,7 +304,7 @@ void human::U_compartment(const int tNow){
    if(randNum <= phi*fT*lambda){
 
      /* logging */
-     house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",T," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
+     // house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",T," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
 
      /* simulation  */
      state = "T";
@@ -318,7 +318,7 @@ void human::U_compartment(const int tNow){
     if((randNum > phi*fT*lambda) && (randNum <= phi*lambda)){
 
       /* logging */
-      house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",D," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
+      // house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",D," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
 
       /* simulation  */
       state = "D";
@@ -332,7 +332,7 @@ void human::U_compartment(const int tNow){
      if((randNum > phi*lambda) && (randNum <= lambda)){
 
        /* logging */
-       house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",A," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
+       // house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",A," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
 
        /* simulation  */
        state = "A";
@@ -343,10 +343,10 @@ void human::U_compartment(const int tNow){
       * than (lambda + 1/dU), that individual returns to the susceptible
       * state (S) in the next time step.
       */
-      if((randNum > lambda) && (randNum <= (lambda + (1/dU)))){
+      if((randNum > lambda) && (randNum <= (lambda + (1.0/dU)))){
 
         /* logging */
-        house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",S," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
+        // house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",S," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
 
         /* simulation  */
         state = "S";
@@ -366,10 +366,10 @@ void human::P_compartment(const int tNow){
      * If the random number is less than 1/dP, that individual returns to
      * the susceptible state (S) in the next time step.
      */
-    if(randNum <= (1/dP)){
+    if(randNum <= (1.0/dP)){
 
       /* logging */
-      house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",S," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
+      // house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",S," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
 
       /* simulation  */
       state = "S";
@@ -393,7 +393,7 @@ void human::mortality(const int tNow){
   if(randNum <= mu){
 
     /* logging */
-    house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",Death," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
+    // house_ptr->village_ptr->logger_ptr->get_log() << std::to_string(humanID) << ",Death," << std::to_string(tNow) << "," <<  std::to_string(age) << "\n";
 
     /* simulation */
     alive = false;
@@ -428,10 +428,10 @@ void human::update_immunity(){
    double dID = house_ptr->village_ptr->param_ptr->get_dID();
    double dM = house_ptr->village_ptr->param_ptr->get_dM();
 
-   IB = IB + (epsilon/(epsilon*uB + 1)) - (IB)*(1/dB);
-   ICA = ICA + (lambda/(lambda*uC + 1)) - (ICA)*(1/dC);
-   ICM = ICM - (ICM)*(1/dM);
-   ID = ID + (lambda/(lambda*uD + 1)) - (ID)*(1/dID);
+   IB = IB + (epsilon/(epsilon*uB + 1.0)) - (IB)*(1.0/dB);
+   ICA = ICA + (lambda/(lambda*uC + 1.0)) - (ICA)*(1.0/dC);
+   ICM = ICM - (ICM)*(1.0/dM);
+   ID = ID + (lambda/(lambda*uD + 1.0)) - (ID)*(1.0/dID);
 
 };
 
@@ -451,8 +451,8 @@ void human::update_lambda(){
    double kappaB = house_ptr->village_ptr->param_ptr->get_kappaB();
    double psi = house_ptr->get_psi();
 
-   epsilon = epsilon0 * bitingHet * (1 - rho * exp(-age/a0)) * psi;
-   double b = b0*(b1 + ((1-b1)/(1 + pow((IB/IB0),kappaB))));
+   epsilon = epsilon0 * bitingHet * (1.0 - rho * exp(-age/a0)) * psi;
+   double b = b0*(b1 + ((1.0-b1)/(1.0 + pow((IB/IB0),kappaB))));
    lambda = epsilon * b;
 
 };
@@ -470,7 +470,7 @@ void human::update_phi(){
    double IC0 = house_ptr->village_ptr->param_ptr->get_IC0();
    double kappaC = house_ptr->village_ptr->param_ptr->get_kappaC();
 
-   phi = phi0 * (phi1 + ((1 - phi1)/(1 + pow(((ICA+ICM)/IC0),kappaC))));
+   phi = phi0 * (phi1 + ((1.0 - phi1)/(1 + pow(((ICA+ICM)/IC0),kappaC))));
 
 };
 
@@ -492,8 +492,8 @@ void human::update_q(){
   double alphaA = house_ptr->village_ptr->param_ptr->get_alphaA();
   double alphaU = house_ptr->village_ptr->param_ptr->get_alphaU();
 
-  double fD = 1 - ((1 - fD0)/(1 + pow((age/aD),gammaD)));
-  double q = d1 + ((1 - d1)/(1 + (fD*pow((ID/ID0),kappaD))*fD));
+  double fD = 1.0 - ((1.0 - fD0)/(1 + pow((age/aD),gammaD)));
+  double q = d1 + ((1.0 - d1)/(1 + (fD*pow((ID/ID0),kappaD))*fD));
 
   prDetectAMic = q;
   prDetectAPCR = pow(q,alphaA);
