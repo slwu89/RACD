@@ -5,7 +5,7 @@
 #########################################################################
 
 # Clear all stored parameters:
-rm(list=ls())
+rm(list=ls());gc()
 
 # Set working directory:
 setwd("C://Users/John/My Documents/Berkeley/MEI/MicroEpiModeling/")
@@ -1155,8 +1155,9 @@ theta <- c(
 	meanNumPeoplePerHouse = 6.5, # Mean number of people per house (from Misungu data set)
 	numHousesPerBreedingSite = 5) # Number of houses per breeding site
 
-numIter <- 10*365 # Simulation over 10 years
+numIter <- 20*365 # Simulation over 10 years
 # numIter <- 365 # Simulation over 1 year
+set.seed(6954690)
 sim1 <- malaria_ibm(theta=theta, numIter=numIter) # Runs the simulation
 
 ##########################################################
