@@ -4,17 +4,13 @@
 \alias{RACD_Setup}
 \title{Initialize State for RACD Model}
 \usage{
-RACD_Setup(xy_h, xy_b, theta)
+RACD_Setup(theta)
 }
 \arguments{
-\item{xy_h}{two column matrix of house coordinates}
-
-\item{xy_b}{two column matrix of breeding site coordinates}
-
 \item{theta}{named vector of parameters (see \code{\link{RACD_Parameters}})}
 }
 \description{
-Initialize initial conditions for the RACD simulation model
+DEBUG VERSION Initialize initial conditions for the RACD simulation model
 }
 \examples{
 \dontrun{
