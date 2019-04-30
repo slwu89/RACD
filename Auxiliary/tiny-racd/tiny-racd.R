@@ -8,12 +8,181 @@
 rm(list=ls());gc()
 
 # Set working directory:
-setwd("C://Users/John/My Documents/Berkeley/MEI/MicroEpiModeling/")
+# setwd("C://Users/John/My Documents/Berkeley/MEI/MicroEpiModeling/")
 
 # Load required libraries:
 library(deSolve)
+library(Rcpp)
+library(here)
 library(ggplot2)
 library(RColorBrewer)
+
+Rcpp::sourceCpp("tiny-racd/tiny-human.cpp")
+
+##############################################################################
+## Functions for calculating levels of immunity when the simulation starts: ##
+##############################################################################
+
+## Differential equations for:
+## 1. Pre-erythrocytic immunity (IB, reduces the probability of infection
+##    following an infectious challenge).
+## 2. Detection immunity (ID, a.k.a. blood-stage immunity, reduces the
+##    probability of detection and reduces infectiousness to mosquitoes).
+## 3. Acquired clinical immunity (ICA, reduces the probability of clinical
+##    disease, acquired from previous exposure).
+
+I_ode <- function(time, state, theta) {
+	## States:
+	IB <- state["IB"]
+	ID <- state["ID"]
+	ICA <- state["ICA"]
+
+	## Parameters:
+	a0 <- theta[["a0"]]
+	rho <- theta[["rho"]]
+	durB <- theta[["dB"]] / 365 # Inverse decay rate (years)
+	uB <- theta[["uB"]] / 365 # Duration in which immunity is not boosted (years)
+	durD <- theta[["dID"]] / 365 # Inverse decay rate (years)
+	uD <- theta[["uD"]] / 365 # Duration in which immunity is not boosted (years)
+	durC <- theta[["dC"]] / 365 # Inverse decay rate (years)
+	uC <- theta[["uC"]] / 365 # Duration in which immunity is not boosted (years)
+	zita <- theta[["zita"]]
+	psi <- theta[["psi"]]
+	b0 <- theta[["b0"]]
+	b1 <- theta[["b1"]]
+	IB0 <- theta[["IB0"]]
+	kappaB <- theta[["kappaB"]]
+	epsilon0 <- theta[["epsilon0"]] * 365 # Entomological innoculation rate (annual)
+	epsilon <- epsilon0*zita*(1 - rho*exp(-time/a0))*psi
+	b <- b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
+	lambda <- epsilon*b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
+
+	## ODEs:
+	dIB <- epsilon/(epsilon*uB + 1) - IB/durB
+	dID <- lambda/(lambda*uD + 1) - ID/durD
+	dICA <- lambda/(lambda*uC + 1) - ICA/durC
+
+	return(list(c(dIB, dID, dICA)))
+}
+
+## Wrapper function to calculate pre-erythrocytic immunity at age a for
+## given EIR heterogeneities (biting rate & geographic location):
+initialI <- function(a, zita, psi, theta) {
+	initState <- c(IB=0, ID=0, ICA=0)
+	thetaI <- c(a0=theta[["a0"]], rho=theta[["rho"]], dB=theta[["dB"]],
+		     uB=theta[["uB"]], epsilon0=theta[["epsilon0"]],
+		     dID=theta[["dID"]], uD=theta[["uD"]], dC=theta[["dC"]],
+		     uC=theta[["uC"]], b0=theta[["b0"]], b1=theta[["b1"]],
+		     IB0=theta[["IB0"]], kappaB=theta[["kappaB"]], psi=psi, zita=zita)
+	IvsAge <- data.frame(ode(y=initState, times=seq(0, a, by=a/1000), func=I_ode,
+                         parms=thetaI, method="ode45"))
+	c(IB=IvsAge$IB[length(IvsAge$IB)], ID=IvsAge$ID[length(IvsAge$ID)],
+         ICA=IvsAge$ICA[length(IvsAge$ICA)])
+}
+
+##############################################################################
+## Functions for calculating distribution of states when simulation starts: ##
+##############################################################################
+
+## Differential equations for calculating the probability that an individual
+## is in each state given their age and EIR heterogeneity attributes:
+
+malaria_ode <- function(time, state, theta) {
+	## States:
+	prS <- state["prS"]
+	prT <- state["prT"]
+	prD <- state["prD"]
+	prA <- state["prA"]
+	prU <- state["prU"]
+	prP <- state["prP"]
+	IB <- state["IB"]
+	ICA <- state["ICA"]
+
+	# Parameters:
+	## Variable model parameters:
+	epsilon0 <- theta[["epsilon0"]] * 365 # Mean EIR for adults (per year)
+	fT <- theta[["fT"]] # Proportion of clinical disease cases successfully treated
+
+	## Model parameters taken from Griffin et al. (2014):
+	## Human infection durations:
+	dE <- theta[["dE"]] / 365 # Duration of latent period (years)
+	dT <- theta[["dT"]] / 365 # Duration of treated clinical disease (years)
+	dD <- theta[["dD"]] / 365 # Duration of untreated clinical disease (years)
+	dA <- theta[["dA"]] / 365 # Duration of patent infection (years)
+	dU <- theta[["dU"]] / 365 # Duration of sub-patent infection (years) (fitted)
+	dP <- theta[["dP"]] / 365 # Duration of prophylactic protection following treatment (years)
+
+	## Age parameters:
+	rho <- theta[["rho"]] # Age-dependent biting parameter
+	a0 <- theta[["a0"]] # Age-dependent biting parameter (years)
+
+	## Immunity reducing probability of infection:
+	b0 <- theta[["b0"]] # Probabiliy with no immunity (fitted)
+	b1 <- theta[["b1"]] # Maximum relative reduction
+	dB <- theta[["dB"]] / 365 # Inverse of decay rate (years)
+	IB0 <- theta[["IB0"]] # Scale parameter (fitted)
+	kappaB <- theta[["kappaB"]] # Shape parameter (fitted)
+	uB <- theta[["uB"]] / 365 # Duration in which immunity is not boosted (years) (fitted)
+
+	## Immunity reducing probability of clinical disease:
+	phi0 <- theta[["phi0"]] # Probability with no immunity
+	phi1 <- theta[["phi1"]] # Maximum relative reduction
+	dC <- theta[["dC"]] / 365 # Inverse decay rate (years)
+	IC0 <- theta[["IC0"]] # Scale parameter
+	kappaC <- theta[["kappaC"]] # Shape parameter
+	uC <- theta[["uC"]] / 365 # Duration in which immunity is not boosted (years)
+	PM <- theta[["PM"]] # New-born immunity relative to mother's immunity
+	dM <- theta[["dM"]] / 365 # Inverse decay rate of maternal immunity (years)
+	initICA20 <- theta["initICA20"]
+	ICM <- initICA20*exp(-time/dM)
+
+	## Individual heterogeneity parameters:
+	zita <- theta[["zita"]]
+	psi <- theta[["psi"]]
+	epsilon <- epsilon0*zita*(1 - rho*exp(-time/a0))*psi
+	b <- b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
+	lambda <- epsilon*b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
+	phi <- phi0*(phi1 + ((1 - phi1)/(1 + ((ICA + ICM)/IC0)^kappaC)))
+
+	## ODEs:
+	dprS <- - lambda*prS + prP/dP + prU/dU
+	dprT <- phi*fT*lambda*(prS + prA + prU) - prT/dT
+	dprD <- phi*(1 - fT)*lambda*(prS + prA + prU) - prD/dD
+	dprA <- (1 - phi)*lambda*(prS + prA + prU) + prD/dD - lambda*prA - prA/dA
+	dprU <- prA/dA - prU/dU - lambda*prU
+	dprP <- prT/dT - prP/dP
+	dIB <- epsilon/(epsilon*uB + 1) - IB/dB
+	dICA <- lambda/(lambda*uC + 1) - ICA/dC
+
+	return(list(c(dprS, dprT, dprD, dprA, dprU, dprP, dIB, dICA)))
+}
+
+## Wrapper function for proportion belonging to each state for each age
+## at the beginning of the simulation:
+initialStates <- function(a, zita, psi, theta) {
+	## All individuals begin as susceptible when born:
+	initState <- c(prS=1, prT=0, prD=0, prA=0, prU=0, prP=0,
+			   IB=0, ICA=0)
+
+	## The vector of parameters, with additional heterogeneity parameters:
+	thetaI <- theta
+	thetaI["zita"] <- zita
+	thetaI["psi"] <- psi
+	initI20 <- initialI(a=20, zita=1, psi=1, theta=theta)
+	thetaI["initICA20"] <- initI20[["ICA"]]
+
+	## Running the system of ODEs:
+	prStates <- data.frame(ode(y=initState, times=seq(0, a, by=a/1000),
+				func=malaria_ode, parms=thetaI, method="ode45"))
+
+	c(prS=prStates$prS[length(prStates$prS)],
+	  prT=prStates$prT[length(prStates$prT)],
+	  prD=prStates$prD[length(prStates$prD)],
+	  prA=prStates$prA[length(prStates$prA)],
+	  prU=prStates$prU[length(prStates$prU)],
+	  prP=prStates$prP[length(prStates$prP)])
+}
+
 
 #########################################################################
 ## Coding the Imperial College model as an IBM:                        ##
@@ -84,7 +253,7 @@ malaria_ibm <- function(theta, numIter) {
 	## Demographic parameters:
 	N <- theta[["N"]] # Village population size
 	meanAge <- theta[["meanAge"]] # Mean age in Tanzania (males and females, years)
-	mu <- 1/(meanAge*365) # Daily death rate as a function of mean age in years
+	theta[["mu"]] <- mu <- 1/(meanAge*365) # Daily death rate as a function of mean age in years
 
 	## Geographic parameters:
 	meanNumPeoplePerHouse <- theta[["meanNumPeoplePerHouse"]] # Mean number of people per house (from Misungu data set)
@@ -437,379 +606,16 @@ malaria_ibm <- function(theta, numIter) {
 					  if (length(isA15Plus)>0) { sum(sapply(prDetectAMicVector[isA15Plus], function(x) rbinom(n=1, size=1, prob=x))) } else { 0 }
 		slidPosAll[i] <- slidPos0_5[i] + slidPos5_10[i] + slidPos10_15[i] + slidPos15Plus[i]
 
-		# Determine which individuals die during the current time step:
-		for (j in 1:N) {
-			randNum <- runif(1)
-			if(randNum <= mu) {
-				indiv[[j]]$alive <- 0
-				householdSize[indiv[[j]]$house] <- householdSize[indiv[[j]]$house] - 1
-			}
-		}
+    # loop over people
+    for(j in 1:N){
 
-		## Transitions from S compartment:
-		for (j in isS) {
-			if (indiv[[j]]$alive == 1) {
-				# Extract information for jth individual.
-				lambda <- indiv[[j]]$lambda
+      one_day_human(
+        indiv[[j]],
+        theta,
+        psiHouse[indiv[[j]]$house]
+      )
 
-				# Draw a random number between 1 and 0 for each susceptible
-				# individual.
-				randNum <- runif(1)
-
-				## Latent infection (S -> E):
-				# If the random number is less than lambda, that individual
-				# develops a latent infection (E) in the next time step.
-				if (randNum <= lambda) {
-					indiv[[j]]$state <- "E"
-					indiv[[j]]$daysLatent <- 1
-				}
-			}
-		}
-
-		# table(sapply(indiv,function(x){x$state}))
-
-		## Transitions from E compartment:
-		for (j in isE) {
-			if (indiv[[j]]$alive == 1) {
-				if (indiv[[j]]$daysLatent < dE) {
-					indiv[[j]]$daysLatent <- indiv[[j]]$daysLatent + 1
-				} else {
-					# Extract information for jth individual.
-					phi <- indiv[[j]]$phi
-
-					# Draw a random number between 1 and 0 for each
-					# latently-infected individual.
-					randNum <- runif(1)
-
-					## Treated clinical infection (E -> T):
-					# If the random number is less than phi*fT, that
-					# individual develops a treated clinical infection (T)
-					# in the next time step.
-					if (randNum <= phi*fT) {
-						indiv[[j]]$state <- "T"
-						indiv[[j]]$daysLatent <- 0
-
-						# Keep track of clinical incidence in different age groups:
-						clinIncAll[i] <- clinIncAll[i] + 1
-						if ((indiv[[j]]$age >= 2) & (indiv[[j]]$age < 10)) {
-							clinInc2_10[i] <- clinInc2_10[i] + 1
-						}
-						if (indiv[[j]]$age < 5) {
-							clinInc0_5[i] <- clinInc0_5[i] + 1
-						} else if ((indiv[[j]]$age >= 5) & (indiv[[j]]$age < 10)) {
-							clinInc5_10[i] <- clinInc5_10[i] + 1
-						} else if ((indiv[[j]]$age >= 10) & (indiv[[j]]$age < 15)) {
-							clinInc10_15[i] <- clinInc10_15[i] + 1
-						} else if (indiv[[j]]$age >= 15) {
-							clinInc15Plus[i] <- clinInc15Plus[i] + 1
-						}
-					}
-
-					## Untreated clinical infection (E -> D):
-					# If the random number is greater than phi*fT and less
-					# than phi, that individual develops an untreated
-					# clinical infection (D) in the next time step.
-					if ((randNum > phi*fT) & (randNum <= phi)) {
-						indiv[[j]]$state <- "D"
-						indiv[[j]]$daysLatent <- 0
-
-						# Keep track of clinical incidence in different age groups:
-						clinIncAll[i] <- clinIncAll[i] + 1
-						if ((indiv[[j]]$age >= 2) & (indiv[[j]]$age < 10)) {
-							clinInc2_10[i] <- clinInc2_10[i] + 1
-						}
-						if (indiv[[j]]$age < 5) {
-							clinInc0_5[i] <- clinInc0_5[i] + 1
-						} else if ((indiv[[j]]$age >= 5) & (indiv[[j]]$age < 10)) {
-							clinInc5_10[i] <- clinInc5_10[i] + 1
-						} else if ((indiv[[j]]$age >= 10) & (indiv[[j]]$age < 15)) {
-							clinInc10_15[i] <- clinInc10_15[i] + 1
-						} else if (indiv[[j]]$age >= 15) {
-							clinInc15Plus[i] <- clinInc15Plus[i] + 1
-						}
-					}
-
-					## Asymptomatic infection (E -> A):
-					# If the random number is greater than phi, that
-					# individual develops an asymptomatic infection (A) in
-					# the next time step.
-					if (randNum > phi) {
-						indiv[[j]]$state <- "A"
-						indiv[[j]]$daysLatent <- 0
-					}
-				}
-			}
-		}
-
-		## Transitions from T compartment:
-		for (j in isT) {
-			if (indiv[[j]]$alive == 1) {
-				# Draw a random number between 1 and 0 for each treated individual.
-				randNum <- runif(1)
-
-				## Prophylactic protection (T -> P):
-				# If the random number is less than 1/dT, that individual enters the
-				# phase of prophylactic protection (P) in the next time step.
-				if (randNum <= (1/dT)) {
-					indiv[[j]]$state <- "P"
-				}
-			}
-		}
-
-		## Transitions from D compartment:
-		for (j in isD) {
-			if (indiv[[j]]$alive == 1) {
-				# Draw a random number between 1 and 0 for each treated individual.
-				randNum <- runif(1)
-
-				## Progression from diseased to asymptomatic (D -> A):
-				# If the random number is less than 1/dD, that individual enters the
-				# phase of asymptomatic patent infection (A) in the next time step.
-				if (randNum <= (1/dD)) {
-					indiv[[j]]$state <- "A"
-				}
-			}
-		}
-
-		## Transitions from A compartment:
-		for (j in isA) {
-			if (indiv[[j]]$alive == 1) {
-				# Extract information for jth individual.
-				lambda <- indiv[[j]]$lambda
-				phi <- indiv[[j]]$phi
-
-				# Draw a random number between 1 and 0 for each susceptible
-				# individual.
-				randNum <- runif(1)
-
-				## Treated clinical infection (A -> T):
-				# If the random number is less than phi*fT*lambda, that
-				# individual develops a treated clinical infection (T) in
-				# the next time step.
-				if (randNum <= phi*fT*lambda) {
-					indiv[[j]]$state <- "T"
-
-					# Keep track of clinical incidence in different age groups:
-					clinIncAll[i] <- clinIncAll[i] + 1
-					if ((indiv[[j]]$age >= 2) & (indiv[[j]]$age < 10)) {
-						clinInc2_10[i] <- clinInc2_10[i] + 1
-					}
-					if (indiv[[j]]$age < 5) {
-						clinInc0_5[i] <- clinInc0_5[i] + 1
-					} else if ((indiv[[j]]$age >= 5) & (indiv[[j]]$age < 10)) {
-						clinInc5_10[i] <- clinInc5_10[i] + 1
-					} else if ((indiv[[j]]$age >= 10) & (indiv[[j]]$age < 15)) {
-						clinInc10_15[i] <- clinInc10_15[i] + 1
-					} else if (indiv[[j]]$age >= 15) {
-						clinInc15Plus[i] <- clinInc15Plus[i] + 1
-					}
-				}
-
-				## Untreated clinical infection (A -> D):
-				# If the random number is greater than phi*fT*lambda and
-				# less than phi*lambda, that individual develops an
-				# untreated clinical infection (D) in the next time step.
-				if ((randNum > phi*fT*lambda) & (randNum <= phi*lambda)) {
-					indiv[[j]]$state <- "D"
-
-					# Keep track of clinical incidence in different age groups:
-					clinIncAll[i] <- clinIncAll[i] + 1
-					if ((indiv[[j]]$age >= 2) & (indiv[[j]]$age < 10)) {
-						clinInc2_10[i] <- clinInc2_10[i] + 1
-					}
-					if (indiv[[j]]$age < 5) {
-						clinInc0_5[i] <- clinInc0_5[i] + 1
-					} else if ((indiv[[j]]$age >= 5) & (indiv[[j]]$age < 10)) {
-						clinInc5_10[i] <- clinInc5_10[i] + 1
-					} else if ((indiv[[j]]$age >= 10) & (indiv[[j]]$age < 15)) {
-						clinInc10_15[i] <- clinInc10_15[i] + 1
-					} else if (indiv[[j]]$age >= 15) {
-						clinInc15Plus[i] <- clinInc15Plus[i] + 1
-					}
-				}
-
-				## Progression to asymptomatic sub-patent infection (A -> U):
-				# If the random number is greater than phi*lambda and less
-				# than (phi*lambda + 1/dA), that individual develops an asymptomatic
-				# infection (A) in the next time step.
-				if ((randNum > phi*lambda) & (randNum <= (phi*lambda + (1/dA)))) {
-					indiv[[j]]$state <- "U"
-				}
-			}
-		}
-
-		## Transitions from U compartment:
-		for (j in isU) {
-			if (indiv[[j]]$alive == 1) {
-				# Extract information for jth individual.
-				lambda <- indiv[[j]]$lambda
-				phi <- indiv[[j]]$phi
-
-				# Draw a random number between 1 and 0 for each susceptible
-				# individual.
-				randNum <- runif(1)
-
-				## Treated clinical infection (U -> T):
-				# If the random number is less than phi*fT*lambda, that
-				# individual develops a treated clinical infection (T) in
-				# the next time step.
-				if (randNum <= phi*fT*lambda) {
-					indiv[[j]]$state <- "T"
-
-					# Keep track of clinical incidence in different age groups:
-					clinIncAll[i] <- clinIncAll[i] + 1
-					if ((indiv[[j]]$age >= 2) & (indiv[[j]]$age < 10)) {
-						clinInc2_10[i] <- clinInc2_10[i] + 1
-					}
-					if (indiv[[j]]$age < 5) {
-						clinInc0_5[i] <- clinInc0_5[i] + 1
-					} else if ((indiv[[j]]$age >= 5) & (indiv[[j]]$age < 10)) {
-						clinInc5_10[i] <- clinInc5_10[i] + 1
-					} else if ((indiv[[j]]$age >= 10) & (indiv[[j]]$age < 15)) {
-						clinInc10_15[i] <- clinInc10_15[i] + 1
-					} else if (indiv[[j]]$age >= 15) {
-						clinInc15Plus[i] <- clinInc15Plus[i] + 1
-					}
-				}
-
-				## Untreated clinical infection (U -> D):
-				# If the random number is greater than phi*fT*lambda and
-				# less than phi*lambda, that individual develops an
-				# untreated clinical infection (D) in the next time step.
-				if ((randNum > phi*fT*lambda) & (randNum <= phi*lambda)) {
-					indiv[[j]]$state <- "D"
-
-					# Keep track of clinical incidence in different age groups:
-					clinIncAll[i] <- clinIncAll[i] + 1
-					if ((indiv[[j]]$age >= 2) & (indiv[[j]]$age < 10)) {
-						clinInc2_10[i] <- clinInc2_10[i] + 1
-					}
-					if (indiv[[j]]$age < 5) {
-						clinInc0_5[i] <- clinInc0_5[i] + 1
-					} else if ((indiv[[j]]$age >= 5) & (indiv[[j]]$age < 10)) {
-						clinInc5_10[i] <- clinInc5_10[i] + 1
-					} else if ((indiv[[j]]$age >= 10) & (indiv[[j]]$age < 15)) {
-						clinInc10_15[i] <- clinInc10_15[i] + 1
-					} else if (indiv[[j]]$age >= 15) {
-						clinInc15Plus[i] <- clinInc15Plus[i] + 1
-					}
-				}
-
-				## Asymptomatic infection (U -> A):
-				# If the random number is greater than phi*lambda and
-				# less than lambda, that individual develops a patent
-				# asymptomatic infection (A) in the next time step.
-				if ((randNum > phi*lambda) & (randNum <= lambda)) {
-					indiv[[j]]$state <- "A"
-				}
-
-				## Progression to asymptomatic sub-patent infection (U -> S):
-				# If the random number is greater than lambda and less
-				# than (lambda + 1/dU), that individual returns to the susceptible
-				# state (S) in the next time step.
-				if ((randNum > lambda) & (randNum <= (lambda + (1/dU)))) {
-					indiv[[j]]$state <- "S"
-				}
-			}
-		}
-
-		## Transitions from P compartment:
-		for (j in isP) {
-			if (indiv[[j]]$alive == 1) {
-				# Draw a random number between 1 and 0 for each treated individual.
-				randNum <- runif(1)
-
-				## Prophylactic protection (P -> S):
-				# If the random number is less than 1/dP, that individual returns to
-				# the susceptible state (S) in the next time step.
-				if (randNum <= (1/dP)) {
-					indiv[[j]]$state <- "S"
-				}
-			}
-		}
-
-		## Update ages by time step (one day):
-		for (j in 1:N) {
-			if (indiv[[j]]$alive == 1) {
-				indiv[[j]]$age <- indiv[[j]]$age + (1/365)
-			}
-		}
-
-		## Immunity:
-		# Update values for:
-		# 1. Pre-erythrocytic immunity (IB, reduces the probability of infection
-		#    following an infectious challenge)
-		# 2. Acquired clinical immunity (ICA, reduces the probability of clinical
-		#    disease, acquired from previous exposure)
-		# 3. Maternal clinical immunity (ICM, reduces the probability of clinical
-		#    disease, acquired maternally)
-		# 4. Detection immunity (ID, a.k.a. blood-stage immunity, reduces the
-		#    probability of detection and reduces infectiousness to mosquitoes)
-		for (j in 1:N) {
-			if (indiv[[j]]$alive == 1) {
-				epsilon <- indiv[[j]]$epsilon
-				lambda <- indiv[[j]]$lambda
-				indiv[[j]]$IB <- indiv[[j]]$IB + (epsilon/(epsilon*uB + 1)) - (indiv[[j]]$IB)*(1/dB)
-				indiv[[j]]$ICA <- indiv[[j]]$ICA + (lambda/(lambda*uC + 1)) - (indiv[[j]]$ICA)*(1/dC)
-				indiv[[j]]$ICM <- indiv[[j]]$ICM - (indiv[[j]]$ICM)*(1/dM)
-				indiv[[j]]$ID <- indiv[[j]]$ID + (lambda/(lambda*uD + 1)) - (indiv[[j]]$ID)*(1/dID)
-			}
-		}
-
-		# sapply(indiv,function(x){
-		#   c("IB"=x$IB,"ICA"=x$ICA,"ICM"=x$ICM,"ID"=x$ID)
-		# })
-
-		# Lambda (the force of infection) is calculated for each individual. It
-		# varies according to age and biting heterogeneity group:
-		for (j in 1:N) {
-			if (indiv[[j]]$alive == 1) {
-				zita <- indiv[[j]]$bitingHet
-				psi <- psiHouse[indiv[[j]]$house]
-				a <- indiv[[j]]$age
-				IB <- indiv[[j]]$IB
-				epsilon <- epsilon0 * zita * (1 - rho * exp(-a/a0)) * psi
-				b <- b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
-				indiv[[j]]$epsilon <- epsilon
-				indiv[[j]]$lambda <- epsilon*b
-			}
-		}
-
-		# sapply(indiv,function(x){
-		#   c("epsilon"=x$epsilon,"lambda"=x$lambda)
-		# })
-
-		# Phi (the probability of acquiring clinical disease upon infection) is
-		# also calculated for each individual. It varies according to immune
-		# status:
-		for (j in 1:N) {
-			if (indiv[[j]]$alive == 1) {
-				ICA <- indiv[[j]]$ICA
-				ICM <- indiv[[j]]$ICM
-				indiv[[j]]$phi <- phi0 * (phi1 + ((1 - phi1)/(1 + ((ICA+ICM)/IC0)^kappaC)))
-			}
-		}
-
-		# sapply(indiv,function(x){x$phi})
-
-		# q (the probability that an asymptomatic infection is detected by
-		# microscopy) is also calculated for each individual, as well as the
-		# probability of detection by PCR for asymptomatic infections in states
-		# A (patent) and U (subpatent). This also varies according to immune
-		# status:
-		for (j in 1:N) {
-			if (indiv[[j]]$alive == 1) {
-				a <- indiv[[j]]$age
-				ID <- indiv[[j]]$ID
-				fD <- 1 - ((1 - fD0)/(1 + (a/aD)^gammaD))
-				q <- d1 + ((1 - d1)/(1 + (fD*(ID/ID0)^kappaD)*fD))
-				indiv[[j]]$prDetectAMic <- q
-				indiv[[j]]$prDetectAPCR <- q^alphaA
-				indiv[[j]]$prDetectUPCR <- q^alphaU
-			}
-		}
-
-		# sapply(indiv,function(x){x$prDetectUPCR})
+    }
 
 		# Incorporate new births at the end of the time step:
 		numNewBirths <- rbinom(n = 1, size = N, prob = mu)
@@ -870,12 +676,12 @@ malaria_ibm <- function(theta, numIter) {
 		# 		  y = seq(0, 1, length.out = ncol(riskMap)),
 		# 		  z= riskMap, drawlabels=FALSE, nlevels=numContours, lwd=2,
 		# 		  col=brewer.pal(numContours, "Blues"), axes=FALSE)
-		#
+    #
 		# 	# 2. Plot breeding sites
 		# 	# for (j in 1:numBreedingSites) {
 		# 	#	points(longBreedingSite[j], latBreedingSite[j], col="red", lwd=3)
 		# 	# }
-		#
+    #
 		# 	# 3. Plot houses
 		# 	houseEdgeSize <- 0.015
 		# 	for (j in 1:numHouses) {
@@ -883,7 +689,7 @@ malaria_ibm <- function(theta, numIter) {
 		# 		        y=c(latHouse[j]+houseEdgeSize/2, latHouse[j]-houseEdgeSize/2, latHouse[j]-houseEdgeSize/2, latHouse[j]+houseEdgeSize/2, latHouse[j]+houseEdgeSize),
 		# 			  col="brown", border="black", lwd=2)
 		# 	}
-		#
+    #
 		# 	# 3. Plot T (green), D (red), A (orange), U (yellow) as they come
 		# 	#    up (around house):
 		# 	radCases <- 0.025
@@ -917,170 +723,6 @@ malaria_ibm <- function(theta, numIter) {
 	  slidPosAll, slidPos2_10, slidPos0_5, slidPos5_10, slidPos10_15, slidPos15Plus,
 	  NAll, N2_10, N0_5, N5_10, N10_15, N15Plus)
 	return(simResults)
-}
-
-##############################################################################
-## Functions for calculating levels of immunity when the simulation starts: ##
-##############################################################################
-
-## Differential equations for:
-## 1. Pre-erythrocytic immunity (IB, reduces the probability of infection
-##    following an infectious challenge).
-## 2. Detection immunity (ID, a.k.a. blood-stage immunity, reduces the
-##    probability of detection and reduces infectiousness to mosquitoes).
-## 3. Acquired clinical immunity (ICA, reduces the probability of clinical
-##    disease, acquired from previous exposure).
-
-I_ode <- function(time, state, theta) {
-	## States:
-	IB <- state["IB"]
-	ID <- state["ID"]
-	ICA <- state["ICA"]
-
-	## Parameters:
-	a0 <- theta[["a0"]]
-	rho <- theta[["rho"]]
-	durB <- theta[["dB"]] / 365 # Inverse decay rate (years)
-	uB <- theta[["uB"]] / 365 # Duration in which immunity is not boosted (years)
-	durD <- theta[["dID"]] / 365 # Inverse decay rate (years)
-	uD <- theta[["uD"]] / 365 # Duration in which immunity is not boosted (years)
-	durC <- theta[["dC"]] / 365 # Inverse decay rate (years)
-	uC <- theta[["uC"]] / 365 # Duration in which immunity is not boosted (years)
-	zita <- theta[["zita"]]
-	psi <- theta[["psi"]]
-	b0 <- theta[["b0"]]
-	b1 <- theta[["b1"]]
-	IB0 <- theta[["IB0"]]
-	kappaB <- theta[["kappaB"]]
-	epsilon0 <- theta[["epsilon0"]] * 365 # Entomological innoculation rate (annual)
-	epsilon <- epsilon0*zita*(1 - rho*exp(-time/a0))*psi
-	b <- b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
-	lambda <- epsilon*b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
-
-	## ODEs:
-	dIB <- epsilon/(epsilon*uB + 1) - IB/durB
-	dID <- lambda/(lambda*uD + 1) - ID/durD
-	dICA <- lambda/(lambda*uC + 1) - ICA/durC
-
-	return(list(c(dIB, dID, dICA)))
-}
-
-## Wrapper function to calculate pre-erythrocytic immunity at age a for
-## given EIR heterogeneities (biting rate & geographic location):
-initialI <- function(a, zita, psi, theta) {
-	initState <- c(IB=0, ID=0, ICA=0)
-	thetaI <- c(a0=theta[["a0"]], rho=theta[["rho"]], dB=theta[["dB"]],
-		     uB=theta[["uB"]], epsilon0=theta[["epsilon0"]],
-		     dID=theta[["dID"]], uD=theta[["uD"]], dC=theta[["dC"]],
-		     uC=theta[["uC"]], b0=theta[["b0"]], b1=theta[["b1"]],
-		     IB0=theta[["IB0"]], kappaB=theta[["kappaB"]], psi=psi, zita=zita)
-	IvsAge <- data.frame(ode(y=initState, times=seq(0, a, by=a/1000), func=I_ode,
-                         parms=thetaI, method="ode45"))
-	c(IB=IvsAge$IB[length(IvsAge$IB)], ID=IvsAge$ID[length(IvsAge$ID)],
-         ICA=IvsAge$ICA[length(IvsAge$ICA)])
-}
-
-##############################################################################
-## Functions for calculating distribution of states when simulation starts: ##
-##############################################################################
-
-## Differential equations for calculating the probability that an individual
-## is in each state given their age and EIR heterogeneity attributes:
-
-malaria_ode <- function(time, state, theta) {
-	## States:
-	prS <- state["prS"]
-	prT <- state["prT"]
-	prD <- state["prD"]
-	prA <- state["prA"]
-	prU <- state["prU"]
-	prP <- state["prP"]
-	IB <- state["IB"]
-	ICA <- state["ICA"]
-
-	# Parameters:
-	## Variable model parameters:
-	epsilon0 <- theta[["epsilon0"]] * 365 # Mean EIR for adults (per year)
-	fT <- theta[["fT"]] # Proportion of clinical disease cases successfully treated
-
-	## Model parameters taken from Griffin et al. (2014):
-	## Human infection durations:
-	dE <- theta[["dE"]] / 365 # Duration of latent period (years)
-	dT <- theta[["dT"]] / 365 # Duration of treated clinical disease (years)
-	dD <- theta[["dD"]] / 365 # Duration of untreated clinical disease (years)
-	dA <- theta[["dA"]] / 365 # Duration of patent infection (years)
-	dU <- theta[["dU"]] / 365 # Duration of sub-patent infection (years) (fitted)
-	dP <- theta[["dP"]] / 365 # Duration of prophylactic protection following treatment (years)
-
-	## Age parameters:
-	rho <- theta[["rho"]] # Age-dependent biting parameter
-	a0 <- theta[["a0"]] # Age-dependent biting parameter (years)
-
-	## Immunity reducing probability of infection:
-	b0 <- theta[["b0"]] # Probabiliy with no immunity (fitted)
-	b1 <- theta[["b1"]] # Maximum relative reduction
-	dB <- theta[["dB"]] / 365 # Inverse of decay rate (years)
-	IB0 <- theta[["IB0"]] # Scale parameter (fitted)
-	kappaB <- theta[["kappaB"]] # Shape parameter (fitted)
-	uB <- theta[["uB"]] / 365 # Duration in which immunity is not boosted (years) (fitted)
-
-	## Immunity reducing probability of clinical disease:
-	phi0 <- theta[["phi0"]] # Probability with no immunity
-	phi1 <- theta[["phi1"]] # Maximum relative reduction
-	dC <- theta[["dC"]] / 365 # Inverse decay rate (years)
-	IC0 <- theta[["IC0"]] # Scale parameter
-	kappaC <- theta[["kappaC"]] # Shape parameter
-	uC <- theta[["uC"]] / 365 # Duration in which immunity is not boosted (years)
-	PM <- theta[["PM"]] # New-born immunity relative to mother's immunity
-	dM <- theta[["dM"]] / 365 # Inverse decay rate of maternal immunity (years)
-	initICA20 <- theta["initICA20"]
-	ICM <- initICA20*exp(-time/dM)
-
-	## Individual heterogeneity parameters:
-	zita <- theta[["zita"]]
-	psi <- theta[["psi"]]
-	epsilon <- epsilon0*zita*(1 - rho*exp(-time/a0))*psi
-	b <- b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
-	lambda <- epsilon*b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
-	phi <- phi0*(phi1 + ((1 - phi1)/(1 + ((ICA + ICM)/IC0)^kappaC)))
-
-	## ODEs:
-	dprS <- - lambda*prS + prP/dP + prU/dU
-	dprT <- phi*fT*lambda*(prS + prA + prU) - prT/dT
-	dprD <- phi*(1 - fT)*lambda*(prS + prA + prU) - prD/dD
-	dprA <- (1 - phi)*lambda*(prS + prA + prU) + prD/dD - lambda*prA - prA/dA
-	dprU <- prA/dA - prU/dU - lambda*prU
-	dprP <- prT/dT - prP/dP
-	dIB <- epsilon/(epsilon*uB + 1) - IB/dB
-	dICA <- lambda/(lambda*uC + 1) - ICA/dC
-
-	return(list(c(dprS, dprT, dprD, dprA, dprU, dprP, dIB, dICA)))
-}
-
-## Wrapper function for proportion belonging to each state for each age
-## at the beginning of the simulation:
-initialStates <- function(a, zita, psi, theta) {
-	## All individuals begin as susceptible when born:
-	initState <- c(prS=1, prT=0, prD=0, prA=0, prU=0, prP=0,
-			   IB=0, ICA=0)
-
-	## The vector of parameters, with additional heterogeneity parameters:
-	thetaI <- theta
-	thetaI["zita"] <- zita
-	thetaI["psi"] <- psi
-	initI20 <- initialI(a=20, zita=1, psi=1, theta=theta)
-	thetaI["initICA20"] <- initI20[["ICA"]]
-
-	## Running the system of ODEs:
-	prStates <- data.frame(ode(y=initState, times=seq(0, a, by=a/1000),
-				func=malaria_ode, parms=thetaI, method="ode45"))
-
-	c(prS=prStates$prS[length(prStates$prS)],
-	  prT=prStates$prT[length(prStates$prT)],
-	  prD=prStates$prD[length(prStates$prD)],
-	  prA=prStates$prA[length(prStates$prA)],
-	  prU=prStates$prU[length(prStates$prU)],
-	  prP=prStates$prP[length(prStates$prP)])
 }
 
 #########################
@@ -1207,5 +849,5 @@ ggplot(sim1, aes(x = time, y = sim1, color = "Age group")) +
 ## Save simulation output:     ##
 #################################
 
-head(sim1)
-write.table(sim1,file="MalariaIBMsim.csv",sep=",",row.names=F,col.names=T)
+# head(sim1)
+# write.table(sim1,file="MalariaIBMsim.csv",sep=",",row.names=F,col.names=T)
