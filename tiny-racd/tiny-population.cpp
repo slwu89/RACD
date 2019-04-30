@@ -48,8 +48,7 @@
 // for da maths
 #include <math.h>
 
-// we dont want to hurt out fingers
-using uuint = unsigned int;
+// current simulation time
 static size_t tnow = 0;
 
 // output: states
@@ -131,12 +130,12 @@ static void setup_cinc_out(const size_t tmax){
 ################################################################################ */
 
 // we're all special snowflakes here
-static uuint global_hid = 0;
+static size_t global_hid = 0;
 
 // a person
 typedef struct human {
   // known on initialization
-  uuint         id;
+  size_t         id;
   double        age;
   bool          alive;
   size_t        house;
@@ -153,7 +152,7 @@ typedef struct human {
   double        prDetectUPCR;
   std::string   state;
   // other dynamic members
-  uuint         days_latent;
+  size_t         days_latent;
   // constructor/destructor
   human(const double age_,
         const bool alive_,
@@ -850,6 +849,7 @@ Rcpp::List tiny_racd_population(
   // main simulation loop
   Progress pb(tmax,true);
   while(tnow < tmax){
+
     // check for worried users
     if(tnow % 5 == 0){
       if(Progress::check_abort()){
