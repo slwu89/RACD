@@ -51,7 +51,7 @@ void S_compartment(Rcpp::List& human, const Rcpp::NumericVector& theta){
    */
   if(randNum <= lambda){
     human["state"] = "E";
-    human["daysLatent"] = 1;
+    human["daysLatent"] = 0;
   }
 };
 
