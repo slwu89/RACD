@@ -1,174 +1,12 @@
-###############################################################################
-#       ____  ___   __________
-#      / __ \/   | / ____/ __ \
-#     / /_/ / /| |/ /   / / / /
-#    / _, _/ ___ / /___/ /_/ /
-#   /_/ |_/_/  |_\____/_____/
-#
-#   Sean Wu & John Marshall
-#   December 2017
-#   Setup Simulation
-#
-###############################################################################
 
-# #' Initialize State for RACD Model
-# #'
-# #' Initialize initial conditions for the RACD simulation model
-# #'
-# #' @param theta named vector of parameters (see \code{\link{RACD_Parameters}})
-# #' @param psi household risk (probability for a bite to be taken at this house, given it goes anywhere)
-# #' @param EIR the total EIR produced by mosquitoes in this setting (mean EIR will be EIR/number of houses)
-# #'
-# #' @examples
-# #' \dontrun{
-# #' library(RACD)
-# #' library(tidyverse)
-# #' library(spatstat)
-# #' xy_h <- rpoispp(lambda = 100,win = owin(c(0,1),c(0,1)))
-# #' xy_b <- rpoispp(lambda = 100,win = owin(c(0,1),c(0,1)))
-# #' theta <- RACD_Parameters()
-# #' init <- RACD_Setup(as.matrix.ppx(xy_h),as.matrix.ppx(xy_b),theta)
-# #' outfile = "/Users/slwu89/Desktop/log_trans.csv"
-# #' RACD_Simulation(365,theta,init$humans,init$houses,123,outfile)
-# #' state = RACDaux::RACD_StateVector(outfile)
-# #' state %>% as.tibble %>% gather(state,value,-time) %>% ggplot(aes(x=time,y=value,color=state)) + geom_line() + theme_bw()
-# #' }
-# #'
-# #' @export
-# RACD_Setup <- function(theta, psi, EIR){
-#
-#   if(!fequal(sum(psi),1)){
-#     stop("vector psi must be normalized to 1")
-#   }
-#
-#   with(as.list(theta),{
-#
-#     cat("generate population\n")
-#
-#     # mu <- 1/(meanAge*365) # daily mortality st mean age does not change
-#     n_dwelling <- length(psi)
-#
-#     # sample characteristics of each person
-#     h_ages <- rexp(n=N,rate=1/meanAge)
-#     h_alive <- rep(TRUE,N)
-#     h_bitehet <- rlnorm(n=N,meanlog = -sigma2/2, sdlog = sqrt(sigma2))
-#
-#     # assign the humans to houses roughly uniformly
-#     dwelling_size <- rmultinom(n=1,size = N,prob = rep(1,n_dwelling)
-#     while(any(dwelling_size) == 0){
-#       dwelling_size <- rmultinom(n=1,size = N,prob = rep(1,n_dwelling)
-#     }
-#
-#     h_residence <- rep(1:n_dwelling,times=as.vector(dwelling_size))
-#
-#
-#
-#
-#     cat("begin calculating individual immune status\n")
-#     pb = txtProgressBar(min=1,max=N,initial = 1, style=3)
-#
-#
-#
-# #     > mapply(FUN = function(...){
-# # +     c(...)
-# # + },x=x,y=y,SIMPLIFY = FALSE)
-#
-#
-#
-#
-#     for (j in 1:N) {
-#
-#       # Randomly assign biting heterogeneity attributes:
-#       # (Biting heterogeneity is sampled from a log-normal distribution with mean
-#       # 1 and standard deviation sigma)
-#       # (Referred to as zeta in Griffin et al. (2014))
-#       humans[[j]]$bitingHet <- zeta <- rlnorm(n = 1, meanlog = -sigma2/2, sdlog = sqrt(sigma2))
-#
-#       # Lambda (the force of infection) is calculated for each individual. It
-#       # varies according to age and biting heterogeneity group.
-#       # Immunity values are also calculated here since these depend on the
-#       # the values of epsilon (the entomological inoculation rate) and lambda:
-#       # 1. Pre-erythrocytic immunity (IB, reduces the probability of infection
-#       #    following an infectious challenge)
-#       # 2. Acquired clinical immunity (ICA, reduces the probability of clinical
-#       #    disease, acquired from previous exposure)
-#       # 3. Maternal clinical immunity (ICM, reduces the probability of clinical
-#       #    disease, acquired maternally)
-#       # 4. Detection immunity (ID, a.k.a. blood-stage immunity, reduces the
-#       #    probability of detection and reduces infectiousness to mosquitoes)
-#       psi <- psi[humans[[j]]$house]
-#       a <- indiv[[j]]$age
-#       # Calculate initial immunity levels from their differential equations:
-#       initI <- immune_initial(a=a,zeta=zeta,psi=psi,theta=theta)
-#       IB <- initI[["IB"]]; ID <- initI[["ID"]]; ICA <- initI[["ICA"]]
-#       initI20 <- immune_initial(a=20, zeta=1, psi=1, theta=theta)
-#       ICM <- initI[["ICA"]] * exp(-a/dM)
-#       # epsilon <- EIR * zeta * (1 - rho * exp(-a/a0)) * psi
-#       b <- b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
-#       lambda <- epsilon*b
-#       indiv[[j]]$IB <- IB
-#       indiv[[j]]$ID <- ID
-#       indiv[[j]]$ICA <- ICA
-#       indiv[[j]]$ICM <- ICM
-#       indiv[[j]]$epsilon <- epsilon
-#       indiv[[j]]$lambda <- lambda
-#
-#       # Phi (the probability of acquiring clinical disease upon infection) is
-#       # also calculated for each individual. It varies according to immune
-#       # status:
-#       indiv[[j]]$phi <- phi0 * (phi1 + ((1 - phi1)/(1 + ((ICA+ICM)/IC0)^kappaC)))
-#
-#       # q (the probability that an asymptomatic infection is detected by
-#       # microscopy) is also calculated for each individual, as well as the
-#       # probability of detection by PCR for asymptomatic infections in states
-#       # A (patent) and U (subpatent). This also varies according to immune
-#       # status:
-#       fD <- 1 - ((1 - fD0)/(1 + (a/aD)^gammaD))
-#       q <- d1 + ((1 - d1)/(1 + (fD*(ID/ID0)^kappaD)*fD))
-#       indiv[[j]]$prDetectAMic <- q
-#       indiv[[j]]$prDetectAPCR <- q^alphaA
-#       indiv[[j]]$prDetectUPCR <- q^alphaU
-#
-#       setTxtProgressBar(pb,j)
-#     }
-#     close(pb)
-#     cat("done calculating individual immune status\n")
-#     cat("\n")
-#
-#     # For each invididual, use the ODE transmission model to determine the
-#     # probability that they are in each state given their age and EIR
-#     # heterogeneity attributes:
-#     cat("Initializing individual state probabilities...\n")
-#     pb <- txtProgressBar(min = 1, max = N, initial = 1, style=3)
-#     for (j in 1:N) {
-#       a <- indiv[[j]]$age
-#       zeta <- indiv[[j]]$bitingHet
-#       psi <- psiHouse[indiv[[j]]$house]
-#       prStateVector <- infection_initial(a=a, zeta=zeta, psi=psi, theta=theta)
-#       prS <- prStateVector[["prS"]]
-#       prT <- prStateVector[["prT"]]
-#       prD <- prStateVector[["prD"]]
-#       prA <- prStateVector[["prA"]]
-#       prU <- prStateVector[["prU"]]
-#       prP <- prStateVector[["prP"]]
-#       indiv[[j]]$state <- sample(x=c("S","T","D","A","U","P"), size=1, prob = c(prS,prT,prD,prA,prU,prP))
-#
-#       # Add an attribute to keep track of number of days of latent infection:
-#       indiv[[j]]$daysLatent <- 0
-#
-#       setTxtProgressBar(pb, j)
-#     }
-#     close(pb)
-#     cat("Done initializing individual state probabilities...\n")
-#     cat("\n")
-#
-#     return(list(
-#       humans = indiv,
-#       breedingSites = mapply(xy_b[,1],xy_b[,2],sigmaBreedingSite,FUN = function(x,y,z){list(x=x,y=y,sigma=z)},SIMPLIFY = FALSE),
-#       houses = mapply(xy_h[,1],xy_h[,2],householdSize,psiHouse,FUN = function(x,y,z,w){list(x=x,y=y,size=z,psi=w)},SIMPLIFY = FALSE)
-#     ))
-#   })
-# }
+
+
+
+
+
+
+
+
 
 
 #' Initialize State for RACD Model
@@ -291,7 +129,7 @@ RACD_Setup <- function(xy_h, xy_b, theta){
       # Calculate initial immunity levels from their differential equations:
       initI <- immune_initial(a=a,zeta=zeta,psi=psi,theta=theta)
       IB <- initI[["IB"]]; ID <- initI[["ID"]]; ICA <- initI[["ICA"]]
-      initI20 <- immune_initial(a=20, zeta=1, psi=1, theta=theta)
+      # initI20 <- immune_initial(a=20, zeta=1, psi=1, theta=theta)
       ICM <- initI[["ICA"]] * exp(-a/dM)
       epsilon <- epsilon0 * zeta * (1 - rho * exp(-a/a0)) * psi
       b <- b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
