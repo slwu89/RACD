@@ -16,10 +16,12 @@
 ################################################################################ */
 
 // [[Rcpp::plugins(cpp14)]]
+// [[Rcpp::depends(RcppProgress)]]
 
 // for Rcpp and R's RNG because we're lazy
 #include <Rcpp.h>
 #include <Rmath.h>
+#include <progress.hpp>
 
 // the best debugger
 #include <iostream>
@@ -48,6 +50,32 @@
 
 // we dont want to hurt out fingers
 using uuint = unsigned int;
+static size_t tnow = 0;
+
+// output: states
+// static std::vector<size_t> state_S;
+// static std::vector<size_t> state_E;
+// static std::vector<size_t> state_T;
+// static std::vector<size_t> state_D;
+// static std::vector<size_t> state_A;
+// static std::vector<size_t> state_U;
+// static std::vector<size_t> state_P;
+
+// // output: pop sizes
+// static std::vector<uuint> num_All;
+// static std::vector<uuint> num_2_10;
+// static std::vector<uuint> num_0_5;
+// static std::vector<uuint> num_5_10;
+// static std::vector<uuint> num_10_15;
+// static std::vector<uuint> num_15Plus;
+//
+// // output: clinical incidence
+// static std::vector<uuint> cinc_All;
+// static std::vector<uuint> cinc_2_10;
+// static std::vector<uuint> cinc_0_5;
+// static std::vector<uuint> cinc_5_10;
+// static std::vector<uuint> cinc_10_15;
+// static std::vector<uuint> cinc_15Plus;
 
 
 /* ################################################################################
@@ -145,15 +173,25 @@ using human_ptr = std::unique_ptr<human>;
 static std::list<human_ptr> human_pop;
 
 // we need to know how big each household is
-static std::vector<size_t> household_size;
+static std::vector<size_t> household_size(1,0);
 
 /* shamelessly "referenced" from Knuth, The Art of Computer Programming Vol 2, section 4.2.2 */
 // the mean immunity among 18-22 year olds
 static inline double mean_ICA18_22(){
-  double avg = 0;
+  double avg = 0.;
   int t = 1;
   for (auto& h : human_pop) {
     if((h->age >= 18.) && (h->age < 22.)){
+      avg += (h->ICA - avg) / t;
+      ++t;
+    }
+  }
+  // weird hack if there aren't any 18-22 yr olds
+  // just take avg ICA of entire pop
+  if(avg < 0.001){
+    avg = 0.;
+    t = 1;
+    for (auto& h : human_pop) {
       avg += (h->ICA - avg) / t;
       ++t;
     }
@@ -171,6 +209,7 @@ void mortality(human_ptr& human, const Rcpp::NumericVector& theta){
   double mu = theta["mu"];
   if(randNum <= mu){
     human->alive = false;
+    household_size.at(human->house) -= 1;
   }
 }
 
@@ -413,10 +452,10 @@ void update_immunity(human_ptr& human, const Rcpp::NumericVector& theta){
   double ICM = human->ICM;
   double ID = human->ID;
 
-  human->IB = IB + (epsilon/(epsilon*uB + 1.0)) - (IB)*(1.0/dB);
-  human->ICA = ICA + (lambda/(lambda*uC + 1.0)) - (ICA)*(1.0/dC);
-  human->ICM = ICM - (ICM)*(1.0/dM);
-  human->ID = ID + (lambda/(lambda*uD + 1.0)) - (ID)*(1.0/dID);
+  human->IB = IB + (epsilon/(epsilon*uB + 1.)) - (IB)*(1./dB);
+  human->ICA = ICA + (lambda/(lambda*uC + 1.)) - (ICA)*(1./dC);
+  human->ICM = ICM - (ICM)*(1./dM);
+  human->ID = ID + (lambda/(lambda*uD + 1.)) - (ID)*(1./dID);
 
 };
 
@@ -439,10 +478,10 @@ void update_lambda(human_ptr& human, const Rcpp::NumericVector& theta, const dou
   double age = human->age;
   double IB = human->IB;
 
-  double epsilon = epsilon0 * zeta * (1.0 - rho * std::exp(-age/a0)) * psi;
+  double epsilon = epsilon0 * zeta * (1. - rho * std::exp(-age/a0)) * psi;
 
   human->epsilon = epsilon;
-  double b = b0*(b1 + ((1.0-b1)/(1.0 + std::pow((IB/IB0),kappaB))));
+  double b = b0*(b1 + ((1.-b1)/(1. + std::pow((IB/IB0),kappaB))));
   human->lambda = epsilon * b;
 
 };
@@ -462,7 +501,7 @@ void update_phi(human_ptr& human,const Rcpp::NumericVector& theta){
   double ICA = human->ICA;
   double ICM = human->ICM;
 
-  human->phi = phi0 * (phi1 + ((1.0 - phi1)/(1 + std::pow(((ICA+ICM)/IC0),kappaC))));
+  human->phi = phi0 * (phi1 + ((1. - phi1)/(1. + std::pow(((ICA+ICM)/IC0),kappaC))));
 
 };
 
@@ -486,8 +525,8 @@ void update_q(human_ptr& human,const Rcpp::NumericVector& theta){
   double ID = human->ID;
   double age = human->age;
 
-  double fD = 1.0 - ((1.0 - fD0)/(1 + std::pow((age/aD),gammaD)));
-  double q = d1 + ((1.0 - d1)/(1 + (fD*std::pow((ID/ID0),kappaD))*fD));
+  double fD = 1. - ((1. - fD0)/(1. + std::pow((age/aD),gammaD)));
+  double q = d1 + ((1. - d1)/(1. + (fD*std::pow((ID/ID0),kappaD))*fD));
 
   human->prDetectAMic = q;
   human->prDetectAPCR = std::pow(q,alphaA);
@@ -612,11 +651,125 @@ void one_day_births(const Rcpp::NumericVector& theta, const Rcpp::NumericVector&
 
 // bring out yer dead!
 void one_day_deaths(){
-  
+
   auto dead = std::remove_if(human_pop.begin(),human_pop.end(),
                              [](const human_ptr& h)
                              {return !h->alive;}
                              );
   human_pop.erase(dead,human_pop.end());
 
+};
+
+
+/* ################################################################################
+#   run simulation
+################################################################################ */
+
+// hpop: list of humans
+// theta: named vector of params
+// psiHouse: psi values
+
+// [[Rcpp::export]]
+Rcpp::DataFrame tiny_racd_population(
+  const Rcpp::List& hpop,
+  const Rcpp::NumericVector& theta,
+  const Rcpp::NumericVector psiHouse,
+  const size_t tmax
+){
+
+  // reserve output memory
+  std::vector<size_t> state_S(tmax,0);
+  std::vector<size_t> state_E(tmax,0);
+  std::vector<size_t> state_T(tmax,0);
+  std::vector<size_t> state_D(tmax,0);
+  std::vector<size_t> state_A(tmax,0);
+  std::vector<size_t> state_U(tmax,0);
+  std::vector<size_t> state_P(tmax,0);
+
+  // sizes of houses
+  household_size.resize(psiHouse.size(),0);
+
+  Rcpp::Rcout << " --- initializing population in memory --- " << std::endl;
+  for(size_t i=0; i<hpop.size(); i++){
+
+    Rcpp::List human_pars = Rcpp::as<Rcpp::List>(hpop[i]);
+    size_t house = Rcpp::as<size_t>(human_pars["house"]) - 1;
+
+    household_size.at(house) += 1;
+
+    human_pop.emplace_back(std::make_unique<human>(
+      Rcpp::as<double>(human_pars["age"]),
+      true,
+      house,
+      Rcpp::as<double>(human_pars["bitingHet"]),
+      Rcpp::as<double>(human_pars["IB"]),
+      Rcpp::as<double>(human_pars["ID"]),
+      Rcpp::as<double>(human_pars["ICA"]),
+      Rcpp::as<double>(human_pars["ICM"]),
+      Rcpp::as<double>(human_pars["epsilon"]),
+      Rcpp::as<double>(human_pars["lambda"]),
+      Rcpp::as<double>(human_pars["phi"]),
+      Rcpp::as<double>(human_pars["prDetectAMic"]),
+      Rcpp::as<double>(human_pars["prDetectAPCR"]),
+      Rcpp::as<double>(human_pars["prDetectUPCR"]),
+      Rcpp::as<std::string>(human_pars["state"])
+    ));
+  }
+  Rcpp::Rcout << " --- done initializing population --- " << std::endl;
+
+  Rcpp::Rcout << " --- begin simulation --- " << std::endl;
+
+  // main simulation loop
+  Progress pb(tmax,true);
+  while(tnow < tmax){
+    // check for worried users
+    if(tnow % 5 == 0){
+      if(Progress::check_abort()){
+        Rcpp::stop("user abort detected");
+      }
+    }
+
+    // track output
+    for(auto& h : human_pop){
+      if(h->state.compare("S") == 0){
+        state_S.at(tnow) += 1;
+      } else if(h->state.compare("E") == 0){
+        state_E.at(tnow) += 1;
+      } else if(h->state.compare("T") == 0){
+        state_T.at(tnow) += 1;
+      } else if(h->state.compare("D") == 0){
+        state_D.at(tnow) += 1;
+      } else if(h->state.compare("A") == 0){
+        state_A.at(tnow) += 1;
+      } else if(h->state.compare("U") == 0){
+        state_U.at(tnow) += 1;
+      } else if(h->state.compare("P") == 0){
+        state_P.at(tnow) += 1;
+      } else {
+        Rcpp::stop("incorrect state detected");
+      }
+    }
+
+    // human simulation functions
+    one_day_update(theta, psiHouse);
+    one_day_births(theta, psiHouse);
+    one_day_deaths();
+
+    // increment simulation time
+    pb.increment();
+    tnow++;
+  }
+
+  Rcpp::Rcout << std::endl << " --- end simulation --- " << std::endl;
+
+  // return output
+  return Rcpp::DataFrame::create(
+    Rcpp::Named("state_S") = Rcpp::wrap(state_S),
+    Rcpp::Named("state_E") = Rcpp::wrap(state_E),
+    Rcpp::Named("state_T") = Rcpp::wrap(state_T),
+    Rcpp::Named("state_D") = Rcpp::wrap(state_D),
+    Rcpp::Named("state_A") = Rcpp::wrap(state_A),
+    Rcpp::Named("state_U") = Rcpp::wrap(state_U),
+    Rcpp::Named("state_P") = Rcpp::wrap(state_P)
+  );
 };
