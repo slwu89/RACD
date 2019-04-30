@@ -52,30 +52,59 @@
 using uuint = unsigned int;
 static size_t tnow = 0;
 
-// output: states
-// static std::vector<size_t> state_S;
-// static std::vector<size_t> state_E;
-// static std::vector<size_t> state_T;
-// static std::vector<size_t> state_D;
-// static std::vector<size_t> state_A;
-// static std::vector<size_t> state_U;
-// static std::vector<size_t> state_P;
+// // output: states
+// static std::vector<size_t> state_S(1,0);
+// static std::vector<size_t> state_E(1,0);
+// static std::vector<size_t> state_T(1,0);
+// static std::vector<size_t> state_D(1,0);
+// static std::vector<size_t> state_A(1,0);
+// static std::vector<size_t> state_U(1,0);
+// static std::vector<size_t> state_P(1,0);
 
 // // output: pop sizes
-// static std::vector<uuint> num_All;
-// static std::vector<uuint> num_2_10;
-// static std::vector<uuint> num_0_5;
-// static std::vector<uuint> num_5_10;
-// static std::vector<uuint> num_10_15;
-// static std::vector<uuint> num_15Plus;
+// static std::vector<size_t> num_All(1,0);
+// static std::vector<size_t> num_2_10(1,0);
+// static std::vector<size_t> num_0_5(1,0);
+// static std::vector<size_t> num_5_10(1,0);
+// static std::vector<size_t> num_10_15(1,0);
+// static std::vector<size_t> num_15Plus(1,0);
 //
 // // output: clinical incidence
-// static std::vector<uuint> cinc_All;
-// static std::vector<uuint> cinc_2_10;
-// static std::vector<uuint> cinc_0_5;
-// static std::vector<uuint> cinc_5_10;
-// static std::vector<uuint> cinc_10_15;
-// static std::vector<uuint> cinc_15Plus;
+// static std::vector<size_t> cinc_All(1,0);
+// static std::vector<size_t> cinc_2_10(1,0);
+// static std::vector<size_t> cinc_0_5(1,0);
+// static std::vector<size_t> cinc_5_10(1,0);
+// static std::vector<size_t> cinc_10_15(1,0);
+// static std::vector<size_t> cinc_15Plus(1,0);
+
+// // set up outputs
+// static void setup_state_out(const size_t tmax){
+//   state_S.resize(tmax,0);
+//   state_E.resize(tmax,0);
+//   state_T.resize(tmax,0);
+//   state_D.resize(tmax,0);
+//   state_A.resize(tmax,0);
+//   state_U.resize(tmax,0);
+//   state_P.resize(tmax,0);
+// };
+
+// static void setup_pop_out(const size_t tmax){
+//   num_All.resize(tmax,0);
+//   num_2_10.resize(tmax,0);
+//   num_0_5.resize(tmax,0);
+//   num_5_10.resize(tmax,0);
+//   num_10_15.resize(tmax,0);
+//   num_15Plus.resize(tmax,0);
+// };
+//
+// static void setup_cinc_out(const size_t tmax){
+//   cinc_All.resize(tmax,0);
+//   cinc_2_10.resize(tmax,0);
+//   cinc_0_5.resize(tmax,0);
+//   cinc_5_10.resize(tmax,0);
+//   cinc_10_15.resize(tmax,0);
+//   cinc_15Plus.resize(tmax,0);
+// };
 
 
 /* ################################################################################
@@ -686,7 +715,11 @@ Rcpp::DataFrame tiny_racd_population(
   std::vector<size_t> state_U(tmax,0);
   std::vector<size_t> state_P(tmax,0);
 
-  // sizes of houses
+  // clear static variables
+  global_hid = 0;
+  tnow = 0;
+  human_pop.clear();
+  household_size.clear();
   household_size.resize(psiHouse.size(),0);
 
   Rcpp::Rcout << " --- initializing population in memory --- " << std::endl;
