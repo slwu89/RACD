@@ -547,8 +547,8 @@ void one_day_update(const Rcpp::NumericVector& theta, const Rcpp::NumericVector&
 
 };
 
-// bring out yer dead.
-void one_day_demographics(const Rcpp::NumericVector& theta){
+// a malthusian nightmare
+void one_day_births(const Rcpp::NumericVector& theta, const Rcpp::NumericVector& psiHouse){
 
   size_t nn = human_pop.size();
   double mu = Rcpp::as<double>(theta["mu"]);
@@ -557,6 +557,66 @@ void one_day_demographics(const Rcpp::NumericVector& theta){
 
   if(numbirth > 0){
 
+    double ICA18_22 = mean_ICA18_22();
+
+    double sigma2 = Rcpp::as<double>(theta["sigma2"]);
+    double epsilon0 = Rcpp::as<double>(theta["epsilon0"]);
+    double rho = Rcpp::as<double>(theta["rho"]);
+    double phi0 = Rcpp::as<double>(theta["phi0"]);
+    double phi1 = Rcpp::as<double>(theta["phi1"]);
+    double PM = Rcpp::as<double>(theta["PM"]);
+    double IC0 = Rcpp::as<double>(theta["IC0"]);
+    double kappaC = Rcpp::as<double>(theta["kappaC"]);
+    double b0 = Rcpp::as<double>(theta["b0"]);
+
+    for(size_t i=0; i<numbirth; i++){
+
+      // put newborns in the smallest houses for ... reasons
+      size_t smallest_house = std::distance(household_size.begin(),std::min_element(household_size.begin(),household_size.end()));
+      household_size.at(smallest_house) += 1;
+
+      // sample this person's biting heterogeneity
+      double zeta = R::rlnorm(-sigma2/2., std::sqrt(sigma2));
+
+      // their EIR
+      double psi = psiHouse.at(smallest_house);
+      double epsilon = epsilon0 * zeta * (1. - rho) * psi;
+
+      // their Phi
+      double phi = phi0 * (phi1 + ((1. - phi1)/(1. + std::pow(PM*ICA18_22/IC0,kappaC))));
+
+      // they join the population...
+      human_pop.emplace_back(std::make_unique<human>(
+              0.0,
+              true,
+              smallest_house,
+              zeta,
+              0.0,
+              0.0,
+              0.0,
+              (PM*ICA18_22),
+              epsilon,
+              epsilon*b0,
+              phi,
+              1.0,
+              1.0,
+              1.0,
+              "S"
+      ));
+
+    }
+
   }
+
+};
+
+// bring out yer dead!
+void one_day_deaths(){
+  
+  auto dead = std::remove_if(human_pop.begin(),human_pop.end(),
+                             [](const human_ptr& h)
+                             {return !h->alive;}
+                             );
+  human_pop.erase(dead,human_pop.end());
 
 };
