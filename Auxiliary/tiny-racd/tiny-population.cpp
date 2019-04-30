@@ -804,15 +804,7 @@ Rcpp::List tiny_racd_population(
   const size_t tmax
 ){
 
-  // // reserve output memory
-  // std::vector<size_t> state_S(tmax,0);
-  // std::vector<size_t> state_E(tmax,0);
-  // std::vector<size_t> state_T(tmax,0);
-  // std::vector<size_t> state_D(tmax,0);
-  // std::vector<size_t> state_A(tmax,0);
-  // std::vector<size_t> state_U(tmax,0);
-  // std::vector<size_t> state_P(tmax,0);
-
+  // clear output
   setup_state_out(tmax);
   setup_pop_out(tmax);
   setup_cinc_out(tmax);
