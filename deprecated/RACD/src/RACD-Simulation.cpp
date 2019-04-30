@@ -23,7 +23,7 @@
 #include "RACD-Human.hpp"
 #include "RACD-House.hpp"
 #include "RACD-Village.hpp"
-#include "RACD-Logger.hpp"
+// #include "RACD-Logger.hpp"
 
 //' RACD Simulation Model
 //'
@@ -53,19 +53,24 @@
 //'
 //' @export
 // [[Rcpp::export]]
-void RACD_Simulation(const int tMax, const Rcpp::NumericVector &theta, const Rcpp::List& human, const Rcpp::List& house, const uint_least32_t seed, const std::string& outfile){
+Rcpp::IntegerMatrix RACD_Simulation(const int tMax, const Rcpp::NumericVector &theta, const Rcpp::List& human, const Rcpp::List& house, const uint_least32_t seed){
 
   /* construct village */
   std::unique_ptr<village> village_ptr(std::make_unique<village>(seed,theta));
 
-  /* initialize logging */
-  village_ptr->logger_ptr->open_log(outfile);
-  village_ptr->logger_ptr->get_log() << "HumanID,Event,Time,Age\n";
+  /* output */
+  Rcpp::IntegerMatrix state_out(tMax,7);
+  Rcpp::colnames(state_out) = Rcpp::CharacterVector::create("S","E","T","D","A","U","P");
+
+  // /* initialize logging */
+  // village_ptr->logger_ptr->open_log(outfile);
+  // village_ptr->logger_ptr->get_log() << "HumanID,Event,Time,Age\n";
 
   /* initialize objects */
   village_ptr->initialize(human,house);
 
   /* run simulation */
-  village_ptr->simulation(tMax);
+  village_ptr->simulation(tMax,state_out);
 
+  return state_out;
 };

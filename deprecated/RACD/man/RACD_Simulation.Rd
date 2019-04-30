@@ -4,7 +4,7 @@
 \alias{RACD_Simulation}
 \title{RACD Simulation Model}
 \usage{
-RACD_Simulation(tMax, theta, human, house, seed, outfile)
+RACD_Simulation(tMax, theta, human, house, seed)
 }
 \arguments{
 \item{tMax}{length of simulation in days}

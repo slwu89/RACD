@@ -24,6 +24,9 @@
 #include <iostream>
 #include <math.h> /* sqrt */
 
+#include <string>
+#include <unordered_map>
+
 /* Rcpp includes */
 #include <Rcpp.h>
 #include <progress.hpp>
@@ -59,7 +62,7 @@ public:
   /* Simulation Methods */
 
   /* one simulation run */
-  void                                      simulation(const int tMax);
+  void                                      simulation(const int tMax, Rcpp::IntegerMatrix& state_out);
 
   /* daily simulation */
   void                                      one_day();
@@ -70,7 +73,7 @@ public:
 
   /* utility classes */
   std::unique_ptr<prng>                     prng_ptr;
-  std::unique_ptr<logger>                   logger_ptr;
+  // std::unique_ptr<logger>                   logger_ptr;
   std::unique_ptr<parameters>               param_ptr;
 
 private:

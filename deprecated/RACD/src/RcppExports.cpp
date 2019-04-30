@@ -6,18 +6,18 @@
 using namespace Rcpp;
 
 // RACD_Simulation
-void RACD_Simulation(const int tMax, const Rcpp::NumericVector& theta, const Rcpp::List& human, const Rcpp::List& house, const uint_least32_t seed, const std::string& outfile);
-RcppExport SEXP _RACD_RACD_Simulation(SEXP tMaxSEXP, SEXP thetaSEXP, SEXP humanSEXP, SEXP houseSEXP, SEXP seedSEXP, SEXP outfileSEXP) {
+Rcpp::IntegerMatrix RACD_Simulation(const int tMax, const Rcpp::NumericVector& theta, const Rcpp::List& human, const Rcpp::List& house, const uint_least32_t seed);
+RcppExport SEXP _RACD_RACD_Simulation(SEXP tMaxSEXP, SEXP thetaSEXP, SEXP humanSEXP, SEXP houseSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const int >::type tMax(tMaxSEXP);
     Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type theta(thetaSEXP);
     Rcpp::traits::input_parameter< const Rcpp::List& >::type human(humanSEXP);
     Rcpp::traits::input_parameter< const Rcpp::List& >::type house(houseSEXP);
     Rcpp::traits::input_parameter< const uint_least32_t >::type seed(seedSEXP);
-    Rcpp::traits::input_parameter< const std::string& >::type outfile(outfileSEXP);
-    RACD_Simulation(tMax, theta, human, house, seed, outfile);
-    return R_NilValue;
+    rcpp_result_gen = Rcpp::wrap(RACD_Simulation(tMax, theta, human, house, seed));
+    return rcpp_result_gen;
 END_RCPP
 }
 
@@ -27,7 +27,7 @@ RcppExport SEXP init_immune(SEXP, SEXP);
 RcppExport SEXP init_infection(SEXP, SEXP);
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_RACD_RACD_Simulation", (DL_FUNC) &_RACD_RACD_Simulation, 6},
+    {"_RACD_RACD_Simulation", (DL_FUNC) &_RACD_RACD_Simulation, 5},
     {"derivs_immune",    (DL_FUNC) &derivs_immune,    6},
     {"derivs_infection", (DL_FUNC) &derivs_infection, 6},
     {"init_immune",      (DL_FUNC) &init_immune,      2},
