@@ -12,7 +12,7 @@
 */
 
 /* ################################################################################
-#   Includes
+#   Includes & auxiliary
 ################################################################################ */
 
 // [[Rcpp::plugins(cpp14)]]
@@ -21,10 +21,14 @@
 #include <Rcpp.h>
 #include <Rmath.h>
 
+// the best debugger
 #include <iostream>
 
 // for holding the people
 #include <list>
+
+// name one C++ project that doesn't have vectors in it...go!
+#include <vector>
 
 // for smart pointers
 #include <memory>
@@ -140,12 +144,29 @@ using human_ptr = std::unique_ptr<human>;
 // the humans!
 static std::list<human_ptr> human_pop;
 
+// we need to know how big each household is
+static std::vector<size_t> household_size;
+
+/* shamelessly "referenced" from Knuth, The Art of Computer Programming Vol 2, section 4.2.2 */
+// the mean immunity among 18-22 year olds
+static inline double mean_ICA18_22(){
+  double avg = 0;
+  int t = 1;
+  for (auto& h : human_pop) {
+    if((h->age >= 18.) && (h->age < 22.)){
+      avg += (h->ICA - avg) / t;
+      ++t;
+    }
+  }
+  return avg;
+}
+
 
 /* ################################################################################
 #   State transitions for our little Markov humans
 ################################################################################ */
 
-void mortality(human_ptr human, const Rcpp::NumericVector& theta){
+void mortality(human_ptr& human, const Rcpp::NumericVector& theta){
   double randNum = R::runif(0.0,1.0);
   double mu = theta["mu"];
   if(randNum <= mu){
@@ -159,7 +180,7 @@ void mortality(human_ptr human, const Rcpp::NumericVector& theta){
  * If the random number is less than lambda, that individual
  * develops a latent infection (E) in the next time step.
  */
-void S_compartment(human_ptr human, const Rcpp::NumericVector& theta){
+void S_compartment(human_ptr& human, const Rcpp::NumericVector& theta){
 
   double randNum = R::runif(0.0,1.0);
 
@@ -186,7 +207,7 @@ void S_compartment(human_ptr human, const Rcpp::NumericVector& theta){
  * individual develops an asymptomatic infection (A) in
  * the next time step.
  */
-void E_compartment(human_ptr human, const Rcpp::NumericVector& theta){
+void E_compartment(human_ptr& human, const Rcpp::NumericVector& theta){
 
   int dE = Rcpp::as<double>(theta["dE"]);
   double fT = Rcpp::as<double>(theta["fT"]);
@@ -223,7 +244,7 @@ void E_compartment(human_ptr human, const Rcpp::NumericVector& theta){
  * If the random number is less than 1/dT, that individual enters the
  * phase of prophylactic protection (P) in the next time step.
 */
-void T_compartment(human_ptr human, const Rcpp::NumericVector& theta){
+void T_compartment(human_ptr& human, const Rcpp::NumericVector& theta){
 
   int dT = Rcpp::as<double>(theta["dT"]);
 
@@ -240,7 +261,7 @@ void T_compartment(human_ptr human, const Rcpp::NumericVector& theta){
  * If the random number is less than 1/dD, that individual enters the
  * phase of asymptomatic patent infection (A) in the next time step.
 */
-void D_compartment(human_ptr human, const Rcpp::NumericVector& theta){
+void D_compartment(human_ptr& human, const Rcpp::NumericVector& theta){
 
   int dD = Rcpp::as<double>(theta["dD"]);
   double randNum = R::runif(0.0,1.0);
@@ -266,7 +287,7 @@ void D_compartment(human_ptr human, const Rcpp::NumericVector& theta){
  * than (phi*lambda + 1/dA), that individual develops sub-patent asymptomatic
  * infection (U) in the next time step.
  */
-void A_compartment(human_ptr human, const Rcpp::NumericVector& theta){
+void A_compartment(human_ptr& human, const Rcpp::NumericVector& theta){
 
   double fT = Rcpp::as<double>(theta["fT"]);
   int dA = Rcpp::as<double>(theta["dA"]);
@@ -311,7 +332,7 @@ void A_compartment(human_ptr human, const Rcpp::NumericVector& theta){
 * than (lambda + 1/dU), that individual returns to the susceptible
 * state (S) in the next time step.
 */
-void U_compartment(human_ptr human, const Rcpp::NumericVector& theta){
+void U_compartment(human_ptr& human, const Rcpp::NumericVector& theta){
 
   double fT = Rcpp::as<double>(theta["fT"]);
   int dU = Rcpp::as<double>(theta["dU"]);
@@ -347,7 +368,7 @@ void U_compartment(human_ptr human, const Rcpp::NumericVector& theta){
  * If the random number is less than 1/dP, that individual returns to
  * the susceptible state (S) in the next time step.
  */
-void P_compartment(human_ptr human, const Rcpp::NumericVector& theta){
+void P_compartment(human_ptr& human, const Rcpp::NumericVector& theta){
 
   int dP = Rcpp::as<double>(theta["dP"]);
   double randNum = R::runif(0.0,1.0);
@@ -374,7 +395,7 @@ void P_compartment(human_ptr human, const Rcpp::NumericVector& theta){
  * 4. Detection immunity (ID, a.k.a. blood-stage immunity, reduces the
  *  probability of detection and reduces infectiousness to mosquitoes)
  */
-void update_immunity(human_ptr human, const Rcpp::NumericVector& theta){
+void update_immunity(human_ptr& human, const Rcpp::NumericVector& theta){
 
   double uB = Rcpp::as<double>(theta["uB"]);
   double uC = Rcpp::as<double>(theta["uC"]);
@@ -404,7 +425,7 @@ void update_immunity(human_ptr human, const Rcpp::NumericVector& theta){
  * varies according to age and biting heterogeneity group:
  */
 // psi is the psi of my house
-void update_lambda(human_ptr human, const Rcpp::NumericVector& theta, const double psi){
+void update_lambda(human_ptr& human, const Rcpp::NumericVector& theta, const double psi){
 
   double a0 = Rcpp::as<double>(theta["a0"]);
   double epsilon0 = Rcpp::as<double>(theta["epsilon0"]);
@@ -431,7 +452,7 @@ void update_lambda(human_ptr human, const Rcpp::NumericVector& theta, const doub
  * also calculated for each individual. It varies according to immune
  * status:
  */
-void update_phi(human_ptr human,const Rcpp::NumericVector& theta){
+void update_phi(human_ptr& human,const Rcpp::NumericVector& theta){
 
   double phi0 = Rcpp::as<double>(theta["phi0"]);
   double phi1 = Rcpp::as<double>(theta["phi1"]);
@@ -451,7 +472,7 @@ void update_phi(human_ptr human,const Rcpp::NumericVector& theta){
  * probability of detection by PCR for asymptomatic infections in states
  * A (patent) and U (subpatent). This also varies according to immune status:
  */
-void update_q(human_ptr human,const Rcpp::NumericVector& theta){
+void update_q(human_ptr& human,const Rcpp::NumericVector& theta){
 
   double fD0 = Rcpp::as<double>(theta["fD0"]);
   double aD = Rcpp::as<double>(theta["aD"]);
@@ -475,7 +496,7 @@ void update_q(human_ptr human,const Rcpp::NumericVector& theta){
 };
 
 // put the functions in a hash table
-static std::unordered_map<std::string, std::function<void(human_ptr human, const Rcpp::NumericVector&)> > state_functions  = {
+static std::unordered_map<std::string, std::function<void(human_ptr& human, const Rcpp::NumericVector&)> > state_functions  = {
   {"S",S_compartment},
   {"E",E_compartment},
   {"T",T_compartment},
@@ -490,32 +511,52 @@ static std::unordered_map<std::string, std::function<void(human_ptr human, const
 #   daily update
 ################################################################################ */
 
-// call this on everyone
-// void one_day_human(Rcpp::List& human,const Rcpp::NumericVector& theta, const double psi){
-//
-//   // mortality
-//   mortality(human,theta);
-//
-//   if(Rcpp::as<bool>(human["alive"])){
-//
-//     // state update
-//     std::string state = Rcpp::as<std::string>(human["state"]);
-//     state_functions.at(state)(human,theta);
-//
-//     // update age
-//     double age = Rcpp::as<double>(human["age"]);
-//     human["age"] = age + (1./365.);
-//
-//     // update immunity
-//     update_immunity(human,theta);
-//
-//     // update lambda
-//     update_lambda(human,theta,psi);
-//
-//     // update phi
-//     update_phi(human,theta);
-//
-//     // update q
-//     update_q(human,theta);
-//   }
-// };
+// one day for the humans
+void one_day_update(const Rcpp::NumericVector& theta, const Rcpp::NumericVector& psiHouse){
+
+  for(auto& h : human_pop){
+
+    // mortality
+    mortality(h,theta);
+
+    // if they survived the call of the beyond
+    if(h->alive){
+
+      // state update
+      std::string state(h->state);
+      state_functions.at(state)(h,theta);
+
+      // update age
+      h->age += (1./365.);
+
+      // update immunity
+      update_immunity(h,theta);
+
+      // update lambda
+      double psi = psiHouse.at(h->house);
+      update_lambda(h,theta,psi);
+
+      // update phi
+      update_phi(h,theta);
+
+      // update q
+      update_q(h,theta);
+    }
+
+  };
+
+};
+
+// bring out yer dead.
+void one_day_demographics(const Rcpp::NumericVector& theta){
+
+  size_t nn = human_pop.size();
+  double mu = Rcpp::as<double>(theta["mu"]);
+
+  size_t numbirth = (size_t)R::rbinom((double) nn, mu);
+
+  if(numbirth > 0){
+
+  }
+
+};

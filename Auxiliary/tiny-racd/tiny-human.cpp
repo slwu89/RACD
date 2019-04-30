@@ -367,7 +367,7 @@ void update_q(Rcpp::List& human,const Rcpp::NumericVector& theta){
 };
 
 // put the functions in a hash table
-static std::unordered_map<std::string, std::function<void(Rcpp::List&,const Rcpp::NumericVector&)> > state_functions  = {
+static const std::unordered_map<std::string, std::function<void(Rcpp::List&,const Rcpp::NumericVector&)> > state_functions  = {
   {"S",S_compartment},
   {"E",E_compartment},
   {"T",T_compartment},
