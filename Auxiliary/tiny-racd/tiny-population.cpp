@@ -52,59 +52,78 @@
 using uuint = unsigned int;
 static size_t tnow = 0;
 
-// // output: states
-// static std::vector<size_t> state_S(1,0);
-// static std::vector<size_t> state_E(1,0);
-// static std::vector<size_t> state_T(1,0);
-// static std::vector<size_t> state_D(1,0);
-// static std::vector<size_t> state_A(1,0);
-// static std::vector<size_t> state_U(1,0);
-// static std::vector<size_t> state_P(1,0);
+// output: states
+static std::vector<size_t> state_S(1,0);
+static std::vector<size_t> state_E(1,0);
+static std::vector<size_t> state_T(1,0);
+static std::vector<size_t> state_D(1,0);
+static std::vector<size_t> state_A(1,0);
+static std::vector<size_t> state_U(1,0);
+static std::vector<size_t> state_P(1,0);
 
-// // output: pop sizes
-// static std::vector<size_t> num_All(1,0);
-// static std::vector<size_t> num_2_10(1,0);
-// static std::vector<size_t> num_0_5(1,0);
-// static std::vector<size_t> num_5_10(1,0);
-// static std::vector<size_t> num_10_15(1,0);
-// static std::vector<size_t> num_15Plus(1,0);
-//
-// // output: clinical incidence
-// static std::vector<size_t> cinc_All(1,0);
-// static std::vector<size_t> cinc_2_10(1,0);
-// static std::vector<size_t> cinc_0_5(1,0);
-// static std::vector<size_t> cinc_5_10(1,0);
-// static std::vector<size_t> cinc_10_15(1,0);
-// static std::vector<size_t> cinc_15Plus(1,0);
+// output: pop sizes
+static std::vector<size_t> num_All(1,0);
+static std::vector<size_t> num_2_10(1,0);
+static std::vector<size_t> num_0_5(1,0);
+static std::vector<size_t> num_5_10(1,0);
+static std::vector<size_t> num_10_15(1,0);
+static std::vector<size_t> num_15Plus(1,0);
 
-// // set up outputs
-// static void setup_state_out(const size_t tmax){
-//   state_S.resize(tmax,0);
-//   state_E.resize(tmax,0);
-//   state_T.resize(tmax,0);
-//   state_D.resize(tmax,0);
-//   state_A.resize(tmax,0);
-//   state_U.resize(tmax,0);
-//   state_P.resize(tmax,0);
-// };
+// output: clinical incidence
+static std::vector<size_t> cinc_All(1,0);
+static std::vector<size_t> cinc_2_10(1,0);
+static std::vector<size_t> cinc_0_5(1,0);
+static std::vector<size_t> cinc_5_10(1,0);
+static std::vector<size_t> cinc_10_15(1,0);
+static std::vector<size_t> cinc_15Plus(1,0);
 
-// static void setup_pop_out(const size_t tmax){
-//   num_All.resize(tmax,0);
-//   num_2_10.resize(tmax,0);
-//   num_0_5.resize(tmax,0);
-//   num_5_10.resize(tmax,0);
-//   num_10_15.resize(tmax,0);
-//   num_15Plus.resize(tmax,0);
-// };
-//
-// static void setup_cinc_out(const size_t tmax){
-//   cinc_All.resize(tmax,0);
-//   cinc_2_10.resize(tmax,0);
-//   cinc_0_5.resize(tmax,0);
-//   cinc_5_10.resize(tmax,0);
-//   cinc_10_15.resize(tmax,0);
-//   cinc_15Plus.resize(tmax,0);
-// };
+// set up outputs
+static void setup_state_out(const size_t tmax){
+  state_S.clear();
+  state_E.clear();
+  state_T.clear();
+  state_D.clear();
+  state_A.clear();
+  state_U.clear();
+  state_P.clear();
+  state_S.resize(tmax,0);
+  state_E.resize(tmax,0);
+  state_T.resize(tmax,0);
+  state_D.resize(tmax,0);
+  state_A.resize(tmax,0);
+  state_U.resize(tmax,0);
+  state_P.resize(tmax,0);
+};
+
+static void setup_pop_out(const size_t tmax){
+  num_All.clear();
+  num_2_10.clear();
+  num_0_5.clear();
+  num_5_10.clear();
+  num_10_15.clear();
+  num_15Plus.clear();
+  num_All.resize(tmax,0);
+  num_2_10.resize(tmax,0);
+  num_0_5.resize(tmax,0);
+  num_5_10.resize(tmax,0);
+  num_10_15.resize(tmax,0);
+  num_15Plus.resize(tmax,0);
+};
+
+static void setup_cinc_out(const size_t tmax){
+  cinc_All.clear();
+  cinc_2_10.clear();
+  cinc_0_5.clear();
+  cinc_5_10.clear();
+  cinc_10_15.clear();
+  cinc_15Plus.clear();
+  cinc_All.resize(tmax,0);
+  cinc_2_10.resize(tmax,0);
+  cinc_0_5.resize(tmax,0);
+  cinc_5_10.resize(tmax,0);
+  cinc_10_15.resize(tmax,0);
+  cinc_15Plus.resize(tmax,0);
+};
 
 
 /* ################################################################################
@@ -228,6 +247,73 @@ static inline double mean_ICA18_22(){
   return avg;
 }
 
+// track clinical incidence
+static void track_cinc(human_ptr& h){
+
+  cinc_All.at(tnow) += 1;
+
+  if((h->age >= 2.) && (h->age < 10.)){
+    cinc_2_10.at(tnow) += 1;
+  }
+  if(h->age < 5.) {
+    cinc_0_5.at(tnow) += 1;
+  } else if((h->age >= 5.) && (h->age < 10.)){
+    cinc_5_10.at(tnow) += 1;
+  } else if((h->age >= 10.) && (h->age < 15.)){
+    cinc_10_15.at(tnow) += 1;
+  } else if(h->age >= 15.){
+    cinc_15Plus.at(tnow) += 1;
+  }
+
+};
+
+// track states
+static void track_state(){
+
+  for(auto& h : human_pop){
+    if(h->state.compare("S") == 0){
+      state_S.at(tnow) += 1;
+    } else if(h->state.compare("E") == 0){
+      state_E.at(tnow) += 1;
+    } else if(h->state.compare("T") == 0){
+      state_T.at(tnow) += 1;
+    } else if(h->state.compare("D") == 0){
+      state_D.at(tnow) += 1;
+    } else if(h->state.compare("A") == 0){
+      state_A.at(tnow) += 1;
+    } else if(h->state.compare("U") == 0){
+      state_U.at(tnow) += 1;
+    } else if(h->state.compare("P") == 0){
+      state_P.at(tnow) += 1;
+    } else {
+      Rcpp::stop("incorrect state detected");
+    }
+  }
+
+}
+
+// track age group
+static void track_age(){
+
+  for(auto& h : human_pop){
+    if((h->age >= 2.) && (h->age < 10.)){
+      num_2_10.at(tnow) += 1;
+    }
+    if(h->age < 5.) {
+      num_0_5.at(tnow) += 1;
+    } else if((h->age >= 5.) && (h->age < 10.)){
+      num_5_10.at(tnow) += 1;
+    } else if((h->age >= 10.) && (h->age < 15.)){
+      num_10_15.at(tnow) += 1;
+    } else if(h->age >= 15.){
+      num_15Plus.at(tnow) += 1;
+    }
+
+    num_All.at(tnow) += 1;
+  };
+
+};
+
 
 /* ################################################################################
 #   State transitions for our little Markov humans
@@ -291,12 +377,16 @@ void E_compartment(human_ptr& human, const Rcpp::NumericVector& theta){
     if(randNum <= phi*fT){
       human->state = "T";
       human->days_latent = 0;
+
+      track_cinc(human);
     }
 
     // Untreated clinical infection (E -> D)
     if((randNum > phi*fT) && (randNum <= phi)){
       human->state = "D";
       human->days_latent = 0;
+
+      track_cinc(human);
     }
 
     // Asymptomatic infection (E -> A)
@@ -368,10 +458,14 @@ void A_compartment(human_ptr& human, const Rcpp::NumericVector& theta){
   // Treated clinical infection (A -> T)
   if(randNum <= phi*fT*lambda){
     human->state = "T";
+
+    track_cinc(human);
   }
   // Untreated clinical infection (A -> D)
   if((randNum > phi*fT*lambda) && (randNum <= phi*lambda)){
     human->state = "D";
+
+    track_cinc(human);
   }
   // Progression to asymptomatic sub-patent infection (A -> U):
   if((randNum > phi*lambda) && (randNum <= (phi*lambda + (1.0/dA)))) {
@@ -413,11 +507,15 @@ void U_compartment(human_ptr& human, const Rcpp::NumericVector& theta){
   // Treated clinical infection (U -> T):
   if(randNum <= phi*fT*lambda){
     human->state = "T";
+
+    track_cinc(human);
   }
 
   // Untreated clinical infection (U -> D)
   if((randNum > phi*fT*lambda) && (randNum <= phi*lambda)){
     human->state = "D";
+
+    track_cinc(human);
   }
 
   // Asymptomatic infection (U -> A)
@@ -699,21 +797,25 @@ void one_day_deaths(){
 // psiHouse: psi values
 
 // [[Rcpp::export]]
-Rcpp::DataFrame tiny_racd_population(
+Rcpp::List tiny_racd_population(
   const Rcpp::List& hpop,
   const Rcpp::NumericVector& theta,
   const Rcpp::NumericVector psiHouse,
   const size_t tmax
 ){
 
-  // reserve output memory
-  std::vector<size_t> state_S(tmax,0);
-  std::vector<size_t> state_E(tmax,0);
-  std::vector<size_t> state_T(tmax,0);
-  std::vector<size_t> state_D(tmax,0);
-  std::vector<size_t> state_A(tmax,0);
-  std::vector<size_t> state_U(tmax,0);
-  std::vector<size_t> state_P(tmax,0);
+  // // reserve output memory
+  // std::vector<size_t> state_S(tmax,0);
+  // std::vector<size_t> state_E(tmax,0);
+  // std::vector<size_t> state_T(tmax,0);
+  // std::vector<size_t> state_D(tmax,0);
+  // std::vector<size_t> state_A(tmax,0);
+  // std::vector<size_t> state_U(tmax,0);
+  // std::vector<size_t> state_P(tmax,0);
+
+  setup_state_out(tmax);
+  setup_pop_out(tmax);
+  setup_cinc_out(tmax);
 
   // clear static variables
   global_hid = 0;
@@ -722,6 +824,7 @@ Rcpp::DataFrame tiny_racd_population(
   household_size.clear();
   household_size.resize(psiHouse.size(),0);
 
+  // generate human population
   Rcpp::Rcout << " --- initializing population in memory --- " << std::endl;
   for(size_t i=0; i<hpop.size(); i++){
 
@@ -762,26 +865,11 @@ Rcpp::DataFrame tiny_racd_population(
       }
     }
 
-    // track output
-    for(auto& h : human_pop){
-      if(h->state.compare("S") == 0){
-        state_S.at(tnow) += 1;
-      } else if(h->state.compare("E") == 0){
-        state_E.at(tnow) += 1;
-      } else if(h->state.compare("T") == 0){
-        state_T.at(tnow) += 1;
-      } else if(h->state.compare("D") == 0){
-        state_D.at(tnow) += 1;
-      } else if(h->state.compare("A") == 0){
-        state_A.at(tnow) += 1;
-      } else if(h->state.compare("U") == 0){
-        state_U.at(tnow) += 1;
-      } else if(h->state.compare("P") == 0){
-        state_P.at(tnow) += 1;
-      } else {
-        Rcpp::stop("incorrect state detected");
-      }
-    }
+    // track state output
+    track_state();
+
+    // track age group output
+    track_age();
 
     // human simulation functions
     one_day_update(theta, psiHouse);
@@ -796,13 +884,37 @@ Rcpp::DataFrame tiny_racd_population(
   Rcpp::Rcout << std::endl << " --- end simulation --- " << std::endl;
 
   // return output
-  return Rcpp::DataFrame::create(
-    Rcpp::Named("state_S") = Rcpp::wrap(state_S),
-    Rcpp::Named("state_E") = Rcpp::wrap(state_E),
-    Rcpp::Named("state_T") = Rcpp::wrap(state_T),
-    Rcpp::Named("state_D") = Rcpp::wrap(state_D),
-    Rcpp::Named("state_A") = Rcpp::wrap(state_A),
-    Rcpp::Named("state_U") = Rcpp::wrap(state_U),
-    Rcpp::Named("state_P") = Rcpp::wrap(state_P)
+  Rcpp::DataFrame state = Rcpp::DataFrame::create(
+    Rcpp::Named("S") = Rcpp::wrap(state_S),
+    Rcpp::Named("E") = Rcpp::wrap(state_E),
+    Rcpp::Named("T") = Rcpp::wrap(state_T),
+    Rcpp::Named("D") = Rcpp::wrap(state_D),
+    Rcpp::Named("A") = Rcpp::wrap(state_A),
+    Rcpp::Named("U") = Rcpp::wrap(state_U),
+    Rcpp::Named("P") = Rcpp::wrap(state_P)
+  );
+
+  Rcpp::DataFrame age = Rcpp::DataFrame::create(
+    Rcpp::Named("all") = Rcpp::wrap(num_All),
+    Rcpp::Named("2_10") = Rcpp::wrap(num_2_10),
+    Rcpp::Named("0_5") = Rcpp::wrap(num_0_5),
+    Rcpp::Named("5_10") = Rcpp::wrap(num_5_10),
+    Rcpp::Named("10_15") = Rcpp::wrap(num_10_15),
+    Rcpp::Named("15+") = Rcpp::wrap(num_15Plus)
+  );
+
+  Rcpp::DataFrame clinic = Rcpp::DataFrame::create(
+    Rcpp::Named("all") = Rcpp::wrap(cinc_All),
+    Rcpp::Named("2_10") = Rcpp::wrap(cinc_2_10),
+    Rcpp::Named("0_5") = Rcpp::wrap(cinc_0_5),
+    Rcpp::Named("5_10") = Rcpp::wrap(cinc_5_10),
+    Rcpp::Named("10_15") = Rcpp::wrap(cinc_10_15),
+    Rcpp::Named("15+") = Rcpp::wrap(cinc_15Plus)
+  );
+
+  return Rcpp::List::create(
+    Rcpp::Named("state") = state,
+    Rcpp::Named("age") = age,
+    Rcpp::Named("clinical_incidence") = clinic
   );
 };
