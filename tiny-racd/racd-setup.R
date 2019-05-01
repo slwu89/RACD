@@ -6,7 +6,83 @@
 
 
 
+RACD_Setup <- function(N, EIR_mean, xy_d, xy_a, theta){
 
+
+	fT <- theta[["fT"]] # Proportion of clinical disease cases successfully treated
+
+	## Model parameters taken from Griffin et al. (2014):
+	## Human infection durations:
+	dE <- theta[["dE"]] # Duration of latent period (days)
+	dT <- theta[["dT"]] # Duration of treated clinical disease (days)
+	dD <- theta[["dD"]] # Duration of untreated clinical disease (days)
+	dA <- theta[["dA"]] # Duration of patent infection (days)
+	dU <- theta[["dU"]] # Duration of sub-patent infection (days) (fitted)
+	dP <- theta[["dP"]] # Duration of prophylactic protection following treatment (days)
+
+	## Infectiousness of humans to mosquitoes:
+	cD <- theta[["cD"]] # Infectiousness with untreated disease & no immunity (fitted)
+	cT <- theta[["cT"]] # Infectiousness after treatment
+	cU <- theta[["cU"]] # Infectiousness with sub-patent infection (fitted)
+	gammaI <- theta[["gammaI"]] # Relates infectiousness to probability of detection (fitted)
+
+	## Age and heterogeneity parameters:
+	rho <- theta[["rho"]] # Age-dependent biting parameter
+	a0 <- theta[["a0"]] # Age-dependent biting parameter (years)
+	sigma2 <- theta[["sigma2"]] # Variance of log of heterogeneity in biting rates
+
+	## Effect of immunity on reducing probability of detection:
+	d1 <- theta[["d1"]] # Probability of detection with maximum immunity (fitted)
+	dID <- theta[["dID"]] # Inverse of decay rate (days)
+	ID0 <- theta[["ID0"]] # Immunity scale parameter (fitted)
+	kappaD <- theta[["kappaD"]] # Immunity shape parameter (fitted)
+	uD <- theta[["uD"]] # Duration in which immunity is not boosted (fitted)
+	aD <- theta[["aD"]] # Scale parameter relating age to immunity (years) (fitted)
+	fD0 <- theta[["fD0"]] # Parameter relating age to immunity (fitted)
+	gammaD <- theta[["gammaD"]] # Shape parameter relating age to immunity (fitted)
+	alphaA <- theta[["alphaA"]] # PCR prevalence parameter (fitted)
+	alphaU <- theta[["alphaU"]] # PCR prevalence parameter (fitted)
+
+	## Immunity reducing probability of infection:
+	b0 <- theta[["b0"]] # Probabiliy with no immunity (fitted)
+	b1 <- theta[["b1"]] # Maximum relative reduction
+	dB <- theta[["dB"]] # Inverse of decay rate (days)
+	IB0 <- theta[["IB0"]] # Scale parameter (fitted)
+	kappaB <- theta[["kappaB"]] # Shape parameter (fitted)
+	uB <- theta[["uB"]] # Duration in which immunity is not boosted (days) (fitted)
+
+	## Immunity reducing probability of clinical disease:
+	phi0 <- theta[["phi0"]] # Probability with no immunity
+	phi1 <- theta[["phi1"]] # Maximum relative reduction
+	dC <- theta[["dC"]] # Inverse decay rate (days)
+	IC0 <- theta[["IC0"]] # Scale parameter
+	kappaC <- theta[["kappaC"]] # Shape parameter
+	uC <- theta[["uC"]] # Duration in which immunity is not boosted
+	PM <- theta[["PM"]] # New-born immunity relative to mother's immunity
+	dM <- theta[["dM"]] # Inverse decay rate of maternal immunity
+
+	## Case detection (recorded incidence relative to daily active case
+	## detection):
+	rW <- theta[["rW"]] # Weekly active case detection
+	rP <- theta[["rP"]] # Weekly passive case detection
+
+  ## Demographic parameters:
+	N <- theta[["N"]] # Village population size
+	meanAge <- theta[["meanAge"]] # Mean age in Tanzania (males and females, years)
+	theta[["mu"]] <- mu <- 1/(meanAge*365) # Daily death rate as a function of mean age in years
+
+
+
+
+  numA <- nrow(xy_a)
+  numD <- nrow(xy_d)
+
+  EIR_tot <- EIR_mean * N
+
+  EIR_houses <- EIR_tot * xy_d$psi
+
+  household_sizes <- rep(0,numD)
+}
 
 
 #' Initialize State for RACD Model

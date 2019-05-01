@@ -9,12 +9,12 @@ library(foreach)
 library(doSNOW)
 
 nd <- 20 # num dwellings
-na <- 20 # num aquatic habitats
+na <- 40 # num aquatic habitats
 
 xy_d <- rpoispp(lambda = nd,win = owin(c(0,1),c(0,1)))
 xy_a <- rpoispp(lambda = na,win = owin(c(0,1),c(0,1)))
 
-# diagnostic plot
+# # diagnostic plot
 # plot(xy_d,pch=17,cols = adjustcolor("firebrick3",alpha.f = 0.8),main = "Dwelling/Habitat Surface")
 # plot(xy_a,pch=16,cols = adjustcolor("steelblue",alpha.f = 0.8),add = T)
 # legend(x = "topleft",bg = "transparent",
@@ -28,7 +28,7 @@ dwell_df <- data.frame(x=xy_d$x,y=xy_d$y)
 
 # the risk on houses
 psi_d <- foreach(xy = iter(dwell_df,by="row"),.combine = "rbind",.inorder = TRUE) %:%
-  foreach(hab = iter(aqua_df,by = "row"),.combine = "+", .options.snow = opts) %do% {
+  foreach(hab = iter(aqua_df,by = "row"),.combine = "+") %do% {
     dist <- as.matrix(dist(x = rbind(as.vector(xy),c(hab$x,hab$y))))[1,2]
     psi <- dnorm(dist,mean=0,sd=hab$sigma)
     psi
