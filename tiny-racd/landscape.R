@@ -37,7 +37,8 @@ psi_d <- foreach(xy = iter(dwell_df,by="row"),.combine = "rbind",.inorder = TRUE
 dwell_df$psi <- psi_d[,1]/sum(psi_d[,1])
 
 # the risk surface
-grid <- expand.grid(x=seq(-0.2,1.2,by=0.015),y=seq(-0.2,1.2,by=0.015))
+grid_res <- 0.015
+grid <- expand.grid(x=seq(0-grid_res,1+grid_res,by=grid_res),y=seq(0-grid_res,1+grid_res,by=grid_res))
 
 cl <- makeCluster(4)
 registerDoSNOW(cl)
