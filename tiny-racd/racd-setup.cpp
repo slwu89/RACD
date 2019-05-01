@@ -14,16 +14,14 @@
 #include <Rcpp.h>
 #include <math.h>
 
-// pi_h: proportion of bites at this house I get (zeta/sum(zeta))
-// EIR_d: the EIR at this house (EIR_tot * psi_d)
+// EIR_h: my personal EIR (EIR_tot * pi)
 
 // [[Rcpp::export]]
 Rcpp::List immmune_ode(
   const double time,
   const Rcpp::NumericVector& state,
   const Rcpp::NumericVector& theta,
-  const double pi_h,
-  const double EIR_d
+  const double EIR_h
 ){
   // states
   double IB = state[0];
@@ -45,12 +43,12 @@ Rcpp::List immmune_ode(
   double IB0 = Rcpp::as<double>(theta["IB0"]);
   double kappaB = Rcpp::as<double>(theta["kappaB"]);
 
-  double EIR_h = EIR_d * pi_h * 365.; // my EIR (years)
+  double EIR = EIR_h * 365.; // my EIR (years)
   double b = b0*(b1 + ((1.-b1)/(1. + std::pow((IB/IB0),kappaB))));
-  double lambda = EIR_h * b;
+  double lambda = EIR * b;
 
   // ODEs
-  dx[0] = EIR_h/(EIR_h*uB + 1.) - IB/durB; // IB
+  dx[0] = EIR/(EIR*uB + 1.) - IB/durB; // IB
   dx[1] = lambda/(lambda*uD + 1.) - ID/durD;   // ID
   dx[2] = lambda/(lambda*uC + 1.) - ICA/durC;  // ICA
 
@@ -58,16 +56,14 @@ Rcpp::List immmune_ode(
 };
 
 
-// pi_h: proportion of bites at this house I get (zeta/sum(zeta))
-// EIR_d: the EIR at this house (EIR_tot * psi_d)
+// EIR_h: my personal EIR (EIR_tot * pi)
 
 // [[Rcpp::export]]
 Rcpp::List state_ode(
   const double time,
   const Rcpp::NumericVector& state,
   const Rcpp::NumericVector& theta,
-  const double pi_h,
-  const double EIR_d
+  const double EIR_h
 ){
 
   // states
@@ -114,9 +110,9 @@ Rcpp::List state_ode(
 
   double ICM = initICA20 * std::exp(-time/dM);
 
-  double EIR_h = EIR_d * pi_h * 365.; // my EIR (years)
+  double EIR = EIR_h * 365.; // my EIR (years)
   double b = b0*(b1 + ((1.-b1)/(1. + std::pow((IB/IB0),kappaB))));
-  double lambda = EIR_h * b;
+  double lambda = EIR * b;
   double phi = phi0 * (phi1 + ((1. - phi1)/(1. + std::pow(((ICA+ICM)/IC0),kappaC))));
 
   // ODEs
@@ -126,7 +122,7 @@ Rcpp::List state_ode(
 	dx[3] = (1. - phi)*lambda*(prS + prA + prU) + prD/dD - lambda*prA - prA/dA;
 	dx[4] = prA/dA - prU/dU - lambda*prU;
 	dx[5] = prT/dT - prP/dP;
-	dx[6] = EIR_h/(EIR_h*uB + 1.) - IB/dB;
+	dx[6] = EIR/(EIR*uB + 1.) - IB/dB;
 	dx[7] = lambda/(lambda*uC + 1.) - ICA/dC;
 
   return Rcpp::List::create(dx);

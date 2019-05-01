@@ -2,7 +2,27 @@
 
 
 
+divmod <- function(a,b){
+	a <- as.integer(a)
+	b <- as.integer(b)
+	c(
+		quo = a %/% b,
+		rem = a %% b
+	)
+}
 
+# n: number of "things"
+# p: set of "places" they can go
+distribute <- function(n,p){
+	n <- as.integer(n)
+	p <- as.integer(p)
+	distn <- rep(0L,p)
+	div <- divmod(n,p)
+	for(i in 0:(p-1)){
+		distn[i+1] <- div[["quo"]] + (i < div[["rem"]])
+	}
+	return(distn)
+}
 
 
 
@@ -73,15 +93,42 @@ RACD_Setup <- function(N, EIR_mean, xy_d, xy_a, theta){
 
 
 
-
+	# calculate EIR and EIR on houses. To get EIR on people, we need pi, we'll do that later
   numA <- nrow(xy_a)
   numD <- nrow(xy_d)
 
+  psi_house <- xy_d$psi
+
   EIR_tot <- EIR_mean * N
+  EIR_houses <- EIR_tot * psi_house
 
-  EIR_houses <- EIR_tot * xy_d$psi
+  household_sizes <- distribute(n=N,p=numD)
+	household_assignment <- rep(x = 1:numD,times = household_sizes)
 
-  household_sizes <- rep(0,numD)
+	pi_vec <- rep(0,N) # pi for each person
+	pi_house <- rep(0,numD) # summed pi for each house
+
+	humans <- vector("list",N)
+	for (j in 1:N) {
+		humans[[j]]$age <- rexp(n = 1, rate = 1/meanAge)
+		humans[[j]]$zeta <- rlnorm(n = 1, meanlog = -sigma2/2, sdlog = sqrt(sigma2))
+		humans[[j]]$house <- household_assignment[j]
+	}
+
+	# calculate pi
+	for(i in 1:numD){
+	  zetas <- sapply(humans[which(household_assignment == i)],function(x){x$zeta})
+	  ages <- sapply(humans[which(household_assignment == i)],function(x){x$age})
+	  pi_house[i] <- sum(zetas * (1 - rho * exp(-ages/a0)))
+	}
+	for(j in 1:N){
+	  pi_vec[j] <-  psi_house[humans[[j]]$house] * (humans[[j]]$zeta * (1 - rho * exp(-humans[[j]]$age/a0)) / pi_house[humans[[j]]$house])
+	}
+
+	# if we wanted the conditional probs of landing on someone at house 1, knowing it lands at 1
+	# pi_vec[which(household_assignment==1)] / psi_house[1]
+
+
 }
 
 
