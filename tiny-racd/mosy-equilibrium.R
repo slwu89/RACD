@@ -235,6 +235,7 @@ RACD_mosq_equilibrium <- function(theta,dt,IV,lambdaV,sd=0.25,nstart=1e3,cores=4
   out <- list(
     SV_eq = SV,
     EV_eq = EV,
+    IV_eq = IV,
     PL_eq = PL,
     LL_eq = opt[[min]]$par[2],
     EL_eq = opt[[min]]$par[1],

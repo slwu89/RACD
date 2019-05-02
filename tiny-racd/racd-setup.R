@@ -252,7 +252,8 @@ RACD_Setup <- function(N, EIR_mean, xy_d, xy_a, theta){
 	return(
 		list(
 			humans=humans,
-			mosy=mosy_eq
+			mosy=mosy_eq,
+			theta=theta
 		)
 	)
 }
