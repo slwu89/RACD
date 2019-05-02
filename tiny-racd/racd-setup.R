@@ -17,6 +17,8 @@ library(deSolve)
 library(here)
 
 Rcpp::sourceCpp(here::here("racd-setup.cpp"))
+source(here::here("mosy-equilibrium.R"))
+source(here::here("racd-parameters.R"))
 
 # helper functions
 divmod <- function(a,b){
@@ -150,11 +152,12 @@ RACD_Setup <- function(N, EIR_mean, xy_d, xy_a, theta){
 	# if we wanted the conditional probs of landing on someone at house 1, knowing it lands at 1
 	# pi_vec[which(household_assignment==1)] / psi_house[1]
 
+	# calculate immunity and state probabilities for population
+	cat("\n --- begin calculating immunity and state probabilities for population --- \n")
+
 	# mean value of ICA for 20-year olds
 	theta[["initICA20"]] <- immune_initial(a = 20,EIR = EIR_mean,theta = theta)[["ICA"]]
 
-	# calculate immunity and state probabilities for population
-	cat("\n --- begin calculating immunity and state probabilities for population --- \n")
 	pb <- txtProgressBar(min = 1, max = N, initial = 1, style=3)
 	for(j in 1:N){
 		# run the immune ODEs
@@ -199,42 +202,59 @@ RACD_Setup <- function(N, EIR_mean, xy_d, xy_a, theta){
 	close(pb);rm(pb)
 	cat(" --- done calculating immunity and state probabilities for population --- \n")
 
-	# # set up the mosquitos
-	# cat("\n --- begin calculating mosquito gonotrophic cycle parameters --- \n")
-	#
-	# delta <- 1.0/(tau1+tau2) # Inverse of gonotrophic cycle without ITNs/IRS
-  # eggOV <- beta*(exp(muV/delta)-1)/muV # Number of eggs per oviposition per mosquito
-	#
-	# w_vec <- sapply(humans,function(x){x$w})
-	# z_vec <- sapply(humans,function(x){x$z})
-	# c_vec <- sapply(humans,function(x){x$c})
-	#
-	# # P(successful feed)
-	# W <- (1 - Q0) + Q0*sum(pi_vec * w_vec)
-	#
-	# # P(repelled w/out feed)
-	# Z = Q0 * sum(pi_vec * z_vec)
-	#
-	# # feeding rate
-	# f = 1 / (tau1/(1 - Z) + tau2)
-	#
-	# # survival
-	# p10 <- exp(-muV*tau1)
-  # p1 <- p10*W/(1 - Z*p10)
-  # p2 <- exp(-muV*tau2)
-  # mu <- -f*log(p1*p1)
-	#
-	# # proportion of successful bites on humans & HBR (EIR_tot = a * Iv)
-	# Q <- 1 - ((1 - Q0)/W)
-	# a <- f*Q
-	#
-	# # calculate FOI on mosquitos
-	# lambda_v <- a * sum(pi_vec * c_vec * w_vec)
-	#
-	# # egg laying rate
-	# betaC <- eggOV*mu/(exp(mu/f) - 1)
-	#
-	# cat(" --- done calculating mosquito gonotrophic cycle parameters --- \n")
+	# set up the mosquitos
+	cat("\n --- begin calculating mosquito gonotrophic cycle parameters --- \n")
 
-	return(humans)
+	delta <- 1.0/(tau1+tau2) # Inverse of gonotrophic cycle without ITNs/IRS
+  eggOV <- beta*(exp(muV/delta)-1)/muV # Number of eggs per oviposition per mosquito
+	theta["eggOV"] <- eggOV
+
+	w_vec <- sapply(humans,function(x){x$w})
+	z_vec <- sapply(humans,function(x){x$z})
+	c_vec <- sapply(humans,function(x){x$c})
+
+	# P(successful feed)
+	W <- (1 - Q0) + Q0*sum(pi_vec * w_vec)
+
+	# P(repelled w/out feed)
+	Z = Q0 * sum(pi_vec * z_vec)
+
+	# feeding rate
+	f = 1 / (tau1/(1 - Z) + tau2)
+
+	# survival
+	p10 <- exp(-muV*tau1)
+  p1 <- p10*W/(1 - Z*p10)
+  p2 <- exp(-muV*tau2)
+  mu <- -f*log(p1*p1)
+
+	# proportion of successful bites on humans & HBR (EIR_tot = a * Iv)
+	Q <- 1 - ((1 - Q0)/W)
+	a <- f*Q
+
+	# calculate FOI on mosquitos
+	lambda_v <- a * sum(pi_vec * c_vec * w_vec)
+
+	# egg laying rate
+	betaC <- eggOV*mu/(exp(mu/f) - 1)
+
+	# equilibrum number of infectious vectors
+	Iv_eq <- EIR_tot / a
+	cat(" --- done calculating mosquito gonotrophic cycle parameters --- \n")
+
+	# solve the mosquitos at equilibrium
+	cat("\n --- begin calculating equilibrium values for mosquito population --- \n")
+
+	mosy_eq <- RACD_mosq_equilibrium(theta = theta,dt = 1,IV = Iv_eq,lambdaV = lambda_v,cores=max(2,parallel::detectCores()-2))
+
+	cat(" --- done calculating equilibrium values for mosquito population --- \n")
+
+	return(
+		list(
+			humans=humans,
+			mosy=mosy_eq
+		)
+	)
 }
+
+RACD_init <- RACD_Setup(N = 200,EIR_mean = 0.05,xy_d = dwell_df,xy_a = aqua_df,theta = RACD_theta)

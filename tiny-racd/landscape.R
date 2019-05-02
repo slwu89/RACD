@@ -76,9 +76,12 @@ grid$psi <- surface$V1
 ggplot() +
   geom_raster(aes(x=x,y=y,fill=psi),data=grid) +
   stat_contour(aes(x=x,y=y,z=psi),colour=grey(0.5,0.5),size=0.25,data = grid,geom = "contour") +
-  geom_point(aes(x=x,y=y),shape=17,colour=grey(0.75,0.75),size=1.85,data=dwell_df) +
+  geom_point(aes(x=x,y=y,size=cut(psi,breaks=quantile(psi),include.lowest = T)),shape=17,colour=grey(0.75,0.75),data=dwell_df) +
   geom_point(aes(x=x,y=y),shape=16,colour=grey(0.75,0.75),size=1.85,data=aqua_df) +
   scale_fill_viridis() +
   geom_contour() +
   theme_bw() +
+  guides(size = FALSE) +
   theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+
+  
