@@ -43,7 +43,12 @@ Rcpp::List immmune_ode(
   double IB0 = Rcpp::as<double>(theta["IB0"]);
   double kappaB = Rcpp::as<double>(theta["kappaB"]);
 
-  double EIR = EIR_h * 365.; // my EIR (years)
+  // age-specific modifier of EIR
+  double rho = Rcpp::as<double>(theta["rho"]);
+  double a0 = Rcpp::as<double>(theta["a0"]);
+  double agemod = (1. - rho*std::exp(-time/a0));
+
+  double EIR = EIR_h * agemod * 365.; // my EIR (years)
   double b = b0*(b1 + ((1.-b1)/(1. + std::pow((IB/IB0),kappaB))));
   double lambda = EIR * b;
 
@@ -67,12 +72,12 @@ Rcpp::List state_ode(
 ){
 
   // states
-  double prS = state[0];
-  double prT = state[1];
-  double prD = state[2];
-  double prA = state[3];
-  double prU = state[4];
-  double prP = state[5];
+  double S = state[0];
+  double T = state[1];
+  double D = state[2];
+  double A = state[3];
+  double U = state[4];
+  double P = state[5];
   double IB = state[6];
   double ICA = state[7];
 
@@ -110,18 +115,23 @@ Rcpp::List state_ode(
 
   double ICM = initICA20 * std::exp(-time/dM);
 
-  double EIR = EIR_h * 365.; // my EIR (years)
+  // age-specific modifier of EIR
+  double rho = Rcpp::as<double>(theta["rho"]);
+  double a0 = Rcpp::as<double>(theta["a0"]);
+  double agemod = (1. - rho*std::exp(-time/a0));
+
+  double EIR = EIR_h * agemod * 365.; // my EIR (years)
   double b = b0*(b1 + ((1.-b1)/(1. + std::pow((IB/IB0),kappaB))));
   double lambda = EIR * b;
   double phi = phi0 * (phi1 + ((1. - phi1)/(1. + std::pow(((ICA+ICM)/IC0),kappaC))));
 
   // ODEs
-	dx[0] = - lambda*prS + prP/dP + prU/dU;
-	dx[1] = phi*fT*lambda*(prS + prA + prU) - prT/dT;
-	dx[2] = phi*(1. - fT)*lambda*(prS + prA + prU) - prD/dD;
-	dx[3] = (1. - phi)*lambda*(prS + prA + prU) + prD/dD - lambda*prA - prA/dA;
-	dx[4] = prA/dA - prU/dU - lambda*prU;
-	dx[5] = prT/dT - prP/dP;
+	dx[0] = - lambda*S + P/dP + U/dU;
+	dx[1] = phi*fT*lambda*(S + A + U) - T/dT;
+	dx[2] = phi*(1. - fT)*lambda*(S + A + U) - D/dD;
+	dx[3] = (1. - phi)*lambda*(S + A + U) + D/dD - lambda*A - A/dA;
+	dx[4] = A/dA - U/dU - lambda*U;
+	dx[5] = T/dT - P/dP;
 	dx[6] = EIR/(EIR*uB + 1.) - IB/dB;
 	dx[7] = lambda/(lambda*uC + 1.) - ICA/dC;
 

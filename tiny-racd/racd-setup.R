@@ -1,7 +1,24 @@
+###############################################################################
+#       ____  ___   __________
+#      / __ \/   | / ____/ __ \
+#     / /_/ / /| |/ /   / / / /
+#    / _, _/ ___ / /___/ /_/ /
+#   /_/ |_/_/  |_\____/_____/
+#
+#   Sean Wu & John Marshall
+#   April 2019
+#   Setup the RACD model (at equilibrium)
+#
+###############################################################################
 
+# load things we need
+library(Rcpp)
+library(deSolve)
+library(here)
 
+Rcpp::sourceCpp(here::here("racd-setup.cpp"))
 
-
+# helper functions
 divmod <- function(a,b){
 	a <- as.integer(a)
 	b <- as.integer(b)
@@ -24,76 +41,71 @@ distribute <- function(n,p){
 	return(distn)
 }
 
+# set up immune (IB,ID,ICA)
+# a: my age
+# EIR: my EIR
+# theta: vector of parameters
+immune_initial <- function(a, EIR, theta){
+
+  state <- c("IB"=0,"ID"=0,"ICA"=0)
+  time <- seq(from=0,to=a,by=a/1e3)
+	immune <- deSolve::lsoda(y = state,times = time,func = immmune_ode,parms = theta, EIR_h = EIR)
+
+  return(c(
+    IB = unname(immune[nrow(immune),"IB"]),
+    ID = unname(immune[nrow(immune),"ID"]),
+    ICA = unname(immune[nrow(immune),"ICA"])
+  ))
+}
+
+# set up P(state)
+# a: my age
+# EIR: my EIR
+# theta: vector of parameters
+state_initial <- function(a, EIR, theta){
+
+	state <- c(S=1, T=0, D=0, A=0, U=0, P=0, IB=0, ICA=0)
+	time <- seq(from=0,to=a,by=a/1e3)
+	states <- deSolve::lsoda(y = state,times = time,func = state_ode,parms = theta, EIR_h = EIR)
+
+	return(c(
+    S = unname(states[nrow(states),"S"]),
+		T = unname(states[nrow(states),"T"]),
+		D = unname(states[nrow(states),"D"]),
+		A = unname(states[nrow(states),"A"]),
+		U = unname(states[nrow(states),"U"]),
+		P = unname(states[nrow(states),"P"])
+  ))
+}
+
+# initial infectivity to mosquitos
+c_initial <- function(human){
+	switch(human$state,
+		S = {return(0)},
+		E = {return(0)},
+		T = {return(cT)},
+		D = {return(cD)},
+		A = {
+			c = cU + (cD - cU)*(human$prDetectAMic^gammaI)
+			return(c)
+		},
+		U = {return(cU)},
+		P = {return(0)}
+		)
+}
 
 
 RACD_Setup <- function(N, EIR_mean, xy_d, xy_a, theta){
 
+	# extract variables that we need and assign here
+	invisible(mapply(FUN = function(val,name){
+    assign(x = name,value = val,pos = 1)
+	},val = unname(theta),name = names(theta)))
 
-	fT <- theta[["fT"]] # Proportion of clinical disease cases successfully treated
-
-	## Model parameters taken from Griffin et al. (2014):
-	## Human infection durations:
-	dE <- theta[["dE"]] # Duration of latent period (days)
-	dT <- theta[["dT"]] # Duration of treated clinical disease (days)
-	dD <- theta[["dD"]] # Duration of untreated clinical disease (days)
-	dA <- theta[["dA"]] # Duration of patent infection (days)
-	dU <- theta[["dU"]] # Duration of sub-patent infection (days) (fitted)
-	dP <- theta[["dP"]] # Duration of prophylactic protection following treatment (days)
-
-	## Infectiousness of humans to mosquitoes:
-	cD <- theta[["cD"]] # Infectiousness with untreated disease & no immunity (fitted)
-	cT <- theta[["cT"]] # Infectiousness after treatment
-	cU <- theta[["cU"]] # Infectiousness with sub-patent infection (fitted)
-	gammaI <- theta[["gammaI"]] # Relates infectiousness to probability of detection (fitted)
-
-	## Age and heterogeneity parameters:
-	rho <- theta[["rho"]] # Age-dependent biting parameter
-	a0 <- theta[["a0"]] # Age-dependent biting parameter (years)
-	sigma2 <- theta[["sigma2"]] # Variance of log of heterogeneity in biting rates
-
-	## Effect of immunity on reducing probability of detection:
-	d1 <- theta[["d1"]] # Probability of detection with maximum immunity (fitted)
-	dID <- theta[["dID"]] # Inverse of decay rate (days)
-	ID0 <- theta[["ID0"]] # Immunity scale parameter (fitted)
-	kappaD <- theta[["kappaD"]] # Immunity shape parameter (fitted)
-	uD <- theta[["uD"]] # Duration in which immunity is not boosted (fitted)
-	aD <- theta[["aD"]] # Scale parameter relating age to immunity (years) (fitted)
-	fD0 <- theta[["fD0"]] # Parameter relating age to immunity (fitted)
-	gammaD <- theta[["gammaD"]] # Shape parameter relating age to immunity (fitted)
-	alphaA <- theta[["alphaA"]] # PCR prevalence parameter (fitted)
-	alphaU <- theta[["alphaU"]] # PCR prevalence parameter (fitted)
-
-	## Immunity reducing probability of infection:
-	b0 <- theta[["b0"]] # Probabiliy with no immunity (fitted)
-	b1 <- theta[["b1"]] # Maximum relative reduction
-	dB <- theta[["dB"]] # Inverse of decay rate (days)
-	IB0 <- theta[["IB0"]] # Scale parameter (fitted)
-	kappaB <- theta[["kappaB"]] # Shape parameter (fitted)
-	uB <- theta[["uB"]] # Duration in which immunity is not boosted (days) (fitted)
-
-	## Immunity reducing probability of clinical disease:
-	phi0 <- theta[["phi0"]] # Probability with no immunity
-	phi1 <- theta[["phi1"]] # Maximum relative reduction
-	dC <- theta[["dC"]] # Inverse decay rate (days)
-	IC0 <- theta[["IC0"]] # Scale parameter
-	kappaC <- theta[["kappaC"]] # Shape parameter
-	uC <- theta[["uC"]] # Duration in which immunity is not boosted
-	PM <- theta[["PM"]] # New-born immunity relative to mother's immunity
-	dM <- theta[["dM"]] # Inverse decay rate of maternal immunity
-
-	## Case detection (recorded incidence relative to daily active case
-	## detection):
-	rW <- theta[["rW"]] # Weekly active case detection
-	rP <- theta[["rP"]] # Weekly passive case detection
-
-  ## Demographic parameters:
-	N <- theta[["N"]] # Village population size
-	meanAge <- theta[["meanAge"]] # Mean age in Tanzania (males and females, years)
 	theta[["mu"]] <- mu <- 1/(meanAge*365) # Daily death rate as a function of mean age in years
 
-
-
 	# calculate EIR and EIR on houses. To get EIR on people, we need pi, we'll do that later
+	cat(" --- begin calculating landscape-dependent parameters --- \n")
   numA <- nrow(xy_a)
   numD <- nrow(xy_d)
 
@@ -110,9 +122,18 @@ RACD_Setup <- function(N, EIR_mean, xy_d, xy_a, theta){
 
 	humans <- vector("list",N)
 	for (j in 1:N) {
+
+		# basic parameters
 		humans[[j]]$age <- rexp(n = 1, rate = 1/meanAge)
 		humans[[j]]$zeta <- rlnorm(n = 1, meanlog = -sigma2/2, sdlog = sqrt(sigma2))
 		humans[[j]]$house <- household_assignment[j]
+
+		# interventions (none for now)
+		humans[[j]]$ITN <- FALSE
+
+		humans[[j]]$w <- 1
+		humans[[j]]$y <- 1
+		humans[[j]]$z <- 0
 	}
 
 	# calculate pi
@@ -124,199 +145,96 @@ RACD_Setup <- function(N, EIR_mean, xy_d, xy_a, theta){
 	for(j in 1:N){
 	  pi_vec[j] <-  psi_house[humans[[j]]$house] * (humans[[j]]$zeta * (1 - rho * exp(-humans[[j]]$age/a0)) / pi_house[humans[[j]]$house])
 	}
+	cat(" --- done calculating landscape-dependent parameters --- \n")
 
 	# if we wanted the conditional probs of landing on someone at house 1, knowing it lands at 1
 	# pi_vec[which(household_assignment==1)] / psi_house[1]
 
+	# mean value of ICA for 20-year olds
+	theta[["initICA20"]] <- immune_initial(a = 20,EIR = EIR_mean,theta = theta)[["ICA"]]
 
-}
+	# calculate immunity and state probabilities for population
+	cat("\n --- begin calculating immunity and state probabilities for population --- \n")
+	pb <- txtProgressBar(min = 1, max = N, initial = 1, style=3)
+	for(j in 1:N){
+		# run the immune ODEs
+		a <- humans[[j]]$age
+		epsilon <- EIR_tot * pi_vec[j]
+		init_i <- immune_initial(a = a, EIR = epsilon, theta = theta)
 
+		# my initial immune values
+		IB <- init_i[["IB"]]
+		ID <- init_i[["ID"]]
+		ICA <- init_i[["ICA"]]
+		ICM <- theta[["initICA20"]] * exp(-a/dM)
 
-#' Initialize State for RACD Model
-#'
-#' Initialize initial conditions for the RACD simulation model
-#'
-#' @param xy_h two column matrix of house coordinates
-#' @param xy_b two column matrix of breeding site coordinates
-#' @param theta named vector of parameters (see \code{\link{RACD_Parameters}})
-#'
-#' @examples
-#' \dontrun{
-#' library(RACD)
-#' library(tidyverse)
-#' library(spatstat)
-#' xy_h <- rpoispp(lambda = 100,win = owin(c(0,1),c(0,1)))
-#' xy_b <- rpoispp(lambda = 100,win = owin(c(0,1),c(0,1)))
-#' theta <- RACD_Parameters()
-#' init <- RACD_Setup(as.matrix.ppx(xy_h),as.matrix.ppx(xy_b),theta)
-#' outfile = "/Users/slwu89/Desktop/log_trans.csv"
-#' RACD_Simulation(365,theta,init$humans,init$houses,123,outfile)
-#' state = RACDaux::RACD_StateVector(outfile)
-#' state %>% as.tibble %>% gather(state,value,-time) %>% ggplot(aes(x=time,y=value,color=state)) + geom_line() + theme_bw()
-#' }
-#'
-#' @export
-RACD_Setup <- function(xy_h, xy_b, theta){
+		# transmission parameters
+		b <- b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
+		lambda <- epsilon*b
 
-  with(as.list(theta),{
+		# assign to the human
+		humans[[j]]$IB <- IB
+		humans[[j]]$ID <- ID
+		humans[[j]]$ICA <- ICA
+		humans[[j]]$ICM <- ICM
+		humans[[j]]$epsilon <- epsilon
+		humans[[j]]$lambda <- lambda
 
-    mu <- 1/(meanAge*365) # daily mortality st mean age does not change
+		# probability of detection
+		fD <- 1 - ((1 - fD0)/(1 + (a/aD)^gammaD))
+		q <- d1 + ((1 - d1)/(1 + (fD*(ID/ID0)^kappaD)*fD))
+		humans[[j]]$prDetectAMic <- q
+		humans[[j]]$prDetectAPCR <- q^alphaA
+		humans[[j]]$prDetectUPCR <- q^alphaU
 
-    numHouses <- nrow(xy_h)
-    numBreedingSites <- nrow(xy_b)
+		# P(state | immune history, EIR, etc)
+		init_s <- state_initial(a = a, EIR = epsilon, theta = theta)
+		humans[[j]]$state <- sample(x=names(init_s), size=1, prob = init_s)
 
-    indiv <- vector(mode="list",length=N)
+		# initial infectivity to mosquito
+		humans[[j]]$c <- c_initial(humans[[j]])
 
-    # Randomly assign age attributes:
-    # (Age is sampled from an exponential distribution with mean equal to
-    # the mean age in the country being considered)
-    for (j in 1:N) {
-      indiv[[j]]$age <- rexp(n = 1, rate = 1/meanAge)
-    }
+		setTxtProgressBar(pb, j)
+	}
+	close(pb);rm(pb)
+	cat(" --- done calculating immunity and state probabilities for population --- \n")
 
-    # At the beginning of the simulation, all humans are alive:
-    for (j in 1:N) {
-      indiv[[j]]$alive <- TRUE
-    }
+	# # set up the mosquitos
+	# cat("\n --- begin calculating mosquito gonotrophic cycle parameters --- \n")
+	#
+	# delta <- 1.0/(tau1+tau2) # Inverse of gonotrophic cycle without ITNs/IRS
+  # eggOV <- beta*(exp(muV/delta)-1)/muV # Number of eggs per oviposition per mosquito
+	#
+	# w_vec <- sapply(humans,function(x){x$w})
+	# z_vec <- sapply(humans,function(x){x$z})
+	# c_vec <- sapply(humans,function(x){x$c})
+	#
+	# # P(successful feed)
+	# W <- (1 - Q0) + Q0*sum(pi_vec * w_vec)
+	#
+	# # P(repelled w/out feed)
+	# Z = Q0 * sum(pi_vec * z_vec)
+	#
+	# # feeding rate
+	# f = 1 / (tau1/(1 - Z) + tau2)
+	#
+	# # survival
+	# p10 <- exp(-muV*tau1)
+  # p1 <- p10*W/(1 - Z*p10)
+  # p2 <- exp(-muV*tau2)
+  # mu <- -f*log(p1*p1)
+	#
+	# # proportion of successful bites on humans & HBR (EIR_tot = a * Iv)
+	# Q <- 1 - ((1 - Q0)/W)
+	# a <- f*Q
+	#
+	# # calculate FOI on mosquitos
+	# lambda_v <- a * sum(pi_vec * c_vec * w_vec)
+	#
+	# # egg laying rate
+	# betaC <- eggOV*mu/(exp(mu/f) - 1)
+	#
+	# cat(" --- done calculating mosquito gonotrophic cycle parameters --- \n")
 
-    # Randomly assign individuals to houses:
-    householdSize <- rep(0, numHouses) # Vector of household sizes
-    for (j in 1:N) {
-      # Assign individuals to one of the samllest houses:
-      smallestHouse <- which(householdSize==min(householdSize))
-      if(length(smallestHouse)==1){
-        indiv[[j]]$house <- smallestHouse
-      } else {
-        indiv[[j]]$house <- sample(smallestHouse, 1)
-      }
-      householdSize[indiv[[j]]$house] <- householdSize[indiv[[j]]$house] + 1
-    }
-
-    cat("begin calculating risk surface psi\n")
-    # Define geographical risk surface due to breeding sites:
-    # We model the risk due to breeding sites at each household as the sum
-    # of multivariate normal distributions centered at each breeding site
-    # with the standard deviation of the normal distribution being equal to
-    # the distance between the breeding site and the nearest household.
-    # 1. First, we calculate the standard deviation of the risk surface for
-    #    each breeding site.
-    sigmaBreedingSite <- rep(0,numBreedingSites)
-    pb <- txtProgressBar(min=1,max=(numBreedingSites+numHouses),initial = 1, style=3)
-    for(j in 1:numBreedingSites){
-      distHousesBreedingSites <- as.matrix(dist(x=rbind(xy_b[j,],xy_h)))[1,2:(nrow(xy_h)+1)] # vector of distance from breeding site j to all houses
-      sigmaBreedingSite[j] <- min(distHousesBreedingSites) # sigma(sd) of breeding site k is nearest distance to house
-      setTxtProgressBar(pb,j)
-    }
-
-    # 2. Next, calculate the contribution of each breeding site to the
-    #    relative risk value for each house.
-    psiHouse <- rep(0,numHouses)
-    for(j in 1:numHouses){
-      for(k in 1:numBreedingSites){
-        d_jk <- as.matrix(dist(x = rbind(xy_h[j,],xy_b[k,])))[1,2] # distance between house j and breeding site k
-        psiHouse[j] <- psiHouse[j] + dnorm(x = d_jk,mean = 0,sd = sigmaBreedingSite[k])
-      }
-      setTxtProgressBar(pb,(j+numBreedingSites))
-    }
-    close(pb)
-    # 3. Finally, we normalize the psiHouse values so they have a mean of 1.
-    psiHouse <- psiHouse*numHouses/sum(psiHouse) # normalize to have mean=1, sum=numHouses
-    cat("done calculating risk surface psi\n")
-    cat("\n")
-
-    cat("begin calculating individual immune status\n")
-    pb = txtProgressBar(min=1,max=N,initial = 1, style=3)
-
-    for (j in 1:N) {
-
-      # Randomly assign biting heterogeneity attributes:
-      # (Biting heterogeneity is sampled from a log-normal distribution with mean
-      # 1 and standard deviation sigma)
-      # (Referred to as zeta in Griffin et al. (2014))
-      indiv[[j]]$bitingHet <- zeta <- rlnorm(n = 1, meanlog = -sigma2/2, sdlog = sqrt(sigma2))
-
-      # Lambda (the force of infection) is calculated for each individual. It
-      # varies according to age and biting heterogeneity group.
-      # Immunity values are also calculated here since these depend on the
-      # the values of epsilon (the entomological inoculation rate) and lambda:
-      # 1. Pre-erythrocytic immunity (IB, reduces the probability of infection
-      #    following an infectious challenge)
-      # 2. Acquired clinical immunity (ICA, reduces the probability of clinical
-      #    disease, acquired from previous exposure)
-      # 3. Maternal clinical immunity (ICM, reduces the probability of clinical
-      #    disease, acquired maternally)
-      # 4. Detection immunity (ID, a.k.a. blood-stage immunity, reduces the
-      #    probability of detection and reduces infectiousness to mosquitoes)
-      psi <- psiHouse[indiv[[j]]$house]
-      a <- indiv[[j]]$age
-      # Calculate initial immunity levels from their differential equations:
-      initI <- immune_initial(a=a,zeta=zeta,psi=psi,theta=theta)
-      IB <- initI[["IB"]]; ID <- initI[["ID"]]; ICA <- initI[["ICA"]]
-      # initI20 <- immune_initial(a=20, zeta=1, psi=1, theta=theta)
-      ICM <- initI[["ICA"]] * exp(-a/dM)
-      epsilon <- epsilon0 * zeta * (1 - rho * exp(-a/a0)) * psi
-      b <- b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
-      lambda <- epsilon*b
-      indiv[[j]]$IB <- IB
-      indiv[[j]]$ID <- ID
-      indiv[[j]]$ICA <- ICA
-      indiv[[j]]$ICM <- ICM
-      indiv[[j]]$epsilon <- epsilon
-      indiv[[j]]$lambda <- lambda
-
-      # Phi (the probability of acquiring clinical disease upon infection) is
-      # also calculated for each individual. It varies according to immune
-      # status:
-      indiv[[j]]$phi <- phi0 * (phi1 + ((1 - phi1)/(1 + ((ICA+ICM)/IC0)^kappaC)))
-
-      # q (the probability that an asymptomatic infection is detected by
-      # microscopy) is also calculated for each individual, as well as the
-      # probability of detection by PCR for asymptomatic infections in states
-      # A (patent) and U (subpatent). This also varies according to immune
-      # status:
-      fD <- 1 - ((1 - fD0)/(1 + (a/aD)^gammaD))
-      q <- d1 + ((1 - d1)/(1 + (fD*(ID/ID0)^kappaD)*fD))
-      indiv[[j]]$prDetectAMic <- q
-      indiv[[j]]$prDetectAPCR <- q^alphaA
-      indiv[[j]]$prDetectUPCR <- q^alphaU
-
-      setTxtProgressBar(pb,j)
-    }
-    close(pb)
-    cat("done calculating individual immune status\n")
-    cat("\n")
-
-    # For each invididual, use the ODE transmission model to determine the
-    # probability that they are in each state given their age and EIR
-    # heterogeneity attributes:
-    cat("Initializing individual state probabilities...\n")
-    pb <- txtProgressBar(min = 1, max = N, initial = 1, style=3)
-    for (j in 1:N) {
-      a <- indiv[[j]]$age
-      zeta <- indiv[[j]]$bitingHet
-      psi <- psiHouse[indiv[[j]]$house]
-      prStateVector <- infection_initial(a=a, zeta=zeta, psi=psi, theta=theta)
-      prS <- prStateVector[["prS"]]
-      prT <- prStateVector[["prT"]]
-      prD <- prStateVector[["prD"]]
-      prA <- prStateVector[["prA"]]
-      prU <- prStateVector[["prU"]]
-      prP <- prStateVector[["prP"]]
-      indiv[[j]]$state <- sample(x=c("S","T","D","A","U","P"), size=1, prob = c(prS,prT,prD,prA,prU,prP))
-
-      # Add an attribute to keep track of number of days of latent infection:
-      indiv[[j]]$daysLatent <- 0
-
-      setTxtProgressBar(pb, j)
-    }
-    close(pb)
-    cat("Done initializing individual state probabilities...\n")
-    cat("\n")
-
-    return(list(
-      humans = indiv,
-      breedingSites = mapply(xy_b[,1],xy_b[,2],sigmaBreedingSite,FUN = function(x,y,z){list(x=x,y=y,sigma=z)},SIMPLIFY = FALSE),
-      houses = mapply(xy_h[,1],xy_h[,2],householdSize,psiHouse,FUN = function(x,y,z,w){list(x=x,y=y,size=z,psi=w)},SIMPLIFY = FALSE)
-    ))
-  })
+	return(humans)
 }

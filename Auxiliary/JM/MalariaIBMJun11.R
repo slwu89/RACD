@@ -235,7 +235,8 @@ malaria_ibm <- function(theta, numIter) {
 		initI <- initialI(a=a, zita=zita, psi=psi, theta=theta)
 		IB <- initI[["IB"]]; ID <- initI[["ID"]]; ICA <- initI[["ICA"]]
 		initI20 <- initialI(a=20, zita=1, psi=1, theta=theta)
-		ICM <- initI[["ICA"]] * exp(-a/dM)
+		# ICM <- initI[["ICA"]] * exp(-a/dM)
+		ICM <- initI20[["ICA"]] * exp(-a/dM)
 		epsilon <- epsilon0 * zita * (1 - rho * exp(-a/a0)) * psi
 		b <- b0*(b1 + ((1-b1)/(1 + (IB/IB0)^kappaB)))
 		lambda <- epsilon*b
@@ -1155,9 +1156,9 @@ theta <- c(
 	meanNumPeoplePerHouse = 6.5, # Mean number of people per house (from Misungu data set)
 	numHousesPerBreedingSite = 5) # Number of houses per breeding site
 
-numIter <- 20*365 # Simulation over 10 years
+numIter <- 10*365 # Simulation over 10 years
 # numIter <- 365 # Simulation over 1 year
-set.seed(6954690)
+# set.seed(6954690)
 sim1 <- malaria_ibm(theta=theta, numIter=numIter) # Runs the simulation
 
 ##########################################################

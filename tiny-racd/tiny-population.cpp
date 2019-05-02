@@ -8,7 +8,7 @@
  #  Sean Wu & John M. Marshall
  #  April 2019
  #
- #  test human functions
+ #  run a human population (classic RACD mode w/no mosquitos)
 */
 
 /* ################################################################################
@@ -135,7 +135,7 @@ static size_t global_hid = 0;
 // a person
 typedef struct human {
   // known on initialization
-  size_t         id;
+  size_t        id;
   double        age;
   bool          alive;
   size_t        house;
