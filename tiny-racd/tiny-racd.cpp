@@ -11,6 +11,11 @@
  #  the whole enchilada
 */
 
+// TO-DO!
+// when someone dies, remember to take their pi value out of house->pi and renormalize it
+// same when they are born, add and renorm
+// add check such that if a house is empty, its psi value gets set to 0 and renorm
+
 /* ################################################################################
 #   Includes & auxiliary
 ################################################################################ */
@@ -66,30 +71,34 @@ static std::unordered_map<std::string,double> parameters;
 
 // a house
 // all expectations are averaging out heterogeneity in the people at this house
+// the reason pi is a hash table is because the humans are in a linked list
+// so they will need to look up their pi by their ID number
 typedef struct house {
 
   // data members
-  size_t            id;
-  double            psi;  // P(a bite going anywhere goes here)
-  double            w;    // E[P(feed and survive)]
-  double            y;    // E[P(feed)]
-  double            z;    // E[P(repelled without feeding)]
-  double            c;    // E[P(a feed here will result in a mosquito infection)]
-  size_t            n;    // number of people here
-  double            EIR;  // the number of bites this house gets today
-  bool              IRS;  // does my house have IRS
+  size_t                                  id;
+  double                                  psi;  // P(a bite going anywhere goes here)
+  double                                  w;    // E[P(feed and survive)]
+  double                                  y;    // E[P(feed)]
+  double                                  z;    // E[P(repelled without feeding)]
+  double                                  C;    // E[P(a feed here will result in a mosquito infection)]
+  size_t                                  n;    // number of people here
+  std::unordered_map<size_t,double>       pi;   // normalized PMF of who gets bitten
+  double                                  EIR;  // the number of bites this house gets today
+  bool                                    IRS;  // does my house have IRS
 
-  house(const size_t id_, const double psi_, const double w_, const double y_, const double z_, const double c_,
+  // constructor & destructor
+  house(const size_t id_, const double psi_, const double w_, const double y_, const double z_, const double C_,
         const size_t n_
   );
   ~house();
 } house;
 
 // constructor
-house::house(const size_t id_, const double psi_, const double w_, const double y_, const double z_, const double c_,
+house::house(const size_t id_, const double psi_, const double w_, const double y_, const double z_, const double C_,
              const size_t n_
 ) :
-  id(id_), psi(psi_), w(w_), y(y_), z(z_), c(c_), n(n_), EIR(0), IRS(false)
+  id(id_), psi(psi_), w(w_), y(y_), z(z_), C(C_), n(n_), EIR(0), IRS(false)
 {};
 
 // destructor
@@ -111,6 +120,7 @@ static size_t global_hid = 0;
 
 // a person
 typedef struct human {
+
   // known on initialization
   size_t        id;
   double        age;
@@ -129,8 +139,10 @@ typedef struct human {
   double        prDetectUPCR;
   double        c;
   std::string   state;
+
   // other dynamic members
   size_t         days_latent;
+  bool           ITN;
   // constructor/destructor
   human(const double age_,
         const bool alive_,
@@ -183,7 +195,8 @@ human::human(const double age_,
       prDetectUPCR(prDetectUPCR_),
       c(0.0),
       state(state_),
-      days_latent(0)
+      days_latent(0),
+      ITN(false)
       {
         // after we take our id, increment for the next person!
         global_hid++;
@@ -197,9 +210,6 @@ using human_ptr = std::unique_ptr<human>;
 
 // the humans!
 static std::list<human_ptr> human_pop;
-
-// we need to know how big each household is
-static std::vector<size_t> household_size(1,0);
 
 /* shamelessly "referenced" from Knuth, The Art of Computer Programming Vol 2, section 4.2.2 */
 // the mean immunity among 18-22 year olds
@@ -225,6 +235,18 @@ static inline double mean_ICA18_22(){
   return avg;
 }
 
+// bookkeeping functions that we will define later
+void add_pi(human_ptr& human);
+
+// take out my biting weight
+void remove_pi(human_ptr& human);
+
+// normalize pi vector in a house
+void normalize_pi(house_ptr& house);
+
+// update C for all houses (FOI from this house is a*psi*C)
+void update_C();
+
 
 /* ################################################################################
 #   State transitions for our little Markov humans
@@ -235,16 +257,12 @@ void mortality(human_ptr& human){
   double mu = parameters.at("mu");
   if(randNum <= mu){
     human->alive = false;
-    household_size.at(human->house) -= 1;
+    houses.at(human->house)->n -= 1;
+    remove_pi(human); 
   }
 }
 
-
 /* S: susceptible */
-/* Latent infection (S -> E):
- * If the random number is less than lambda, that individual
- * develops a latent infection (E) in the next time step.
- */
 void S_compartment(human_ptr& human){
 
   double randNum = R::runif(0.0,1.0);
@@ -257,21 +275,6 @@ void S_compartment(human_ptr& human){
 
 
 /* E: latent period */
-/* Treated clinical infection (E -> T):
- * If the random number is less than phi*fT, that
- * individual develops a treated clinical infection (T)
- * in the next time step.
- */
-/* Untreated clinical infection (E -> D):
-* If the random number is greater than phi*fT and less
-* than phi, that individual develops an untreated
-* clinical infection (D) in the next time step.
-*/
-/* Asymptomatic infection (E -> A):
- * If the random number is greater than phi, that
- * individual develops an asymptomatic infection (A) in
- * the next time step.
- */
 void E_compartment(human_ptr& human){
 
   double dE = parameters.at("dE");
@@ -309,10 +312,6 @@ void E_compartment(human_ptr& human){
 };
 
 /* T: treated clinical disease */
-/* Prophylactic protection (T -> P):
- * If the random number is less than 1/dT, that individual enters the
- * phase of prophylactic protection (P) in the next time step.
-*/
 void T_compartment(human_ptr& human){
 
   double dT = parameters.at("dT");
@@ -325,10 +324,6 @@ void T_compartment(human_ptr& human){
 };
 
 /* D: untreated clinical disease */
-/* Progression from diseased to asymptomatic (D -> A):
- * If the random number is less than 1/dD, that individual enters the
- * phase of asymptomatic patent infection (A) in the next time step.
-*/
 void D_compartment(human_ptr& human){
 
   double dD = parameters.at("dD");
@@ -340,21 +335,6 @@ void D_compartment(human_ptr& human){
 };
 
 /* A: asymptomatic patent (detectable by microscopy) infection */
-/* Treated clinical infection (A -> T):
- * If the random number is less than phi*fT*lambda, that
- * individual develops a treated clinical infection (T) in
- * the next time step.
- */
-/* Untreated clinical infection (A -> D):
-* If the random number is greater than phi*fT*lambda and
-* less than phi*lambda, that individual develops an
-* untreated clinical infection (D) in the next time step.
-*/
-/* Progression to asymptomatic sub-patent infection (A -> U):
- * If the random number is greater than phi*lambda and less
- * than (phi*lambda + 1/dA), that individual develops sub-patent asymptomatic
- * infection (U) in the next time step.
- */
 void A_compartment(human_ptr& human){
 
   double fT = parameters.at("fT");
@@ -384,26 +364,6 @@ void A_compartment(human_ptr& human){
 };
 
 /* U: asymptomatic sub-patent (not detectable by microscopy) infection */
-/* Treated clinical infection (U -> T):
- * If the random number is less than phi*fT*lambda, that
- * individual develops a treated clinical infection (T) in
- * the next time step.
- */
-/* Untreated clinical infection (U -> D):
-* If the random number is greater than phi*fT*lambda and
-* less than phi*lambda, that individual develops an
-* untreated clinical infection (D) in the next time step.
-*/
-/* Asymptomatic infection (U -> A):
-* If the random number is greater than phi*lambda and
-* less than lambda, that individual develops a patent
-* asymptomatic infection (A) in the next time step.
-*/
-/* Recovery to susceptible (U -> S):
-* If the random number is greater than lambda and less
-* than (lambda + 1/dU), that individual returns to the susceptible
-* state (S) in the next time step.
-*/
 void U_compartment(human_ptr& human){
 
   double fT = parameters.at("fT");
@@ -440,10 +400,6 @@ void U_compartment(human_ptr& human){
 };
 
 /* P: protection due to chemoprophylaxis treatment */
-/* Prophylactic protection (P -> S):
- * If the random number is less than 1/dP, that individual returns to
- * the susceptible state (S) in the next time step.
- */
 void P_compartment(human_ptr& human){
 
   double dP = parameters.at("dP");
@@ -459,6 +415,10 @@ void P_compartment(human_ptr& human){
 #   Immunity Functions
 ################################################################################ */
 
+// declarations here; defn below
+double get_w(human_ptr& human);
+double get_y(human_ptr& human);
+double get_z(human_ptr& human);
 
 /* immunity */
 /* Update values for:
@@ -497,37 +457,33 @@ void update_immunity(human_ptr& human){
 };
 
 /* lambda */
-/* Lambda (the force of infection) is calculated for each individual. It
- * varies according to age and biting heterogeneity group:
- */
 // psi is the psi of my house
-void update_lambda(human_ptr& human, const double psi){
+void update_lambda(human_ptr& human){
 
-  double a0 = parameters.at("a0");
-  double epsilon0 = parameters.at("epsilon0");
+  // double a0 = parameters.at("a0");
+  // double epsilon0 = parameters.at("epsilon0");
   double b0 = parameters.at("b0");
   double b1 = parameters.at("b1");
-  double rho = parameters.at("rho");
+  // double rho = parameters.at("rho");
   double IB0 = parameters.at("IB0");
   double kappaB = parameters.at("kappaB");
 
-  double zeta = human->zeta;
-  double age = human->age;
+  // double zeta = human->zeta;
+  // double age = human->age;
   double IB = human->IB;
 
-  double epsilon = epsilon0 * zeta * (1. - rho * std::exp(-age/a0)) * psi;
+  // double epsilon = epsilon0 * zeta * (1. - rho * std::exp(-age/a0)) * psi;
 
-  human->epsilon = epsilon;
+  // my EIR (house EIR * P(it bites me))
+  double EIR_h = houses.at(human->house)->EIR * houses.at(human->house)->pi.at(human->id);
+
+  human->epsilon = EIR_h * get_y(human); // term to account for possible effect of intervention
   double b = b0*(b1 + ((1.-b1)/(1. + std::pow((IB/IB0),kappaB))));
-  human->lambda = epsilon * b;
+  human->lambda = EIR_h * b;
 
 };
 
 /* phi */
-/* Phi (the probability of acquiring clinical disease upon infection) is
- * also calculated for each individual. It varies according to immune
- * status:
- */
 void update_phi(human_ptr& human){
 
   double phi0 = parameters.at("phi0");
@@ -543,11 +499,6 @@ void update_phi(human_ptr& human){
 };
 
 /* q (microscopy) */
-/* q (the probability that an asymptomatic infection is detected by
- * microscopy) is also calculated for each individual, as well as the
- * probability of detection by PCR for asymptomatic infections in states
- * A (patent) and U (subpatent). This also varies according to immune status:
- */
 void update_q(human_ptr& human){
 
   double fD0 = parameters.at("fD0");
@@ -627,4 +578,219 @@ static std::unordered_map<std::string, std::function<void(human_ptr& human)> > i
   {"A",infectiousness_A},
   {"U",infectiousness_U},
   {"P",infectiousness_P}
+};
+
+
+/* ################################################################################
+#   Mosquito Approch probabilities (what happens when a bloodsucker tries to bite me)
+################################################################################ */
+
+/* probability of successful biting */
+double get_w(human_ptr& human){
+  bool IRS = houses.at(human->house)->IRS;
+  bool ITN = human->ITN;
+  /* none */
+  if(!ITN && !IRS){
+    return 1.0;
+  /* IRS only */
+  } else if(IRS && !ITN){
+
+    double phiI = parameters.at("phiI");
+    double rS = parameters.at("rIRS");
+    double sS = parameters.at("sIRS");
+
+    return (1.0 - phiI) + (phiI * (1 - rS) * sS);
+  /* ITN only */
+  } else if(!IRS && ITN){
+
+    double phiB = parameters.at("phiB");
+    double sN = parameters.at("sITN");
+
+    return (1.0 - phiB) + (phiB * sN);
+  /* IRS and ITN */
+  } else if(IRS && ITN){
+
+    double phiI = parameters.at("phiI");
+    double rS = parameters.at("rIRS");
+    double sS = parameters.at("sIRS");
+
+    double phiB = parameters.at("phiB");
+    double sN = parameters.at("sITN");
+
+    return (1.0 - phiI) + (phiB * (1 - rS) * sN * sS) + ((phiI - phiB) * (1 - rS) * sS);
+  } else {
+    Rcpp::stop("error: invalid combination of ITN/IRS");
+  }
+};
+
+/* probability of biting */
+double get_y(human_ptr& human){
+  bool IRS = houses.at(human->house)->IRS;
+  bool ITN = human->ITN;
+  /* none */
+  if(!ITN && !IRS){
+    return 1.0;
+  /* IRS only */
+  } else if(IRS && !ITN){
+
+    double phiI = parameters.at("phiI");
+    double rS = parameters.at("rIRS");
+
+    return (1.0 - phiI) + (phiI * (1 - rS));
+  /* ITN only */
+  } else if(!IRS && ITN){
+
+    double phiB = parameters.at("phiB");
+    double sN = parameters.at("sITN");
+
+    return (1.0 - phiB) + (phiB * sN);
+  /* IRS and ITN */
+  } else if(IRS && ITN){
+
+    double phiI = parameters.at("phiI");
+    double rS = parameters.at("rIRS");
+
+    double phiB = parameters.at("phiB");
+    double sN = parameters.at("sITN");
+
+    return (1.0 - phiI) + (phiB * (1 - rS) * sN) + ((phiI - phiB) * (1 - rS) );
+  } else {
+    Rcpp::stop("error: invalid combination of ITN/IRS");
+  }
+};
+
+/* probability of repellency*/
+double get_z(human_ptr& human){
+  bool IRS = houses.at(human->house)->IRS;
+  bool ITN = human->ITN;
+  /* none */
+  if(!ITN && !IRS){
+    return 0.0;
+  /* IRS only */
+  } else if(IRS && !ITN){
+
+    double phiI = parameters.at("phiI");
+    double rS = parameters.at("rIRS");
+
+    return phiI * rS;
+  /* ITN only */
+  } else if(!IRS && ITN){
+
+    double phiB = parameters.at("phiB");
+    double rN = parameters.at("rN");
+
+    return phiB * rN;
+  /* IRS and ITN */
+  } else if(IRS && ITN){
+
+    double phiI = parameters.at("phiI");
+    double rS = parameters.at("rIRS");
+
+    double phiB = parameters.at("phiB");
+    double rN = parameters.at("rN");
+
+    return (phiB * (1 - rS) * rN) + (phiI * rS);
+  } else {
+    Rcpp::stop("error: invalid combination of ITN/IRS");
+  }
+};
+
+
+/* ################################################################################
+#   bookkeeping (bites and biting weights)
+#   these work on humans and houses
+################################################################################ */
+
+// add my biting weight to the hash table
+void add_pi(human_ptr& human){
+
+  double a0 = parameters.at("a0");
+  double rho = parameters.at("rho");
+
+  double pi = human->zeta * (1. - rho * std::exp(-human->age/a0));
+
+  houses.at(human->house)->pi.emplace(human->id,pi);
+
+};
+
+// take out my biting weight
+void remove_pi(human_ptr& human){
+  houses.at(human->house)->pi.erase(human->id);
+}
+
+// normalize pi vector in a house
+void normalize_pi(house_ptr& house){
+
+  const double pi_sum = std::accumulate(house->pi.begin(), house->pi.end(), 0.0,
+    [](const double prev, const auto& element){
+      return prev + element.second;
+    }
+  );
+
+  std::for_each(house->pi.begin(), house->pi.end(), [pi_sum](auto& element){
+    element.second /= pi_sum;
+  });
+
+};
+
+// update C for all houses (FOI from this house is a*psi*C)
+void update_C(){
+
+  // clear C for houses
+  for(auto& hh : houses){
+    hh->C = 0.;
+  }
+
+  // iterative mean
+  std::vector<size_t> tt(houses.size(),0);
+
+  for(auto& h : human_pop){
+
+    double cc = houses.at(h->house)->pi.at(h->id) * h->c * get_w(h);
+    houses.at(h->house)->C += (cc - houses.at(h->house)->C) / tt[h->house];
+    tt[h->house]++;
+
+  }
+}
+
+
+/* ################################################################################
+#   Humans: daily update
+################################################################################ */
+
+void one_day_update(){
+
+  for(auto& h : human_pop){
+
+    // mortality
+    mortality(h);
+
+    // if they survived the call of the beyond
+    if(h->alive){
+
+      // state update
+      state_functions.at(h->state)(h);
+
+      // update infectiousness to mosquitos
+      infectivity_functions.at(h->state)(h);
+
+      // update age
+      h->age += (1./365.);
+
+      // update immunity
+      update_immunity(h);
+
+      // update lambda
+      update_lambda(h);
+
+      // update phi
+      update_phi(h);
+
+      // update q
+      update_q(h);
+
+    }
+
+  }
+
 };

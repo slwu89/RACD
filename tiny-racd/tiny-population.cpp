@@ -708,7 +708,7 @@ void one_day_update(const Rcpp::NumericVector& theta, const Rcpp::NumericVector&
       update_q(h,theta);
     }
 
-  };
+  }
 
 };
 
