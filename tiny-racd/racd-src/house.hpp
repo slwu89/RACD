@@ -14,6 +14,8 @@
 #ifndef house_hpp
 #define house_hpp
 
+#include <Rcpp.h>
+
 #include <memory>
 #include <list>
 #include <unordered_map>
@@ -52,7 +54,15 @@ typedef struct house {
 // pointer to house
 using house_ptr = std::unique_ptr<house>;
 
-// functions to operate on houses
+
+/* ################################################################################
+#   Biting stuff (the interface btwn humans and mosquitos)
+################################################################################ */
+
+// update C (net infectivity of this house to mosquitos)
 void update_C(house_ptr& hh);
+
+// normalize pi vector in a house
+void normalize_pi(house_ptr& hh);
 
 #endif
