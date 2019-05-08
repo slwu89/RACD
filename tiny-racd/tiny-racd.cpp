@@ -258,7 +258,7 @@ void mortality(human_ptr& human){
   if(randNum <= mu){
     human->alive = false;
     houses.at(human->house)->n -= 1;
-    remove_pi(human); 
+    remove_pi(human);
   }
 }
 
