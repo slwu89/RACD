@@ -19,6 +19,7 @@
 #include <memory>
 #include <list>
 #include <unordered_map>
+#include <algorithm>
 
 // declare the human
 struct human;

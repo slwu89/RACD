@@ -55,7 +55,8 @@ human::human(const double age_,
       c(0.0),
       state(state_),
       days_latent(0),
-      ITN(false){
+      ITN(false)
+{
   // after we take our id, increment for the next person!
   global_hid++;
 };
@@ -367,8 +368,10 @@ void infectiousness_P(human_ptr& human){
 
 /* probability of successful biting */
 double get_w(human_ptr& human){
-  bool IRS = houses.at(human->house)->IRS;
+
+  bool IRS = human->house_ptr->IRS;
   bool ITN = human->ITN;
+
   /* none */
   if(!ITN && !IRS){
     return 1.0;
@@ -405,8 +408,10 @@ double get_w(human_ptr& human){
 
 /* probability of biting */
 double get_y(human_ptr& human){
-  bool IRS = houses.at(human->house)->IRS;
+
+  bool IRS = human->house_ptr->IRS;
   bool ITN = human->ITN;
+
   /* none */
   if(!ITN && !IRS){
     return 1.0;
@@ -441,8 +446,10 @@ double get_y(human_ptr& human){
 
 /* probability of repellency*/
 double get_z(human_ptr& human){
-  bool IRS = houses.at(human->house)->IRS;
+
+  bool IRS = human->house_ptr->IRS;
   bool ITN = human->ITN;
+
   /* none */
   if(!ITN && !IRS){
     return 0.0;
