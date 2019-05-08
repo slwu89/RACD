@@ -59,5 +59,4 @@ void normalize_pi(house_ptr& hh){
     element.second /= pi_sum;
   });
 
-
 };
