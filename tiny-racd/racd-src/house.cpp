@@ -22,10 +22,10 @@
 #   constructor & destructor
 ################################################################################ */
 
-house::house(const size_t id_, const double psi_, const double w_, const double y_, const double z_, const double C_,
+house::house(const size_t id_, const double psi_, const double W_, const double Y_, const double Z_, const double C_,
              const size_t n_
 ) :
-  id(id_), psi(psi_), w(w_), y(y_), z(z_), C(C_), n(n_), EIR(0), IRS(false)
+  id(id_), psi(psi_), W(W_), Y(Y_), Z(Z_), C(C_), n(n_), EIR(0), IRS(false)
 {};
 
 house::~house(){};
@@ -35,6 +35,8 @@ house::~house(){};
 #   Biting stuff (the interface btwn humans and mosquitos)
 ################################################################################ */
 
+// for each house
+
 // update C (net infectivity of this house to mosquitos)
 void update_C(house_ptr& hh){
 
@@ -42,6 +44,28 @@ void update_C(house_ptr& hh){
 
   for(auto& h : hh->humans){
     hh->C += hh->pi.at(h->id) * get_w(h) * h->c;
+  }
+
+};
+
+// update W (net probability of successfuly feeding)
+void update_W(house_ptr& hh){
+
+  hh->W = 0.;
+
+  for(auto& h : hh->humans){
+    hh->W += hh->pi.at(h->id) * get_w(h);
+  }
+
+};
+
+// update Z (net probability of being repelled w/out feeding)
+void update_Z(house_ptr& hh){
+
+  hh->Z = 0.;
+
+  for(auto& h : hh->humans){
+    hh->Z += hh->pi.at(h->id) * get_z(h);
   }
 
 };
@@ -62,29 +86,43 @@ void normalize_pi(house_ptr& hh){
 };
 
 
-// update global biting interface things
-void update_pi(house_vector& houses){
+// for the global landscape
 
-  for(auto& house : houses){
-    normalize_pi(house);
-  }
-
-};
-
-void update_CC(house_vector& houses){
+// this function updates (in order):
+// pi for each house
+// C for each house
+// global CC
+// global WW
+// global ZZ
+void update_biting(house_vector& houses){
 
   CC = 0.;
-
-};
-
-void update_WW(house_vector& houses){
-
   WW = 0.;
-
-};
-
-void update_ZZ(house_vector& houses){
-
   ZZ = 0.;
+  for(auto& hh : houses){
+
+    /* normalize biting weights (pi) */
+    normalize_pi(hh);
+
+    /* C for each house */
+    update_C(hh);
+
+    /* W for each house */
+    update_W(hh);
+
+    /* Z for each house */
+    update_Z(hh);
+
+    double psi_h = psi.at(hh->id);
+
+    /* global CC is weighted average of household level C's */
+    CC += psi_h * hh->C;
+
+    /* global W is a weighted average of household level W's */
+    WW += psi_h * hh->W;
+
+    /* global Z is a weighted average of household level Z's */
+    WW += psi_h * hh->Z;
+  }
 
 };

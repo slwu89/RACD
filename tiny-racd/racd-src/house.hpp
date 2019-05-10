@@ -34,9 +34,9 @@ typedef struct house {
   // data members
   size_t                                  id;
   double                                  psi;  // P(a bite going anywhere goes here)
-  double                                  w;    // E[P(feed and survive)]
-  double                                  y;    // E[P(feed)]
-  double                                  z;    // E[P(repelled without feeding)]
+  double                                  W;    // E[P(feed and survive)]
+  double                                  Y;    // E[P(feed)]
+  double                                  Z;    // E[P(repelled without feeding)]
   double                                  C;    // E[P(a feed here will result in a mosquito infection)]
   size_t                                  n;    // number of people here
   std::unordered_map<size_t,double>       pi;   // normalized PMF of who gets bitten
@@ -46,7 +46,7 @@ typedef struct house {
   std::list<human_ptr>                    humans; // who lives here
 
   // constructor & destructor
-  house(const size_t id_, const double psi_, const double w_, const double y_, const double z_, const double C_,
+  house(const size_t id_, const double psi_, const double W_, const double Y_, const double Z_, const double C_,
         const size_t n_
   );
   ~house();
@@ -66,16 +66,16 @@ using house_vector = std::vector<house_ptr>;
 // update C (net infectivity of this house to mosquitos)
 void update_C(house_ptr& hh);
 
+// update W (net probability of successfuly feeding)
+void update_W(house_ptr& hh);
+
+// update Z (net probability of being repelled w/out feeding)
+void update_Z(house_ptr& hh);
+
 // normalize pi vector in a house
 void normalize_pi(house_ptr& hh);
 
-// update global biting interface things
-void update_pi(house_vector& houses);
-
-void update_CC(house_vector& houses);
-
-void update_WW(house_vector& houses);
-
-void update_ZZ(house_vector& houses);
+// update global interface for mosquitos
+void update_biting(house_vector& houses);
 
 #endif

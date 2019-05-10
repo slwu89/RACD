@@ -555,6 +555,9 @@ void one_day_update(human_ptr& human){
     // update pi
     update_pi(human);
 
+    // update interventions
+    update_interventions(human);
+
   }
 
 };
