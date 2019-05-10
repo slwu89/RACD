@@ -279,7 +279,8 @@ void update_lambda(human_ptr& human){
   double IB = human->IB;
 
   // my EIR (house EIR * P(it bites me))
-  double EIR_h = human->house_ptr->EIR * human->house_ptr->pi.at(human->id);
+  // double EIR_h = human->house_ptr->EIR * human->house_ptr->pi.at(human->id);
+  double EIR_h = EIR.at(human->house_ptr->id) * human->house_ptr->pi.at(human->id);
 
   human->epsilon = EIR_h * get_y(human); // term to account for possible effect of intervention
   double b = b0*(b1 + ((1.-b1)/(1. + std::pow((IB/IB0),kappaB))));

@@ -25,7 +25,7 @@
 house::house(const size_t id_, const double psi_, const double W_, const double Y_, const double Z_, const double C_,
              const size_t n_
 ) :
-  id(id_), psi(psi_), W(W_), Y(Y_), Z(Z_), C(C_), n(n_), EIR(0), IRS(false)
+  id(id_), psi(psi_), W(W_), Y(Y_), Z(Z_), C(C_), n(n_), EIR(0), IRS(false), IRS_time_off(0.)
 {};
 
 house::~house(){};
@@ -124,5 +124,25 @@ void update_biting(house_vector& houses){
     /* global Z is a weighted average of household level Z's */
     WW += psi_h * hh->Z;
   }
+
+};
+
+
+/* ################################################################################
+#   Interventions
+################################################################################ */
+
+void update_interventions(house_ptr& hh){
+  if(hh->IRS && tnow > hh->IRS_time_off){
+    hh->IRS = false;
+  }
+};
+
+void apply_IRS(house_ptr& hh){
+
+  double IRS_decay = parameters.at("IRS_decay");
+
+  hh->IRS = true;
+  hh->IRS_time_off = R::rgeom(IRS_decay);
 
 };

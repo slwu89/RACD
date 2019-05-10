@@ -41,7 +41,10 @@ typedef struct house {
   size_t                                  n;    // number of people here
   std::unordered_map<size_t,double>       pi;   // normalized PMF of who gets bitten
   double                                  EIR;  // the number of bites this house gets today
+
+  // interventions
   bool                                    IRS;  // does my house have IRS
+  size_t                                  IRS_time_off;
 
   std::list<human_ptr>                    humans; // who lives here
 
@@ -77,5 +80,14 @@ void normalize_pi(house_ptr& hh);
 
 // update global interface for mosquitos
 void update_biting(house_vector& houses);
+
+
+/* ################################################################################
+#   Interventions
+################################################################################ */
+
+void update_interventions(house_ptr& hh);
+
+void apply_IRS(house_ptr& hh);
 
 #endif

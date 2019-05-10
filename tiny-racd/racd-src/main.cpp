@@ -18,6 +18,7 @@ Rcpp::NumericMatrix test(){
 //
 // call update_biting(houses) to update CC,WW,ZZ (mosquitoes need it)
 // call feeding_cycle(mosy) to update EIR on houses (this uses CC,WW,ZZ to calc the FOI on mosy)
+//        at the end of feeding_cycle function, humans and mosquitoes are conditionally independent of each other for this time step
 // call euler_step(mosy) to run the mosy model
 // call what ever update humans
 // do births

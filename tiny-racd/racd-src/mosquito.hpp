@@ -15,6 +15,7 @@
 #define mosquitos_hpp
 
 #include <Rcpp.h>
+#include <Rmath.h>
 
 #include <vector>
 #include <memory>
@@ -23,39 +24,39 @@
 typedef struct mosquitos {
 
   /* new eggs are generated from a conditionally independent Poisson process */
-  size_t                      EL_new;
+  int                      EL_new;
 
   /* probabilities & transitions for early-stage instars ("EL","D","LL") */
   std::vector<double>         EL_probs;
-  std::vector<size_t>         EL_transitions;
+  std::vector<int>         EL_transitions;
 
   /* probabilities & transitions for late-stage instars ("LL","D","PL") */
   std::vector<double>         LL_probs;
-  std::vector<size_t>         LL_transitions;
+  std::vector<int>         LL_transitions;
 
   /* probabilities & transitions for pupae ("PL","D","SV_F","SV_M") */
   std::vector<double>         PL_probs;
-  std::vector<size_t>         PL_transitions;
+  std::vector<int>         PL_transitions;
 
   /* probabilities & transitions for susceptible vectors ("SV","D","EV") */
   std::vector<double>         SV_probs;
-  std::vector<size_t>         SV_transitions;
+  std::vector<int>         SV_transitions;
 
   /* probabilities & transitions for incubating vectors ("EV","D","IV") */
   std::vector<double>         EV_probs;
-  std::vector<size_t>         EV_transitions;
+  std::vector<int>         EV_transitions;
 
   /* probabilities & transitions for infectious vectors ("IV","D") */
   std::vector<double>         IV_probs;
-  std::vector<size_t>         IV_transitions;
+  std::vector<int>         IV_transitions;
 
   /* state space */
-  size_t                      EL;
-  size_t                      LL;
-  size_t                      PL;
-  size_t                      SV;
-  size_t                      EV;
-  size_t                      IV;
+  int                      EL;
+  int                      LL;
+  int                      PL;
+  int                      SV;
+  int                      EV;
+  int                      IV;
 
   /* carrying capacity */
   double                      K;
@@ -73,7 +74,7 @@ typedef struct mosquitos {
   double                      beta; // eggs/day/mosquito
 
   /* constructor & destructor */
-  mosquitos(const size_t EL_, const size_t LL_, const size_t PL_, const size_t SV_, const size_t EV_, const size_t IV_, const double K_);
+  mosquitos(const int EL_, const int LL_, const int PL_, const int SV_, const int EV_, const int IV_, const double K_);
   ~mosquitos();
 
 } mosquitos;
