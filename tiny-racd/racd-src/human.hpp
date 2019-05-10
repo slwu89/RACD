@@ -50,7 +50,11 @@ typedef struct human {
 
   // other dynamic members
   size_t         days_latent;
+
+  // intervention
   bool           ITN;
+  size_t         ITN_time_off;
+
   // constructor/destructor
   human(const double age_,
         const bool alive_,
@@ -197,6 +201,14 @@ void update_pi(human_ptr& human);
 void one_day_update(human_ptr& human);
 
 
+/* ################################################################################
+#   interventions
+################################################################################ */
+
+// called before exiting daily update; check if interventions expire
+void update_interventions(human_ptr& human);
+
+void give_ITN(human_ptr& human);
 
 
 #endif

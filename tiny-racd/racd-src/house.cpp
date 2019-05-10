@@ -60,3 +60,31 @@ void normalize_pi(house_ptr& hh){
   });
 
 };
+
+
+// update global biting interface things
+void update_pi(house_vector& houses){
+
+  for(auto& house : houses){
+    normalize_pi(house);
+  }
+
+};
+
+void update_CC(house_vector& houses){
+
+  CC = 0.;
+
+};
+
+void update_WW(house_vector& houses){
+
+  WW = 0.;
+
+};
+
+void update_ZZ(house_vector& houses){
+
+  ZZ = 0.;
+
+};

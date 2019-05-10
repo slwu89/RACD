@@ -55,6 +55,9 @@ typedef struct house {
 // pointer to house
 using house_ptr = std::unique_ptr<house>;
 
+// the houses
+using house_vector = std::vector<house_ptr>;
+
 
 /* ################################################################################
 #   Biting stuff (the interface btwn humans and mosquitos)
@@ -65,5 +68,14 @@ void update_C(house_ptr& hh);
 
 // normalize pi vector in a house
 void normalize_pi(house_ptr& hh);
+
+// update global biting interface things
+void update_pi(house_vector& houses);
+
+void update_CC(house_vector& houses);
+
+void update_WW(house_vector& houses);
+
+void update_ZZ(house_vector& houses);
 
 #endif

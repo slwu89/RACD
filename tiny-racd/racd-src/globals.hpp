@@ -52,5 +52,22 @@ std::unordered_map<std::string,double> parameters;
 // current simulation time
 size_t tnow = 0;
 
+// transmission: mosy -> human
+
+// psi (biting weights) and EIR for each house
+std::vector<double>   psi;
+std::vector<double>   EIR;
+
+// transmission: human -> mosy
+
+double      CC; // P(bite will cause infection in mosquito) --- expectation of this prob over all landscape/individual heterogeneities
+double      WW; // avg probability to bite and survive
+double      ZZ; // avg probability to bite
+
+// function to reset globals between calls from R
+void reset_globals(){
+  Rcpp::Rcout << "write me\n";
+};
+
 
 #endif

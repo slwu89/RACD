@@ -55,7 +55,8 @@ human::human(const double age_,
       c(0.0),
       state(state_),
       days_latent(0),
-      ITN(false)
+      ITN(false),
+      ITN_time_off(0.)
 {
   // after we take our id, increment for the next person!
   global_hid++;
@@ -524,40 +525,59 @@ void update_pi(human_ptr& human){
 
 void one_day_update(human_ptr& human){
 
-  // for(auto& h : human_pop){
+  // mortality
+  mortality(human);
 
-    // mortality
-    mortality(human);
+  // if they survived the call of the beyond
+  if(human->alive){
 
-    // if they survived the call of the beyond
-    if(human->alive){
+    // state update
+    state_functions.at(human->state)(human);
 
-      // state update
-      state_functions.at(human->state)(human);
+    // update infectiousness to mosquitos
+    infectivity_functions.at(human->state)(human);
 
-      // update infectiousness to mosquitos
-      infectivity_functions.at(human->state)(human);
+    // update age
+    human->age += (1./365.);
 
-      // update age
-      human->age += (1./365.);
+    // update immunity
+    update_immunity(human);
 
-      // update immunity
-      update_immunity(human);
+    // update lambda
+    update_lambda(human);
 
-      // update lambda
-      update_lambda(human);
+    // update phi
+    update_phi(human);
 
-      // update phi
-      update_phi(human);
+    // update q
+    update_q(human);
 
-      // update q
-      update_q(human);
+    // update pi
+    update_pi(human);
 
-      // update pi
-      update_pi(human);
+  }
 
-    }
+};
 
-  // }
+
+/* ################################################################################
+#   interventions
+################################################################################ */
+
+// called before exiting daily update; check if interventions expire
+void update_interventions(human_ptr& human){
+
+  if(human->ITN && tnow >= human->ITN_time_off){
+    human->ITN = false;
+  }
+
+};
+
+void give_ITN(human_ptr& human){
+
+  double ITN_decay = parameters.at("ITN_decay");
+
+  human->ITN = true;
+  human->ITN_time_off = R::rgeom(ITN_decay);
 
 };
