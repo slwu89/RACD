@@ -1,4 +1,13 @@
 #include "globals.hpp"
+#include "house.hpp"
+#include "mosquito.hpp"
+#include "human.hpp"
+
+// [[Rcpp::plugins(cpp17)]]
+// [[Rcpp::depends(RcppProgress)]]
+
+#include <Rcpp.h>
+#include <progress.hpp>
 
 extern Rcpp::NumericMatrix output1;
 
@@ -9,6 +18,8 @@ Rcpp::NumericMatrix test(){
   return output1;
 }
 
+
+// IF WEIRD BUGS OCCUR CHANGE AROUND THE ORDER OF PLUGINS
 
 
 
@@ -25,3 +36,21 @@ Rcpp::NumericMatrix test(){
 // do deaths
 // update household lvl interventions
 // repeat until tnow > tmax
+
+
+// [[Rcpp::export]]
+void tiny_racd(
+  const Rcpp::NumericVector& theta,
+  const size_t tmax
+){
+
+  /* clear global variables */
+  reset_globals(tmax);
+
+  /* put parameters in hash table */
+  Rcpp::CharacterVector theta_names = theta.names();
+  for(size_t i=0; i<theta.size(); i++){
+    parameters.emplace(theta_names.at(i),theta.at(i));
+  }
+
+};

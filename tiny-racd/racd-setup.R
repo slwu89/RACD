@@ -226,7 +226,8 @@ RACD_Setup <- function(N, EIR_mean, xy_d, xy_a, theta){
 	p10 <- exp(-muV*tau1)
   p1 <- p10*W/(1 - Z*p10)
   p2 <- exp(-muV*tau2)
-  mu <- -f*log(p1*p1)
+  p12 <- (p1*p2)^f
+  mu <- -log(p12)
 
 	# proportion of successful bites on humans & HBR (EIR_tot = a * Iv)
 	Q <- 1 - ((1 - Q0)/W)

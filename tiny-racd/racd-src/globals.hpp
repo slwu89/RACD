@@ -57,6 +57,9 @@ std::unordered_map<std::string,double> parameters;
 // current simulation time
 size_t tnow = 0;
 
+// id for people
+size_t global_hid = 0;
+
 // transmission: mosy -> human
 
 // psi (biting weights) and EIR for each house
@@ -134,6 +137,7 @@ void reset_globals(const size_t tmax){
   EIR.clear();
 
   tnow = 0;
+  global_hid = 0;
 
   CC = 0.;
   WW = 0.;

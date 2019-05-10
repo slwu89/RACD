@@ -20,6 +20,63 @@
 #include <vector>
 #include <memory>
 
+// // output: states
+// extern std::vector<size_t> state_S;
+// extern std::vector<size_t> state_E;
+// extern std::vector<size_t> state_T;
+// extern std::vector<size_t> state_D;
+// extern std::vector<size_t> state_A;
+// extern std::vector<size_t> state_U;
+// extern std::vector<size_t> state_P;
+//
+// // output: pop sizes
+// extern std::vector<size_t> num_All;
+// extern std::vector<size_t> num_2_10;
+// extern std::vector<size_t> num_0_5;
+// extern std::vector<size_t> num_5_10;
+// extern std::vector<size_t> num_10_15;
+// extern std::vector<size_t> num_15Plus;
+//
+// // output: clinical incidence
+// extern std::vector<size_t> cinc_All;
+// extern std::vector<size_t> cinc_2_10;
+// extern std::vector<size_t> cinc_0_5;
+// extern std::vector<size_t> cinc_5_10;
+// extern std::vector<size_t> cinc_10_15;
+// extern std::vector<size_t> cinc_15Plus;
+//
+// // output for mosquitos
+// extern std::vector<size_t> mosy_S;
+// extern std::vector<size_t> mosy_E;
+// extern std::vector<size_t> mosy_I;
+//
+// // parameters
+// extern std::unordered_map<std::string,double> parameters;
+//
+// // current simulation time
+// extern size_t tnow;
+//
+// // id for people
+// extern size_t global_hid;
+//
+// // transmission: mosy -> human
+//
+// // psi (biting weights) and EIR for each house
+// extern std::vector<double>   psi;
+// extern std::vector<double>   EIR;
+//
+// // transmission: human -> mosy
+//
+// extern double      CC; // P(bite will cause infection in mosquito) --- expectation of this prob over all landscape/individual heterogeneities
+// extern double      WW; // avg probability to bite and survive
+// extern double      ZZ; // avg probability to bite
+//
+// extern void reset_states(const size_t tmax);
+// extern void reset_pop(const size_t tmax);
+// extern void reset_cinc(const size_t tmax);
+// extern void reset_mosy(const size_t tmax);
+// extern void reset_globals(const size_t tmax);
+
 // the mosquito population struct
 typedef struct mosquitos {
 
