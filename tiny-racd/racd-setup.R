@@ -121,6 +121,11 @@ RACD_Setup <- function(N, EIR_mean, xy_d, xy_a, theta){
 
 	pi_vec <- rep(0,N) # pi for each person
 	pi_house <- rep(0,numD) # summed pi for each house
+	
+	houses <- mapply(FUN = function(psii,nn){
+	  list(psi=psii,n=nn)
+	},psii=psi_house,nn=household_sizes,SIMPLIFY = FALSE)
+	
 
 	humans <- vector("list",N)
 	for (j in 1:N) {
@@ -182,6 +187,9 @@ RACD_Setup <- function(N, EIR_mean, xy_d, xy_a, theta){
 		humans[[j]]$ICM <- ICM
 		humans[[j]]$epsilon <- epsilon
 		humans[[j]]$lambda <- lambda
+		
+		# P(clinical disease | infection)
+		humans[[j]]$phi <- phi0 * (phi1 + ((1 - phi1)/(1 + ((ICA+ICM)/IC0)^kappaC)))
 
 		# probability of detection
 		fD <- 1 - ((1 - fD0)/(1 + (a/aD)^gammaD))
@@ -254,6 +262,7 @@ RACD_Setup <- function(N, EIR_mean, xy_d, xy_a, theta){
 		list(
 			humans=humans,
 			mosy=mosy_eq,
+			houses=houses,
 			theta=theta
 		)
 	)

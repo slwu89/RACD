@@ -23,15 +23,12 @@
 ################################################################################ */
 
 human::human(const double age_,
-      const bool alive_,
       house* house_ptr_,
       const double zeta_,
       const double IB_,
       const double ID_,
       const double ICA_,
       const double ICM_,
-      const double epsilon_,
-      const double lambda_,
       const double phi_,
       const double prDetectAMic_,
       const double prDetectAPCR_,
@@ -39,30 +36,66 @@ human::human(const double age_,
       const std::string state_) :
       id(global_hid),
       age(age_),
-      alive(alive_),
+      alive(true),
       house_ptr(house_ptr_),
       zeta(zeta_),
       IB(IB_),
       ID(ID_),
       ICA(ICA_),
       ICM(ICM_),
-      epsilon(epsilon_),
-      lambda(lambda_),
+      epsilon(0.),
+      lambda(0.),
       phi(phi_),
       prDetectAMic(prDetectAMic_),
       prDetectAPCR(prDetectAPCR_),
       prDetectUPCR(prDetectUPCR_),
-      c(0.0),
+      c(0.),
       state(state_),
       days_latent(0),
       ITN(false),
       ITN_time_off(0.)
 {
+
   // after we take our id, increment for the next person!
   global_hid++;
+
+  // add my biting to the hash table
+  double a0 = parameters.at("a0");
+  double rho = parameters.at("rho");
+  double pi = zeta * (1. - rho * std::exp(-age/a0));
+  house_ptr->pi.emplace(id,pi);
+
+  // let the house know i showed up
+  house_ptr->n += 1;
+
 };
 
 human::~human(){};
+
+
+/* ################################################################################
+#   individual level tracking
+################################################################################ */
+
+// track clinical incidence
+void track_cinc(const human_ptr& h){
+
+  cinc_All.at(tnow) += 1;
+
+  if((h->age >= 2.) && (h->age < 10.)){
+    cinc_2_10.at(tnow) += 1;
+  }
+  if(h->age < 5.) {
+    cinc_0_5.at(tnow) += 1;
+  } else if((h->age >= 5.) && (h->age < 10.)){
+    cinc_5_10.at(tnow) += 1;
+  } else if((h->age >= 10.) && (h->age < 15.)){
+    cinc_10_15.at(tnow) += 1;
+  } else if(h->age >= 15.){
+    cinc_15Plus.at(tnow) += 1;
+  }
+
+};
 
 
 /* ################################################################################
@@ -109,7 +142,7 @@ void E_compartment(human_ptr& human){
       human->state = "T";
       human->days_latent = 0;
 
-      // track_cinc(human);
+      track_cinc(human);
     }
 
     // Untreated clinical infection (E -> D)
@@ -117,7 +150,7 @@ void E_compartment(human_ptr& human){
       human->state = "D";
       human->days_latent = 0;
 
-      // track_cinc(human);
+      track_cinc(human);
     }
 
     // Asymptomatic infection (E -> A)
@@ -166,13 +199,13 @@ void A_compartment(human_ptr& human){
   if(randNum <= phi*fT*lambda){
     human->state = "T";
 
-    // track_cinc(human);
+    track_cinc(human);
   }
   // Untreated clinical infection (A -> D)
   if((randNum > phi*fT*lambda) && (randNum <= phi*lambda)){
     human->state = "D";
 
-    // track_cinc(human);
+    track_cinc(human);
   }
   // Progression to asymptomatic sub-patent infection (A -> U):
   if((randNum > phi*lambda) && (randNum <= (phi*lambda + (1.0/dA)))) {
@@ -195,14 +228,14 @@ void U_compartment(human_ptr& human){
   if(randNum <= phi*fT*lambda){
     human->state = "T";
 
-    // track_cinc(human);
+    track_cinc(human);
   }
 
   // Untreated clinical infection (U -> D)
   if((randNum > phi*fT*lambda) && (randNum <= phi*lambda)){
     human->state = "D";
 
-    // track_cinc(human);
+    track_cinc(human);
   }
 
   // Asymptomatic infection (U -> A)
@@ -524,7 +557,7 @@ void update_pi(human_ptr& human){
 #   Humans: daily update
 ################################################################################ */
 
-void one_day_update(human_ptr& human){
+void one_day_update_human(human_ptr& human){
 
   // mortality
   mortality(human);

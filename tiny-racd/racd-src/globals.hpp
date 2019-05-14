@@ -22,58 +22,61 @@
 // output for humans
 
 // output: states
-std::vector<size_t> state_S(1,0);
-std::vector<size_t> state_E(1,0);
-std::vector<size_t> state_T(1,0);
-std::vector<size_t> state_D(1,0);
-std::vector<size_t> state_A(1,0);
-std::vector<size_t> state_U(1,0);
-std::vector<size_t> state_P(1,0);
+extern std::vector<size_t> state_S;
+extern std::vector<size_t> state_E;
+extern std::vector<size_t> state_T;
+extern std::vector<size_t> state_D;
+extern std::vector<size_t> state_A;
+extern std::vector<size_t> state_U;
+extern std::vector<size_t> state_P;
 
 // output: pop sizes
-std::vector<size_t> num_All(1,0);
-std::vector<size_t> num_2_10(1,0);
-std::vector<size_t> num_0_5(1,0);
-std::vector<size_t> num_5_10(1,0);
-std::vector<size_t> num_10_15(1,0);
-std::vector<size_t> num_15Plus(1,0);
+extern std::vector<size_t> num_All;
+extern std::vector<size_t> num_2_10;
+extern std::vector<size_t> num_0_5;
+extern std::vector<size_t> num_5_10;
+extern std::vector<size_t> num_10_15;
+extern std::vector<size_t> num_15Plus;
 
 // output: clinical incidence
-std::vector<size_t> cinc_All(1,0);
-std::vector<size_t> cinc_2_10(1,0);
-std::vector<size_t> cinc_0_5(1,0);
-std::vector<size_t> cinc_5_10(1,0);
-std::vector<size_t> cinc_10_15(1,0);
-std::vector<size_t> cinc_15Plus(1,0);
+extern std::vector<size_t> cinc_All;
+extern std::vector<size_t> cinc_2_10;
+extern std::vector<size_t> cinc_0_5;
+extern std::vector<size_t> cinc_5_10;
+extern std::vector<size_t> cinc_10_15;
+extern std::vector<size_t> cinc_15Plus;
 
 // output for mosquitos
-std::vector<size_t> mosy_S(1,0);
-std::vector<size_t> mosy_E(1,0);
-std::vector<size_t> mosy_I(1,0);
+extern std::vector<size_t> mosy_S;
+extern std::vector<size_t> mosy_E;
+extern std::vector<size_t> mosy_I;
 
 // parameters
-std::unordered_map<std::string,double> parameters;
+extern std::unordered_map<std::string,double> parameters;
+
+// state variables
 
 // current simulation time
-size_t tnow = 0;
+extern size_t tnow;
 
 // id for people
-size_t global_hid = 0;
+extern size_t global_hid;
 
 // transmission: mosy -> human
 
 // psi (biting weights) and EIR for each house
-std::vector<double>   psi;
-std::vector<double>   EIR;
+extern std::vector<double>   psi;
+extern std::vector<double>   EIR;
 
 // transmission: human -> mosy
 
-double      CC; // P(bite will cause infection in mosquito) --- expectation of this prob over all landscape/individual heterogeneities
-double      WW; // avg probability to bite and survive
-double      ZZ; // avg probability to bite
+extern double      CC; // P(bite will cause infection in mosquito) --- expectation of this prob over all landscape/individual heterogeneities
+extern double      WW; // avg probability to bite and survive
+extern double      ZZ; // avg probability to bite
+
 
 // function to reset globals between calls from R
-void reset_states(const size_t tmax){
+inline void reset_states(const size_t tmax){
   state_S.clear();
   state_E.clear();
   state_T.clear();
@@ -90,7 +93,7 @@ void reset_states(const size_t tmax){
   state_P.resize(tmax,0);
 }
 
-void reset_pop(const size_t tmax){
+inline void reset_pop(const size_t tmax){
   num_All.clear();
   num_2_10.clear();
   num_0_5.clear();
@@ -105,7 +108,7 @@ void reset_pop(const size_t tmax){
   num_15Plus.resize(tmax,0);
 };
 
-void reset_cinc(const size_t tmax){
+inline void reset_cinc(const size_t tmax){
   cinc_All.clear();
   cinc_2_10.clear();
   cinc_0_5.clear();
@@ -120,7 +123,7 @@ void reset_cinc(const size_t tmax){
   cinc_15Plus.resize(tmax,0);
 };
 
-void reset_mosy(const size_t tmax){
+inline void reset_mosy(const size_t tmax){
   mosy_S.clear();
   mosy_E.clear();
   mosy_I.clear();
@@ -130,7 +133,7 @@ void reset_mosy(const size_t tmax){
 }
 
 // reset all of the things
-void reset_globals(const size_t tmax){
+inline void reset_globals(const size_t tmax){
 
   parameters.clear();
   psi.clear();

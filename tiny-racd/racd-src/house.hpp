@@ -21,62 +21,6 @@
 #include <unordered_map>
 #include <algorithm>
 
-// // output: states
-// extern std::vector<size_t> state_S;
-// extern std::vector<size_t> state_E;
-// extern std::vector<size_t> state_T;
-// extern std::vector<size_t> state_D;
-// extern std::vector<size_t> state_A;
-// extern std::vector<size_t> state_U;
-// extern std::vector<size_t> state_P;
-//
-// // output: pop sizes
-// extern std::vector<size_t> num_All;
-// extern std::vector<size_t> num_2_10;
-// extern std::vector<size_t> num_0_5;
-// extern std::vector<size_t> num_5_10;
-// extern std::vector<size_t> num_10_15;
-// extern std::vector<size_t> num_15Plus;
-//
-// // output: clinical incidence
-// extern std::vector<size_t> cinc_All;
-// extern std::vector<size_t> cinc_2_10;
-// extern std::vector<size_t> cinc_0_5;
-// extern std::vector<size_t> cinc_5_10;
-// extern std::vector<size_t> cinc_10_15;
-// extern std::vector<size_t> cinc_15Plus;
-//
-// // output for mosquitos
-// extern std::vector<size_t> mosy_S;
-// extern std::vector<size_t> mosy_E;
-// extern std::vector<size_t> mosy_I;
-//
-// // parameters
-// extern std::unordered_map<std::string,double> parameters;
-//
-// // current simulation time
-// extern size_t tnow;
-//
-// // id for people
-// extern size_t global_hid;
-//
-// // transmission: mosy -> human
-//
-// // psi (biting weights) and EIR for each house
-// extern std::vector<double>   psi;
-// extern std::vector<double>   EIR;
-//
-// // transmission: human -> mosy
-//
-// extern double      CC; // P(bite will cause infection in mosquito) --- expectation of this prob over all landscape/individual heterogeneities
-// extern double      WW; // avg probability to bite and survive
-// extern double      ZZ; // avg probability to bite
-//
-// extern void reset_states(const size_t tmax);
-// extern void reset_pop(const size_t tmax);
-// extern void reset_cinc(const size_t tmax);
-// extern void reset_mosy(const size_t tmax);
-// extern void reset_globals(const size_t tmax);
 
 // declare the human
 struct human;
@@ -90,7 +34,7 @@ typedef struct house {
 
   // data members
   size_t                                  id;
-  double                                  psi;  // P(a bite going anywhere goes here)
+  // double                                  psi;  // P(a bite going anywhere goes here)
   double                                  W;    // E[P(feed and survive)]
   double                                  Y;    // E[P(feed)]
   double                                  Z;    // E[P(repelled without feeding)]
@@ -106,9 +50,8 @@ typedef struct house {
   std::list<human_ptr>                    humans; // who lives here
 
   // constructor & destructor
-  house(const size_t id_, const double psi_, const double W_, const double Y_, const double Z_, const double C_,
-        const size_t n_
-  );
+  house(const size_t id_);
+
   ~house();
 } house;
 
@@ -117,6 +60,15 @@ using house_ptr = std::unique_ptr<house>;
 
 // the houses
 using house_vector = std::vector<house_ptr>;
+
+
+/* ################################################################################
+#   tracking output
+################################################################################ */
+
+void track_state(const house_vector& houses);
+
+void track_age(const house_vector& houses);
 
 
 /* ################################################################################
@@ -135,7 +87,7 @@ void update_Z(house_ptr& hh);
 // normalize pi vector in a house
 void normalize_pi(house_ptr& hh);
 
-// update global interface for mosquitos
+// update global interface for mosquitos: THIS IS THE FUNCTION TO CALL (others are helpers)
 void update_biting(house_vector& houses);
 
 
@@ -146,5 +98,31 @@ void update_biting(house_vector& houses);
 void update_interventions(house_ptr& hh);
 
 void apply_IRS(house_ptr& hh);
+
+
+/* ################################################################################
+#   demographics
+################################################################################ */
+
+/* shamelessly "referenced" from Knuth, The Art of Computer Programming Vol 2, section 4.2.2 */
+// the mean immunity among 18-22 year olds
+double mean_ICA18_22(house_vector& houses);
+
+// bring out yer dead!
+void one_day_deaths(house_vector& houses);
+
+// the respawn point
+void one_day_births(house_vector& houses);
+
+
+/* ################################################################################
+#   daily simulation
+################################################################################ */
+
+// update the dynamics of a single dwelling
+void one_day_update_house(house_ptr& hh);
+
+// the update for all humans/dwellings
+void one_day_update(house_vector& houses);
 
 #endif
