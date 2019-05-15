@@ -29,6 +29,8 @@ human::human(const double age_,
       const double ID_,
       const double ICA_,
       const double ICM_,
+      const double epsilon_,
+      const double lambda_,
       const double phi_,
       const double prDetectAMic_,
       const double prDetectAPCR_,
@@ -44,8 +46,8 @@ human::human(const double age_,
       ID(ID_),
       ICA(ICA_),
       ICM(ICM_),
-      epsilon(0.),
-      lambda(0.),
+      epsilon(epsilon_),
+      lambda(lambda_),
       phi(phi_),
       prDetectAMic(prDetectAMic_),
       prDetectAPCR(prDetectAPCR_),
@@ -417,14 +419,14 @@ double get_w(human_ptr& human){
     double rS = parameters.at("rIRS");
     double sS = parameters.at("sIRS");
 
-    return (1.0 - phiI) + (phiI * (1 - rS) * sS);
+    return (1. - phiI) + (phiI * (1. - rS) * sS);
   /* ITN only */
   } else if(!IRS && ITN){
 
     double phiB = parameters.at("phiB");
     double sN = parameters.at("sITN");
 
-    return (1.0 - phiB) + (phiB * sN);
+    return (1. - phiB) + (phiB * sN);
   /* IRS and ITN */
   } else if(IRS && ITN){
 
@@ -435,7 +437,7 @@ double get_w(human_ptr& human){
     double phiB = parameters.at("phiB");
     double sN = parameters.at("sITN");
 
-    return (1.0 - phiI) + (phiB * (1 - rS) * sN * sS) + ((phiI - phiB) * (1 - rS) * sS);
+    return (1. - phiI) + (phiB * (1. - rS) * sN * sS) + ((phiI - phiB) * (1. - rS) * sS);
   } else {
     Rcpp::stop("error: invalid combination of ITN/IRS");
   }
@@ -456,7 +458,7 @@ double get_y(human_ptr& human){
     double phiI = parameters.at("phiI");
     double rS = parameters.at("rIRS");
 
-    return (1.0 - phiI) + (phiI * (1 - rS));
+    return (1.0 - phiI) + (phiI * (1. - rS));
   /* ITN only */
   } else if(!IRS && ITN){
 
@@ -473,7 +475,7 @@ double get_y(human_ptr& human){
     double phiB = parameters.at("phiB");
     double sN = parameters.at("sITN");
 
-    return (1.0 - phiI) + (phiB * (1 - rS) * sN) + ((phiI - phiB) * (1 - rS) );
+    return (1.0 - phiI) + (phiB * (1. - rS) * sN) + ((phiI - phiB) * (1. - rS) );
   } else {
     Rcpp::stop("error: invalid combination of ITN/IRS");
   }
@@ -511,7 +513,7 @@ double get_z(human_ptr& human){
     double phiB = parameters.at("phiB");
     double rN = parameters.at("rN");
 
-    return (phiB * (1 - rS) * rN) + (phiI * rS);
+    return (phiB * (1. - rS) * rN) + (phiI * rS);
   } else {
     Rcpp::stop("error: invalid combination of ITN/IRS");
   }
@@ -590,7 +592,6 @@ void one_day_update_human(human_ptr& human){
     update_pi(human);
 
     // update interventions
-
     update_interventions_human(human);
 
   }

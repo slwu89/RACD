@@ -20,7 +20,7 @@ source(here("racd-setup.R"))
 # just a test; dead simple model
 dwell_df <- data.frame(x=c(1,2),y=c(1,2),psi=rep(0.5,2))
 aqua_df <- data.frame(x=1,y=1)
-RACD_init <- RACD_Setup(N = 2000,EIR_mean = 0.05,xy_d = dwell_df,xy_a = aqua_df,theta = RACD_theta)
+RACD_init <- RACD_Setup(N = 500,EIR_mean = 0.1,xy_d = dwell_df,xy_a = aqua_df,theta = RACD_theta)
 
 # model diagnostics
 library(ggplot2)
@@ -60,19 +60,23 @@ RACD_out <- tiny_racd(humans_param = RACD_init$humans,
                       house_param = RACD_init$houses,
                       mosy_param = RACD_init$mosy,
                       theta = RACD_theta,
-                      tmax = 365*3)
+                      tmax = 365*5)
 
 library(reshape2)
 
 ggplot(data = melt(RACD_out$state,id.vars="time")) +
-  geom_line(aes(x=time,y=value,color=variable)) +
+  geom_line(aes(x=time,y=value,color=variable),alpha=0.85) +
   theme_bw()
 
 ggplot(data = melt(RACD_out$age,id.vars="time")) +
   geom_line(aes(x=time,y=value,color=variable)) +
   theme_bw()
 
-ggplot(data = melt(RACD_out$clinical_incidence,id.vars="time")) +
+# ggplot(data = melt(RACD_out$clinical_incidence,id.vars="time")) +
+#   geom_line(aes(x=time,y=value,color=variable)) +
+#   theme_bw()
+
+ggplot(data = melt(RACD_out$trans,id.vars="time")) +
   geom_line(aes(x=time,y=value,color=variable)) +
   theme_bw()
 

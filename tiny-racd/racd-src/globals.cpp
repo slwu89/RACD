@@ -45,6 +45,10 @@ std::vector<size_t> mosy_S;
 std::vector<size_t> mosy_E;
 std::vector<size_t> mosy_I;
 
+// transmision output
+std::vector<double> lambda_v;
+// std::vector<double> eir_out;
+
 // other output
 std::vector<size_t> time_out;
 
@@ -60,7 +64,7 @@ size_t global_hid;
 // transmission: mosy -> human
 
 // psi (biting weights) and EIR for each house
-std::vector<double>   GLOBAL_PSI;
+std::vector<double>   psi;
 std::vector<double>   EIR;
 
 size_t NHOUSE;

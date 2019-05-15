@@ -17,14 +17,16 @@
 
 
 /* constructor & destructor */
-mosquitos::mosquitos(const int EL_, const int LL_, const int PL_, const int SV_, const int EV_, const int IV_, const double K_) :
+mosquitos::mosquitos(const int EL_, const int LL_, const int PL_, const int SV_, const int EV_, const int IV_, const double K_,
+          const double lambdaV_) :
   EL_probs{0,0,0}, EL_transitions{0,0,0},
   LL_probs{0,0,0}, LL_transitions{0,0,0},
   PL_probs{0,0,0,0}, PL_transitions{0,0,0,0},
   SV_probs{0,0,0}, SV_transitions{0,0,0},
   EV_probs{0,0,0}, EV_transitions{0,0,0},
   IV_probs{0,0}, IV_transitions{0,0},
-  EL(EL_), LL(LL_), PL(PL_), SV(SV_), EV(EV_), IV(IV_), K(K_)
+  EL(EL_), LL(LL_), PL(PL_), SV(SV_), EV(EV_), IV(IV_), K(K_),
+  lambdaV(lambdaV_)
 {};
 
 mosquitos::~mosquitos(){};
@@ -38,6 +40,7 @@ void track_mosquito(const mosquito_ptr& mosy){
   mosy_S.at(tnow) = mosy->SV;
   mosy_E.at(tnow) = mosy->EV;
   mosy_I.at(tnow) = mosy->IV;
+  lambda_v.at(tnow) = mosy->lambdaV;
 };
 
 
@@ -83,12 +86,16 @@ void feeding_cycle(mosquito_ptr& mosy){
   /* calculate FOI (h->m) */
   mosy->lambdaV = mosy->a*CC;
 
+  // Rcpp::Rcout << "FOI on mosquito: " << mosy->lambdaV << "\n";
+
   /* calculate EIR (m->h) */
   double bites = mosy->a * (double)mosy->IV * dt;
 
-  // for(size_t h=0; h<GLOBAL_PSI.size(); h++){
+  // Rcpp::Rcout << "total EIR (bites): " << bites << "\n";
+
+  // for(size_t h=0; h<psi.size(); h++){
   for(size_t h=0; h<NHOUSE; h++){
-    EIR.at(h) = GLOBAL_PSI.at(h) * bites;
+    EIR.at(h) = psi.at(h) * bites;
   }
 
 };

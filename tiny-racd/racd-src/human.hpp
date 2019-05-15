@@ -61,6 +61,8 @@ typedef struct human {
         const double ID_,
         const double ICA_,
         const double ICM_,
+        const double epsilon_,
+        const double lambda_,
         const double phi_,
         const double prDetectAMic_,
         const double prDetectAPCR_,

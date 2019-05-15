@@ -54,6 +54,10 @@ extern std::vector<size_t> mosy_S;
 extern std::vector<size_t> mosy_E;
 extern std::vector<size_t> mosy_I;
 
+// transmision output
+extern std::vector<double> lambda_v;
+// extern std::vector<double> eir_out;
+
 // other output
 extern std::vector<size_t> time_out;
 
@@ -71,7 +75,7 @@ extern size_t global_hid;
 // transmission: mosy -> human
 
 // psi (biting weights) and EIR for each house
-extern std::vector<double>   GLOBAL_PSI;
+extern std::vector<double>   psi;
 extern std::vector<double>   EIR;
 
 extern size_t NHOUSE;
@@ -143,14 +147,22 @@ inline void reset_mosy(const size_t tmax){
   mosy_I.resize(tmax,0);
 }
 
+inline void reset_transmision(const size_t tmax){
+  lambda_v.clear();
+  lambda_v.resize(tmax,0.);
+  //
+  // eir_out.clear();
+  // eir_out.resize(tmax,0.);
+}
+
 // reset all of the things
 inline void reset_globals(const size_t tmax, const size_t nhouse){
 
   parameters.clear();
 
-  GLOBAL_PSI.clear();
+  psi.clear();
   EIR.clear();
-  GLOBAL_PSI.resize(nhouse,0);
+  psi.resize(nhouse,0);
   EIR.resize(nhouse,0);
 
   NHOUSE = nhouse;
@@ -166,6 +178,7 @@ inline void reset_globals(const size_t tmax, const size_t nhouse){
   reset_pop(tmax);
   reset_cinc(tmax);
   reset_mosy(tmax);
+  reset_transmision(tmax);
 
 };
 

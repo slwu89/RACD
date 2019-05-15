@@ -75,7 +75,8 @@ typedef struct mosquitos {
   double                      beta; // eggs/day/mosquito
 
   /* constructor & destructor */
-  mosquitos(const int EL_, const int LL_, const int PL_, const int SV_, const int EV_, const int IV_, const double K_);
+  mosquitos(const int EL_, const int LL_, const int PL_, const int SV_, const int EV_, const int IV_, const double K_,
+            const double lambdaV_);
   ~mosquitos();
 
 } mosquitos;

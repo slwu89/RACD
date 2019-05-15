@@ -61,6 +61,7 @@ Rcpp::List tiny_racd(
   /* clear global variables */
   reset_globals(tmax,nhouse);
   houses.clear();
+  houses.reserve(nhouse);
 
   /* put parameters in hash table */
   Rcpp::CharacterVector theta_names = theta.names();
@@ -75,27 +76,17 @@ Rcpp::List tiny_racd(
   /* make the houses */
   for(size_t i=0; i<nhouse; i++){
 
-    // EIR.emplace_back(0.);
-    EIR[i] = 0.12+i;
-
     /* biting weight */
     double psi_i = Rcpp::as<double>(Rcpp::as<Rcpp::List>(house_param[i])["psi"]);
-    Rcpp::Rcout << "psi_i " << psi_i << "\n";
 
-    // GLOBAL_PSI.emplace_back(0.);
-    GLOBAL_PSI[i] = (double)psi_i;
-
-
-    Rcpp::Rcout << "EIR[i]: " << EIR[i] << " psi[i]: " << GLOBAL_PSI[i] << "\n";
+    // psi.emplace_back(0.);
+    psi[i] = (double)psi_i;
 
     /* make the house */
     houses.emplace_back(
       std::make_unique<house>(i)
     );
   }
-
-  Rcpp::Rcout << "EIR.size(): " << EIR.size() << " psi.size(): " << GLOBAL_PSI.size() << "\n";
-  Rcpp::Rcout << "houses.size(): " << houses.size() << "\n";
 
   /* make the mosquitos */
   mosquito_ptr mosy_pop = std::make_unique<mosquitos>(
@@ -105,7 +96,8 @@ Rcpp::List tiny_racd(
     Rcpp::as<int>(mosy_param["SV_eq"]),
     Rcpp::as<int>(mosy_param["EV_eq"]),
     Rcpp::as<int>(mosy_param["IV_eq"]),
-    Rcpp::as<int>(mosy_param["K_eq"])
+    Rcpp::as<int>(mosy_param["K_eq"]),
+    Rcpp::as<double>(mosy_param["lambda_v"])
   );
 
   /* make the humans */
@@ -122,6 +114,8 @@ Rcpp::List tiny_racd(
         Rcpp::as<double>(hum_i["ID"]),
         Rcpp::as<double>(hum_i["ICA"]),
         Rcpp::as<double>(hum_i["ICM"]),
+        Rcpp::as<double>(hum_i["epsilon"]),
+        Rcpp::as<double>(hum_i["lambda"]),
         Rcpp::as<double>(hum_i["phi"]),
         Rcpp::as<double>(hum_i["prDetectAMic"]),
         Rcpp::as<double>(hum_i["prDetectAPCR"]),
@@ -220,10 +214,16 @@ Rcpp::List tiny_racd(
     Rcpp::Named("I") = Rcpp::wrap(mosy_I)
   );
 
+  Rcpp::DataFrame trans = Rcpp::DataFrame::create(
+    Rcpp::Named("time") = Rcpp::wrap(time_out),
+    Rcpp::Named("lambda_v") = Rcpp::wrap(lambda_v)
+  );
+
   return Rcpp::List::create(
     Rcpp::Named("state") = state,
     Rcpp::Named("age") = age,
     Rcpp::Named("clinical_incidence") = clinic,
-    Rcpp::Named("mosy") = mosy
+    Rcpp::Named("mosy") = mosy,
+    Rcpp::Named("trans") = trans
   );
 };

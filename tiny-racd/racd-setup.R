@@ -258,7 +258,7 @@ RACD_Setup <- function(N, EIR_mean, xy_d, xy_a, theta){
 
 	mosy_eq <- RACD_mosq_equilibrium(theta = theta,dt = 1,IV = Iv_eq,lambdaV = lambda_v,cores=max(2,parallel::detectCores()-2))
 	mosy_eq$lambda_v <- lambda_v
-	
+
 	cat(" --- done calculating equilibrium values for mosquito population --- \n")
 
 	return(

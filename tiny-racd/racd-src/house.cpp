@@ -174,7 +174,7 @@ void update_biting(house_vector& houses){
     /* Z for each house */
     update_Z(hh);
 
-    double psi_h = GLOBAL_PSI[hh->id];
+    double psi_h = psi[hh->id];
 
     /* global CC is weighted average of household level C's */
     CC += psi_h * hh->C;
@@ -302,6 +302,8 @@ void one_day_births(house_vector& houses){
         0.,
         0.,
         (PM * ICA18_22),
+        0.,
+        0.,
         phi,
         1.,
         1.,
