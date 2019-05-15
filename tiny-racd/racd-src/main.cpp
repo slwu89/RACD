@@ -25,146 +25,6 @@ using mosquito_ptr = std::unique_ptr<mosquitos>;
 
 // IF WEIRD BUGS OCCUR CHANGE AROUND THE ORDER OF PLUGINS
 
-// /* shamelessly "referenced" from Knuth, The Art of Computer Programming Vol 2, section 4.2.2 */
-// // the mean immunity among 18-22 year olds
-// inline double mean_ICA18_22(){
-//   double avg = 0.;
-//   int t = 1;
-//   for (auto& hh : houses) {
-//     for(auto& h : hh->humans){
-//       if((h->age >= 18.) && (h->age < 22.)){
-//         avg += (h->ICA - avg) / t;
-//         ++t;
-//       }
-//     }
-//   }
-//   // weird hack if there aren't any 18-22 yr olds
-//   // just take avg ICA of entire pop
-//   if(avg < 0.001){
-//     avg = 0.;
-//     t = 1;
-//     for (auto& hh : houses) {
-//       for(auto& h : hh->humans){
-//         avg += (h->ICA - avg) / t;
-//         ++t;
-//       }
-//     }
-//   }
-//   return avg;
-// }
-
-
-// population level tracking
-
-// // track states
-// inline void track_state(){
-//
-//   for(auto& hh : houses){
-//     for(auto& h : hh->humans){
-//       if(h->state.compare("S") == 0){
-//         state_S.at(tnow) += 1;
-//       } else if(h->state.compare("E") == 0){
-//         state_E.at(tnow) += 1;
-//       } else if(h->state.compare("T") == 0){
-//         state_T.at(tnow) += 1;
-//       } else if(h->state.compare("D") == 0){
-//         state_D.at(tnow) += 1;
-//       } else if(h->state.compare("A") == 0){
-//         state_A.at(tnow) += 1;
-//       } else if(h->state.compare("U") == 0){
-//         state_U.at(tnow) += 1;
-//       } else if(h->state.compare("P") == 0){
-//         state_P.at(tnow) += 1;
-//       } else {
-//         Rcpp::stop("incorrect state detected");
-//       }
-//     }
-//   }
-//
-// }
-//
-// // track age group
-// inline void track_age(){
-//
-//   for(auto& hh : houses){
-//     for(auto& h : hh->humans){
-//
-//       if((h->age >= 2.) && (h->age < 10.)){
-//         num_2_10.at(tnow) += 1;
-//       }
-//       if(h->age < 5.) {
-//         num_0_5.at(tnow) += 1;
-//       } else if((h->age >= 5.) && (h->age < 10.)){
-//         num_5_10.at(tnow) += 1;
-//       } else if((h->age >= 10.) && (h->age < 15.)){
-//         num_10_15.at(tnow) += 1;
-//       } else if(h->age >= 15.){
-//         num_15Plus.at(tnow) += 1;
-//       }
-//
-//       num_All.at(tnow) += 1;
-//
-//     }
-//   }
-//
-// };
-
-
-// // daily births
-// inline void one_day_births(){
-//
-//   size_t hpop = num_All.at(tnow);
-//   double mu = parameters.at("mu");
-//
-//   size_t nbirth = (size_t)R::rbinom((double)hpop, mu);
-//
-//   if(nbirth > 0){
-//
-//     double ICA18_22 = mean_ICA18_22();
-//
-//     double sigma2 = parameters.at("sigma2");
-//
-//     double PM = parameters.at("PM");
-//
-//     double phi0 = parameters.at("phi0");
-//     double phi1 = parameters.at("phi1");
-//     double kappaC = parameters.at("kappaC");
-//     double IC0 = parameters.at("IC0");
-//
-//     for(size_t i=0; i<nbirth; i++){
-//
-//       // put newborns in the smallest houses for ... reasons
-//       size_t smallest_hh = std::distance(houses.begin(),std::min_element(houses.begin(), houses.end(), [](auto& hh1, auto& hh2) {
-//         return hh1->n < hh2->n;
-//       }));
-//
-//       // sample this person's biting heterogeneity
-//       double zeta = R::rlnorm(-sigma2/2., std::sqrt(sigma2));
-//
-//       // P(clinical disease | infection)
-//       double phi = phi0 * (phi1 + ((1. - phi1)/(1. + std::pow(PM*ICA18_22/IC0,kappaC))));
-//
-//       // put the human in their new home
-//       houses.at(smallest_hh)->humans.emplace_back(std::make_unique<human>(
-//         0.,
-//         houses.at(smallest_hh).get(),
-//         zeta,
-//         0.,
-//         0.,
-//         0.,
-//         (PM * ICA18_22),
-//         phi,
-//         1.,
-//         1.,
-//         1.,
-//         "S"
-//       ));
-//
-//     }
-//
-//   }
-//
-// }
 
 
 // simulation will look something like this
@@ -186,7 +46,7 @@ using mosquito_ptr = std::unique_ptr<mosquitos>;
 
 
 // [[Rcpp::export]]
-void tiny_racd(
+Rcpp::List tiny_racd(
   const Rcpp::List& humans_param,
   const Rcpp::List& house_param,
   const Rcpp::List& mosy_param,
@@ -198,7 +58,6 @@ void tiny_racd(
 
   /* clear global variables */
   reset_globals(tmax);
-
   houses.clear();
 
   /* put parameters in hash table */
@@ -287,22 +146,68 @@ void tiny_racd(
     // update house -> mosy state variables
     update_biting(houses);
 
-    // run mosquito biting (mosy -> house transmission)
+    // run mosquito biting (mosy -> house transmission but to global)
     feeding_cycle(mosy_pop);
+
+    // mosy -> house
+    update_EIR(houses);
 
     // AFTER THIS POINT HUMANS/MOSY ARE CONDITIONALLY INDEPENDENT OF EACH OTHER
 
     // mosquito sim
     euler_step(mosy_pop);
 
+    // human simulation functions
+    one_day_update(houses);
+    one_day_births(houses);
+    one_day_deaths(houses);
 
     // bookkeeping before we move on
     pb.increment();
     tnow++;
   }
 
-
   Rcpp::Rcout << std::endl << " --- end simulation --- " << std::endl;
 
+  // return output
+  Rcpp::DataFrame state = Rcpp::DataFrame::create(
+    Rcpp::Named("S") = Rcpp::wrap(state_S),
+    Rcpp::Named("E") = Rcpp::wrap(state_E),
+    Rcpp::Named("T") = Rcpp::wrap(state_T),
+    Rcpp::Named("D") = Rcpp::wrap(state_D),
+    Rcpp::Named("A") = Rcpp::wrap(state_A),
+    Rcpp::Named("U") = Rcpp::wrap(state_U),
+    Rcpp::Named("P") = Rcpp::wrap(state_P)
+  );
 
+  Rcpp::DataFrame age = Rcpp::DataFrame::create(
+    Rcpp::Named("all") = Rcpp::wrap(num_All),
+    Rcpp::Named("2_10") = Rcpp::wrap(num_2_10),
+    Rcpp::Named("0_5") = Rcpp::wrap(num_0_5),
+    Rcpp::Named("5_10") = Rcpp::wrap(num_5_10),
+    Rcpp::Named("10_15") = Rcpp::wrap(num_10_15),
+    Rcpp::Named("15+") = Rcpp::wrap(num_15Plus)
+  );
+
+  Rcpp::DataFrame clinic = Rcpp::DataFrame::create(
+    Rcpp::Named("all") = Rcpp::wrap(cinc_All),
+    Rcpp::Named("2_10") = Rcpp::wrap(cinc_2_10),
+    Rcpp::Named("0_5") = Rcpp::wrap(cinc_0_5),
+    Rcpp::Named("5_10") = Rcpp::wrap(cinc_5_10),
+    Rcpp::Named("10_15") = Rcpp::wrap(cinc_10_15),
+    Rcpp::Named("15+") = Rcpp::wrap(cinc_15Plus)
+  );
+
+  Rcpp::DataFrame mosy = Rcpp::DataFrame::create(
+    Rcpp::Named("S") = Rcpp::wrap(mosy_S),
+    Rcpp::Named("E") = Rcpp::wrap(mosy_E),
+    Rcpp::Named("I") = Rcpp::wrap(mosy_I)
+  );
+
+  return Rcpp::List::create(
+    Rcpp::Named("state") = state,
+    Rcpp::Named("age") = age,
+    Rcpp::Named("clinical_incidence") = clinic,
+    Rcpp::Named("mosy") = mosy
+  );
 };

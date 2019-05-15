@@ -143,6 +143,9 @@ void normalize_pi(house_ptr& hh){
 
 // for the global landscape
 
+// update global interface for mosquitos: THIS IS THE FUNCTION TO CALL (others are helpers)
+// HUMAN -> MOSY
+
 // this function updates (in order):
 // pi for each house
 // C for each house
@@ -182,12 +185,21 @@ void update_biting(house_vector& houses){
 
 };
 
+// MOSY -> HUMAN (after running feeding_cycle)
+void update_EIR(house_vector& houses){
+
+  for(size_t i=0; i<houses.size(); i++){
+    houses[i]->EIR = EIR[i];
+  }
+
+};
+
 
 /* ################################################################################
 #   Interventions
 ################################################################################ */
 
-void update_interventions(house_ptr& hh){
+void update_interventions_house(house_ptr& hh){
   if(hh->IRS && tnow > hh->IRS_time_off){
     hh->IRS = false;
   }
@@ -306,7 +318,22 @@ void one_day_births(house_vector& houses){
 ################################################################################ */
 
 // update the dynamics of a single dwelling
-void one_day_update_house(house_ptr& hh){};
+void one_day_update_house(house_ptr& hh){
+
+  for(auto& h : hh->humans){
+    one_day_update_human(h);
+  }
+
+};
 
 // the update for all humans/dwellings
-void one_day_update(house_vector& houses){};
+void one_day_update(house_vector& houses){
+
+  for(auto& hh : houses){
+    // simulate the humans
+    one_day_update_house(hh);
+    // update interventions at this house
+    update_interventions_house(hh);
+  }
+
+};

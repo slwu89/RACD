@@ -88,14 +88,18 @@ void update_Z(house_ptr& hh);
 void normalize_pi(house_ptr& hh);
 
 // update global interface for mosquitos: THIS IS THE FUNCTION TO CALL (others are helpers)
+// HUMAN -> MOSY
 void update_biting(house_vector& houses);
+
+// MOSY -> HUMAN (after running feeding_cycle)
+void update_EIR(house_vector& houses);
 
 
 /* ################################################################################
 #   Interventions
 ################################################################################ */
 
-void update_interventions(house_ptr& hh);
+void update_interventions_house(house_ptr& hh);
 
 void apply_IRS(house_ptr& hh);
 

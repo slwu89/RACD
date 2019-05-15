@@ -590,7 +590,7 @@ void one_day_update_human(human_ptr& human){
     update_pi(human);
 
     // update interventions
-    update_interventions(human);
+    update_interventions_human(human);
 
   }
 
@@ -602,7 +602,7 @@ void one_day_update_human(human_ptr& human){
 ################################################################################ */
 
 // called before exiting daily update; check if interventions expire
-void update_interventions(human_ptr& human){
+void update_interventions_human(human_ptr& human){
 
   if(human->ITN && tnow >= human->ITN_time_off){
     human->ITN = false;

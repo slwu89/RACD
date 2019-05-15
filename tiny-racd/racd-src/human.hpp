@@ -208,7 +208,7 @@ void one_day_update_human(human_ptr& human);
 ################################################################################ */
 
 // called before exiting daily update; check if interventions expire
-void update_interventions(human_ptr& human);
+void update_interventions_human(human_ptr& human);
 
 void give_ITN(human_ptr& human);
 
