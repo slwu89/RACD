@@ -52,6 +52,15 @@ theta_mosy <- c(
 
 )
 
+# derived entomological parameters
+with(as.list(theta_mosy),{
+
+  delta <- 1/(tau1+tau2) # Inverse of gonotrophic cycle without ITNs/IRS
+  e_ov <- beta*(exp(muV/delta)-1)/muV # Number of eggs per oviposition per mosquito
+
+  theta_mosy["eggOV"] <<- e_ov
+})
+
 
 theta_human <- c(
 	## Variable model parameters:
@@ -116,4 +125,14 @@ theta_human <- c(
 	meanAge = 17.4 # Mean age in Tanzania (males and females, years)
 ) # Number of houses per breeding site
 
-RACD_theta <- c(theta_mosy,theta_human)
+theta_int <- c(
+  IRS_decay = 1/200,
+  ITN_decay = 1/200
+)
+
+# derived parameters
+with(as.list(theta_human),{
+  theta_mosy["mu"] <<- 1/(meanAge*365)
+})
+
+RACD_theta <- c(theta_mosy,theta_human,theta_int)

@@ -21,6 +21,9 @@
 #include <unordered_map>
 #include <algorithm>
 
+// // declare the globals
+// struct globals;
+// using globals_ptr = std::unique_ptr<globals>;
 
 // declare the human
 struct human;

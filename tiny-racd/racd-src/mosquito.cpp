@@ -18,6 +18,12 @@
 
 /* constructor & destructor */
 mosquitos::mosquitos(const int EL_, const int LL_, const int PL_, const int SV_, const int EV_, const int IV_, const double K_) :
+  EL_probs{0,0,0}, EL_transitions{0,0,0},
+  LL_probs{0,0,0}, LL_transitions{0,0,0},
+  PL_probs{0,0,0,0}, PL_transitions{0,0,0,0},
+  SV_probs{0,0,0}, SV_transitions{0,0,0},
+  EV_probs{0,0,0}, EV_transitions{0,0,0},
+  IV_probs{0,0}, IV_transitions{0,0},
   EL(EL_), LL(LL_), PL(PL_), SV(SV_), EV(EV_), IV(IV_), K(K_)
 {};
 
@@ -64,7 +70,8 @@ void feeding_cycle(mosquito_ptr& mosy){
   double p10 = std::exp(-muV*tau1);
   mosy->p1 = p10*mosy->W/(1.0 - mosy->Z*p10);
   mosy->p2 = std::exp(-muV*tau2);
-  mosy->mu = -mosy->f*std::log(mosy->p1*mosy->p1);
+  double p12 = std::pow(mosy->p1 * mosy->p2, mosy->f);
+  mosy->mu = -std::log(p12); // I FUCKED UP THIS EQUATION
 
   /* proportion of successful bites on humans & HBR */
   mosy->Q = 1.0 - ((1.0 - Q0)/mosy->W);
@@ -76,11 +83,31 @@ void feeding_cycle(mosquito_ptr& mosy){
   /* calculate FOI (h->m) */
   mosy->lambdaV = mosy->a*CC;
 
+  Rcpp::Rcout << "mosy->W: " << mosy->W << "\n";
+  Rcpp::Rcout << "mosy->Z: " << mosy->Z << "\n";
+  Rcpp::Rcout << "mosy->f: " << mosy->f << "\n";
+  Rcpp::Rcout << "mosy->a: " << mosy->a << "\n";
+  Rcpp::Rcout << "mosy->mu: " << mosy->mu << "\n";
+  Rcpp::Rcout << "mosy->beta: " << mosy->beta << "\n";
+  Rcpp::Rcout << "mosy->lambdaV: " << mosy->lambdaV << "\n";
+
   /* calculate EIR (m->h) */
   double bites = mosy->a * (double)mosy->IV * dt;
-  for(size_t h=0; h<psi.size(); h++){
-    EIR.at(h) = psi.at(h) * bites;
+
+  // for(size_t h=0; h<GLOBAL_PSI.size(); h++){
+  for(size_t h=0; h<NHOUSE; h++){
+    EIR.at(h) = GLOBAL_PSI.at(h) * bites;
   }
+
+  // // MAKE SURE STUFF IS DEFINED
+  // Rcpp::Rcout << "mosy->W: " << mosy->W << "\n";
+  // Rcpp::Rcout << "mosy->Z: " << mosy->Z << "\n";
+  // Rcpp::Rcout << "mosy->f: " << mosy->f << "\n";
+  // Rcpp::Rcout << "mosy->mu: " << mosy->mu << "\n";
+  // Rcpp::Rcout << "mosy->Q: " << mosy->Q << "\n";
+  // Rcpp::Rcout << "mosy->a: " << mosy->a << "\n";
+  // Rcpp::Rcout << "mosy->beta: " << mosy->beta << "\n";
+  // Rcpp::Rcout << "mosy->lambdaV: " << mosy->lambdaV << "\n";
 
 };
 

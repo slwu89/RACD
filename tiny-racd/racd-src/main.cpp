@@ -56,8 +56,10 @@ Rcpp::List tiny_racd(
 
   Rcpp::Rcout << " --- initializing global variables and parameters --- " << std::endl;
 
+  size_t nhouse = house_param.size();
+
   /* clear global variables */
-  reset_globals(tmax);
+  reset_globals(tmax,nhouse);
   houses.clear();
 
   /* put parameters in hash table */
@@ -71,20 +73,29 @@ Rcpp::List tiny_racd(
   Rcpp::Rcout << " --- initializing simulation objects in memory --- " << std::endl;
 
   /* make the houses */
-  size_t nhouse = house_param.size();
-  psi.reserve(nhouse);
-  EIR.reserve(nhouse);
   for(size_t i=0; i<nhouse; i++){
+
+    // EIR.emplace_back(0.);
+    EIR[i] = 0.12+i;
 
     /* biting weight */
     double psi_i = Rcpp::as<double>(Rcpp::as<Rcpp::List>(house_param[i])["psi"]);
-    psi.emplace_back(psi_i);
+    Rcpp::Rcout << "psi_i " << psi_i << "\n";
+
+    // GLOBAL_PSI.emplace_back(0.);
+    GLOBAL_PSI[i] = (double)psi_i;
+
+
+    Rcpp::Rcout << "EIR[i]: " << EIR[i] << " psi[i]: " << GLOBAL_PSI[i] << "\n";
 
     /* make the house */
     houses.emplace_back(
       std::make_unique<house>(i)
     );
   }
+
+  Rcpp::Rcout << "EIR.size(): " << EIR.size() << " psi.size(): " << GLOBAL_PSI.size() << "\n";
+  Rcpp::Rcout << "houses.size(): " << houses.size() << "\n";
 
   /* make the mosquitos */
   mosquito_ptr mosy_pop = std::make_unique<mosquitos>(
@@ -115,6 +126,7 @@ Rcpp::List tiny_racd(
         Rcpp::as<double>(hum_i["prDetectAMic"]),
         Rcpp::as<double>(hum_i["prDetectAPCR"]),
         Rcpp::as<double>(hum_i["prDetectUPCR"]),
+        Rcpp::as<double>(hum_i["c"]),
         Rcpp::as<std::string>(hum_i["state"])
       )
     );
@@ -136,26 +148,40 @@ Rcpp::List tiny_racd(
       }
     }
 
+    // Rcpp::Rcout << "tracking human output\n";
+
     // track human output
     track_state(houses);
     track_age(houses);
 
+    // Rcpp::Rcout << "tracking mosquito output\n";
+
     // track mosquito output
     track_mosquito(mosy_pop);
+
+    // Rcpp::Rcout << "update house -> mosy state variables\n";
 
     // update house -> mosy state variables
     update_biting(houses);
 
+    // Rcpp::Rcout << "run mosquito biting (mosy -> house transmission but to global)\n";
+
     // run mosquito biting (mosy -> house transmission but to global)
     feeding_cycle(mosy_pop);
+
+    // Rcpp::Rcout << "mosy -> house\n";
 
     // mosy -> house
     update_EIR(houses);
 
     // AFTER THIS POINT HUMANS/MOSY ARE CONDITIONALLY INDEPENDENT OF EACH OTHER
 
+    // Rcpp::Rcout << "mosquito sim\n";
+
     // mosquito sim
     euler_step(mosy_pop);
+
+    // Rcpp::Rcout << "human simulation functions\n";
 
     // human simulation functions
     one_day_update(houses);
@@ -171,6 +197,7 @@ Rcpp::List tiny_racd(
 
   // return output
   Rcpp::DataFrame state = Rcpp::DataFrame::create(
+    Rcpp::Named("time") = Rcpp::wrap(time_out),
     Rcpp::Named("S") = Rcpp::wrap(state_S),
     Rcpp::Named("E") = Rcpp::wrap(state_E),
     Rcpp::Named("T") = Rcpp::wrap(state_T),
@@ -181,6 +208,7 @@ Rcpp::List tiny_racd(
   );
 
   Rcpp::DataFrame age = Rcpp::DataFrame::create(
+    Rcpp::Named("time") = Rcpp::wrap(time_out),
     Rcpp::Named("all") = Rcpp::wrap(num_All),
     Rcpp::Named("2_10") = Rcpp::wrap(num_2_10),
     Rcpp::Named("0_5") = Rcpp::wrap(num_0_5),
@@ -190,6 +218,7 @@ Rcpp::List tiny_racd(
   );
 
   Rcpp::DataFrame clinic = Rcpp::DataFrame::create(
+    Rcpp::Named("time") = Rcpp::wrap(time_out),
     Rcpp::Named("all") = Rcpp::wrap(cinc_All),
     Rcpp::Named("2_10") = Rcpp::wrap(cinc_2_10),
     Rcpp::Named("0_5") = Rcpp::wrap(cinc_0_5),
@@ -199,6 +228,7 @@ Rcpp::List tiny_racd(
   );
 
   Rcpp::DataFrame mosy = Rcpp::DataFrame::create(
+    Rcpp::Named("time") = Rcpp::wrap(time_out),
     Rcpp::Named("S") = Rcpp::wrap(mosy_S),
     Rcpp::Named("E") = Rcpp::wrap(mosy_E),
     Rcpp::Named("I") = Rcpp::wrap(mosy_I)

@@ -45,6 +45,9 @@ std::vector<size_t> mosy_S;
 std::vector<size_t> mosy_E;
 std::vector<size_t> mosy_I;
 
+// other output
+std::vector<size_t> time_out;
+
 // parameters
 std::unordered_map<std::string,double> parameters;
 
@@ -57,8 +60,10 @@ size_t global_hid;
 // transmission: mosy -> human
 
 // psi (biting weights) and EIR for each house
-std::vector<double>   psi;
+std::vector<double>   GLOBAL_PSI;
 std::vector<double>   EIR;
+
+size_t NHOUSE;
 
 // transmission: human -> mosy
 

@@ -524,8 +524,8 @@ ggplot() +
 int_pars <- list(
   ITNcov = 0.5, # ITN coverage
   IRScov = 0.25, # IRS coverave
-  time_ITN_on = 250, # When ITNs are applied (days)
-  time_IRS_on = 500 # When IRS is applied (days)
+  time_ITN_on = 1e4, # When ITNs are applied (days)
+  time_IRS_on = 1e4 # When IRS is applied (days)
 )
 
 

@@ -33,6 +33,7 @@ human::human(const double age_,
       const double prDetectAMic_,
       const double prDetectAPCR_,
       const double prDetectUPCR_,
+      const double c_,
       const std::string state_) :
       id(global_hid),
       age(age_),
@@ -49,13 +50,12 @@ human::human(const double age_,
       prDetectAMic(prDetectAMic_),
       prDetectAPCR(prDetectAPCR_),
       prDetectUPCR(prDetectUPCR_),
-      c(0.),
+      c(c_),
       state(state_),
       days_latent(0),
       ITN(false),
       ITN_time_off(0.)
 {
-
   // after we take our id, increment for the next person!
   global_hid++;
 
@@ -590,6 +590,7 @@ void one_day_update_human(human_ptr& human){
     update_pi(human);
 
     // update interventions
+
     update_interventions_human(human);
 
   }

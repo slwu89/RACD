@@ -35,6 +35,8 @@ house::~house(){};
 
 void track_state(const house_vector& houses){
 
+  time_out.at(tnow) = tnow;
+
   for(auto& hh : houses){
     for(auto& h : hh->humans){
       if(h->state.compare("S") == 0){
@@ -157,6 +159,7 @@ void update_biting(house_vector& houses){
   CC = 0.;
   WW = 0.;
   ZZ = 0.;
+
   for(auto& hh : houses){
 
     /* normalize biting weights (pi) */
@@ -171,7 +174,7 @@ void update_biting(house_vector& houses){
     /* Z for each house */
     update_Z(hh);
 
-    double psi_h = psi.at(hh->id);
+    double psi_h = GLOBAL_PSI[hh->id];
 
     /* global CC is weighted average of household level C's */
     CC += psi_h * hh->C;
@@ -303,6 +306,7 @@ void one_day_births(house_vector& houses){
         1.,
         1.,
         1.,
+        0.,
         "S"
       ));
 

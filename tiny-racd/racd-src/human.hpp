@@ -65,6 +65,7 @@ typedef struct human {
         const double prDetectAMic_,
         const double prDetectAPCR_,
         const double prDetectUPCR_,
+        const double c_,
         const std::string state_);
   ~human();
 } human;

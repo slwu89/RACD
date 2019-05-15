@@ -81,19 +81,21 @@ state_initial <- function(a, EIR, theta){
 }
 
 # initial infectivity to mosquitos
-c_initial <- function(human){
-	switch(human$state,
-		S = {return(0)},
-		E = {return(0)},
-		T = {return(cT)},
-		D = {return(cD)},
-		A = {
-			c = cU + (cD - cU)*(human$prDetectAMic^gammaI)
-			return(c)
-		},
-		U = {return(cU)},
-		P = {return(0)}
-		)
+c_initial <- function(human,theta){
+	with(as.list(theta),{
+		switch(human$state,
+			S = {return(0)},
+			E = {return(0)},
+			T = {return(cT)},
+			D = {return(cD)},
+			A = {
+				c = cU + (cD - cU)*(human$prDetectAMic^gammaI)
+				return(c)
+			},
+			U = {return(cU)},
+			P = {return(0)}
+			)
+	})
 }
 
 
@@ -101,7 +103,7 @@ RACD_Setup <- function(N, EIR_mean, xy_d, xy_a, theta){
 
 	# extract variables that we need and assign here
 	invisible(mapply(FUN = function(val,name){
-    assign(x = name,value = val,pos = 1)
+    assign(x = name,value = val,envir = sys.frame(1))
 	},val = unname(theta),name = names(theta)))
 
 	theta[["mu"]] <- mu <- 1/(meanAge*365) # Daily death rate as a function of mean age in years
@@ -121,11 +123,11 @@ RACD_Setup <- function(N, EIR_mean, xy_d, xy_a, theta){
 
 	pi_vec <- rep(0,N) # pi for each person
 	pi_house <- rep(0,numD) # summed pi for each house
-	
+
 	houses <- mapply(FUN = function(psii,nn){
 	  list(psi=psii,n=nn)
 	},psii=psi_house,nn=household_sizes,SIMPLIFY = FALSE)
-	
+
 
 	humans <- vector("list",N)
 	for (j in 1:N) {
@@ -187,7 +189,7 @@ RACD_Setup <- function(N, EIR_mean, xy_d, xy_a, theta){
 		humans[[j]]$ICM <- ICM
 		humans[[j]]$epsilon <- epsilon
 		humans[[j]]$lambda <- lambda
-		
+
 		# P(clinical disease | infection)
 		humans[[j]]$phi <- phi0 * (phi1 + ((1 - phi1)/(1 + ((ICA+ICM)/IC0)^kappaC)))
 
@@ -203,7 +205,7 @@ RACD_Setup <- function(N, EIR_mean, xy_d, xy_a, theta){
 		humans[[j]]$state <- sample(x=names(init_s), size=1, prob = init_s)
 
 		# initial infectivity to mosquito
-		humans[[j]]$c <- c_initial(humans[[j]])
+		humans[[j]]$c <- c_initial(humans[[j]],theta)
 
 		setTxtProgressBar(pb, j)
 	}
@@ -253,7 +255,7 @@ RACD_Setup <- function(N, EIR_mean, xy_d, xy_a, theta){
 
 	# solve the mosquitos at equilibrium
 	cat("\n --- begin calculating equilibrium values for mosquito population --- \n")
-
+	cat("Iv_eq: ",Iv_eq," lambdaV: ",lambda_v,"\n")
 	mosy_eq <- RACD_mosq_equilibrium(theta = theta,dt = 1,IV = Iv_eq,lambdaV = lambda_v,cores=max(2,parallel::detectCores()-2))
 
 	cat(" --- done calculating equilibrium values for mosquito population --- \n")
@@ -268,4 +270,4 @@ RACD_Setup <- function(N, EIR_mean, xy_d, xy_a, theta){
 	)
 }
 
-RACD_init <- RACD_Setup(N = 200,EIR_mean = 0.05,xy_d = dwell_df,xy_a = aqua_df,theta = RACD_theta)
+# RACD_init <- RACD_Setup(N = 200,EIR_mean = 0.05,xy_d = dwell_df,xy_a = aqua_df,theta = RACD_theta)
