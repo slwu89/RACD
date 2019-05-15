@@ -148,40 +148,26 @@ Rcpp::List tiny_racd(
       }
     }
 
-    // Rcpp::Rcout << "tracking human output\n";
-
     // track human output
     track_state(houses);
     track_age(houses);
 
-    // Rcpp::Rcout << "tracking mosquito output\n";
-
     // track mosquito output
     track_mosquito(mosy_pop);
-
-    // Rcpp::Rcout << "update house -> mosy state variables\n";
 
     // update house -> mosy state variables
     update_biting(houses);
 
-    // Rcpp::Rcout << "run mosquito biting (mosy -> house transmission but to global)\n";
-
     // run mosquito biting (mosy -> house transmission but to global)
     feeding_cycle(mosy_pop);
-
-    // Rcpp::Rcout << "mosy -> house\n";
 
     // mosy -> house
     update_EIR(houses);
 
     // AFTER THIS POINT HUMANS/MOSY ARE CONDITIONALLY INDEPENDENT OF EACH OTHER
 
-    // Rcpp::Rcout << "mosquito sim\n";
-
     // mosquito sim
     euler_step(mosy_pop);
-
-    // Rcpp::Rcout << "human simulation functions\n";
 
     // human simulation functions
     one_day_update(houses);

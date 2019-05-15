@@ -83,14 +83,6 @@ void feeding_cycle(mosquito_ptr& mosy){
   /* calculate FOI (h->m) */
   mosy->lambdaV = mosy->a*CC;
 
-  Rcpp::Rcout << "mosy->W: " << mosy->W << "\n";
-  Rcpp::Rcout << "mosy->Z: " << mosy->Z << "\n";
-  Rcpp::Rcout << "mosy->f: " << mosy->f << "\n";
-  Rcpp::Rcout << "mosy->a: " << mosy->a << "\n";
-  Rcpp::Rcout << "mosy->mu: " << mosy->mu << "\n";
-  Rcpp::Rcout << "mosy->beta: " << mosy->beta << "\n";
-  Rcpp::Rcout << "mosy->lambdaV: " << mosy->lambdaV << "\n";
-
   /* calculate EIR (m->h) */
   double bites = mosy->a * (double)mosy->IV * dt;
 
@@ -98,16 +90,6 @@ void feeding_cycle(mosquito_ptr& mosy){
   for(size_t h=0; h<NHOUSE; h++){
     EIR.at(h) = GLOBAL_PSI.at(h) * bites;
   }
-
-  // // MAKE SURE STUFF IS DEFINED
-  // Rcpp::Rcout << "mosy->W: " << mosy->W << "\n";
-  // Rcpp::Rcout << "mosy->Z: " << mosy->Z << "\n";
-  // Rcpp::Rcout << "mosy->f: " << mosy->f << "\n";
-  // Rcpp::Rcout << "mosy->mu: " << mosy->mu << "\n";
-  // Rcpp::Rcout << "mosy->Q: " << mosy->Q << "\n";
-  // Rcpp::Rcout << "mosy->a: " << mosy->a << "\n";
-  // Rcpp::Rcout << "mosy->beta: " << mosy->beta << "\n";
-  // Rcpp::Rcout << "mosy->lambdaV: " << mosy->lambdaV << "\n";
 
 };
 

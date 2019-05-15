@@ -20,7 +20,7 @@ source(here("racd-setup.R"))
 # just a test; dead simple model
 dwell_df <- data.frame(x=c(1,2),y=c(1,2),psi=rep(0.5,2))
 aqua_df <- data.frame(x=1,y=1)
-RACD_init <- RACD_Setup(N = 200,EIR_mean = 0.05,xy_d = dwell_df,xy_a = aqua_df,theta = RACD_theta)
+RACD_init <- RACD_Setup(N = 2000,EIR_mean = 0.05,xy_d = dwell_df,xy_a = aqua_df,theta = RACD_theta)
 
 # model diagnostics
 library(ggplot2)
@@ -69,6 +69,10 @@ ggplot(data = melt(RACD_out$state,id.vars="time")) +
   theme_bw()
 
 ggplot(data = melt(RACD_out$age,id.vars="time")) +
+  geom_line(aes(x=time,y=value,color=variable)) +
+  theme_bw()
+
+ggplot(data = melt(RACD_out$clinical_incidence,id.vars="time")) +
   geom_line(aes(x=time,y=value,color=variable)) +
   theme_bw()
 
