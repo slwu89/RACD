@@ -72,7 +72,9 @@ human::human(const double age_,
 
 };
 
-human::~human(){};
+human::~human(){
+  // Rcpp::Rcout << "human: " << id << " is dying because they are dead: " << alive << " in house: " << house_ptr->id << "\n";
+};
 
 
 /* ################################################################################

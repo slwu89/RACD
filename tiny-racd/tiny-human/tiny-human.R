@@ -17,7 +17,7 @@ library(here)
 library(ggplot2)
 library(RColorBrewer)
 
-Rcpp::sourceCpp("tiny-racd/tiny-human.cpp")
+Rcpp::sourceCpp(here("tiny-human/tiny-human.cpp"))
 
 ##############################################################################
 ## Functions for calculating levels of immunity when the simulation starts: ##
@@ -731,7 +731,7 @@ theta <- c(
 	meanNumPeoplePerHouse = 6.5, # Mean number of people per house (from Misungu data set)
 	numHousesPerBreedingSite = 5) # Number of houses per breeding site
 
-numIter <- 20*365 # Simulation over 10 years
+numIter <- 10*365 # Simulation over 10 years
 # numIter <- 365 # Simulation over 1 year
 # set.seed(6954690)
 sim1 <- malaria_ibm(theta=theta, numIter=numIter) # Runs the simulation

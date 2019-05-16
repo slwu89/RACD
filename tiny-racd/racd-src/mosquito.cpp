@@ -80,6 +80,8 @@ void feeding_cycle(mosquito_ptr& mosy){
   mosy->Q = 1.0 - ((1.0 - Q0)/mosy->W);
   mosy->a = mosy->f*mosy->Q;
 
+  // Rcpp::Rcout << "a: " << mosy->a << "\n";
+
   /* calculate egg laying rate */
   mosy->beta = eggOV*mosy->mu/(std::exp(mosy->mu/mosy->f) - 1.0);
 

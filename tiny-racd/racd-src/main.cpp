@@ -60,7 +60,6 @@ Rcpp::List tiny_racd(
 
   /* clear global variables */
   reset_globals(tmax,nhouse);
-  houses.clear();
   houses.reserve(nhouse);
 
   /* put parameters in hash table */
@@ -174,6 +173,8 @@ Rcpp::List tiny_racd(
   }
 
   Rcpp::Rcout << std::endl << " --- end simulation --- " << std::endl;
+
+  houses.clear();
 
   // return output
   Rcpp::DataFrame state = Rcpp::DataFrame::create(
