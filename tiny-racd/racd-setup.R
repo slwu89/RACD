@@ -214,7 +214,7 @@ RACD_Setup <- function(N, EIR_mean, xy_d, xy_a, theta){
 
 	# set up the mosquitos
 	cat("\n --- begin calculating mosquito gonotrophic cycle parameters --- \n")
-	browser()
+	
 	delta <- 1.0/(tau1+tau2) # Inverse of gonotrophic cycle without ITNs/IRS
   eggOV <- beta*(exp(muV/delta)-1)/muV # Number of eggs per oviposition per mosquito
 	theta["eggOV"] <- eggOV
