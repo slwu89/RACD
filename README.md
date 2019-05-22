@@ -37,9 +37,10 @@ New and changed parameters from initial version of model
 
 ## To-do
 
-  - [ ] all simulation pars need to be in a single hash-table in the village class
+  - [x] all simulation pars need to be in a single hash-table in the village class
   - [x] if its possible to have empty houses, we need to renormalize the Psi vector to give them probabiltiy 0, since all bites are conditioned on the bite going at least _somewhere_
-  - [ ] in main sim loop, don't simulate empty houses
+  - [x] in main sim loop, don't simulate empty houses
+  - [ ] develop a central "intervention manager" which houses have pointer to (so humans can tell the manager if they got sick that day, for example). This object at the end of the day can fire up interventions (RACD, MSAT, Rf VC)
   - [ ] very low priority: compartment/infectiousness fn's could be `static`, and also use lambdas for callbacks.
 
 ## Classes

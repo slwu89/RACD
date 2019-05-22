@@ -30,6 +30,7 @@ RACD_init <- RACD_Setup(N = N,EIR_mean = meanEIR,xy_d = dwell_df,xy_a = aqua_df,
 library(ggplot2)
 library(gridExtra)
 
+# basic diagnostic plots
 plot_c <- ggplot(data=data.frame(x=sapply(RACD_init$humans,function(x){x$c})))+
   geom_histogram(aes(x=x)) +
   theme_bw() +
@@ -55,6 +56,33 @@ plot_state <- ggplot(data=data.frame(x=sapply(RACD_init$humans,function(x){x$sta
   ggtitle("Initial Distribution over States")
 
 grid.arrange(plot_c,plot_phi,plot_age,plot_state)
+
+# immunity
+plot_ib <- ggplot(data=data.frame(x=sapply(RACD_init$humans,function(x){x$IB})))+
+  geom_histogram(aes(x=x)) +
+  theme_bw() +
+  xlab("IB") +
+  ggtitle("Pre-erythrocytic immunity",subtitle = "reduces the probability of infection following an infectious challenge")
+
+plot_id <- ggplot(data=data.frame(x=sapply(RACD_init$humans,function(x){x$ID})))+
+  geom_histogram(aes(x=x)) +
+  theme_bw() +
+  xlab("ID") +
+  ggtitle("Blood-stage immunity",subtitle = "reduces the probability of detection and reduces infectiousness to mosquitoes")
+
+plot_icm <- ggplot(data=data.frame(x=sapply(RACD_init$humans,function(x){x$ICM})))+
+  geom_histogram(aes(x=x)) +
+  theme_bw() +
+  xlab("ICM") +
+  ggtitle("Maternal clinical immunity",subtitle = "reduces the probability of clinical disease, acquired maternally")
+
+plot_ica <- ggplot(data=data.frame(x=sapply(RACD_init$humans,function(x){x$ICA})))+
+  geom_histogram(aes(x=x)) +
+  theme_bw() +
+  xlab("ICA") +
+  ggtitle("Acquired clinical immunity", subtitle = "reduces the probability of clinical disease, acquired from previous exposure")
+
+grid.arrange(plot_ib,plot_id,plot_icm,plot_ica)
 
 # compile the simulation
 sourceCpp(here("racd-src/main.cpp"))
