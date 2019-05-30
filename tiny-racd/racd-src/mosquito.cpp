@@ -80,26 +80,23 @@ void feeding_cycle(mosquito_ptr& mosy){
   mosy->Q = 1.0 - ((1.0 - Q0)/mosy->W);
   mosy->a = mosy->f*mosy->Q;
 
-  // Rcpp::Rcout << "a: " << mosy->a << "\n";
-
   /* calculate egg laying rate */
   mosy->beta = eggOV*mosy->mu/(std::exp(mosy->mu/mosy->f) - 1.0);
 
   /* calculate FOI (h->m) */
   mosy->lambdaV = mosy->a*CC;
 
-  // Rcpp::Rcout << "FOI on mosquito: " << mosy->lambdaV << "\n";
-
   /* calculate EIR (m->h) */
   double bites = mosy->a * (double)mosy->IV * dt;
 
-  // Rcpp::Rcout << "total EIR (bites): " << bites << "\n";
-
-  // for(size_t h=0; h<psi.size(); h++){
   for(size_t h=0; h<NHOUSE; h++){
     EIR.at(h) = psi.at(h) * bites;
   }
 
+  // debugging
+  if(tnow < 30){
+    Rcpp::Rcout << " --- W: " << mosy->W << " C: " << CC << " Z: " << mosy->Z << " mu: " << mosy->mu << " Q0: " << Q0 << " bites: " << bites << " --- \n";
+  }
 };
 
 // one-day update function

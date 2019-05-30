@@ -214,7 +214,7 @@ RACD_Setup <- function(N, EIR_mean, xy_d, xy_a, theta){
 
 	# set up the mosquitos
 	cat("\n --- begin calculating mosquito gonotrophic cycle parameters --- \n")
-	
+
 	delta <- 1.0/(tau1+tau2) # Inverse of gonotrophic cycle without ITNs/IRS
   eggOV <- beta*(exp(muV/delta)-1)/muV # Number of eggs per oviposition per mosquito
 	theta["eggOV"] <- eggOV
@@ -244,7 +244,8 @@ RACD_Setup <- function(N, EIR_mean, xy_d, xy_a, theta){
 	a <- f*Q
 
 	# calculate FOI on mosquitos
-	lambda_v <- a * sum(pi_vec * c_vec * w_vec)
+	C <- sum(pi_vec * c_vec * w_vec)
+	lambda_v <- a * C
 
 	# egg laying rate
 	betaC <- eggOV*mu/(exp(mu/f) - 1)
@@ -258,6 +259,13 @@ RACD_Setup <- function(N, EIR_mean, xy_d, xy_a, theta){
 
 	mosy_eq <- RACD_mosq_equilibrium(theta = theta,dt = 1,IV = Iv_eq,lambdaV = lambda_v,cores=max(2,parallel::detectCores()-2))
 	mosy_eq$lambda_v <- lambda_v
+
+	# assign some things to return
+	mosy_eq$W <- W
+	mosy_eq$Z <- Z
+	mosy_eq$mu <- mu
+	mosy_eq$Q0 <- Q0
+	mosy_eq$C <- C
 
 	cat(" --- done calculating equilibrium values for mosquito population --- \n")
 

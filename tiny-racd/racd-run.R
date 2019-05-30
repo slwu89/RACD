@@ -113,7 +113,7 @@ ggplot(data = melt(RACD_out$trans[,-2],id.vars = c("time","EIR_mean","EIR_var"))
   geom_line(aes(x=time,y=EIR_mean)) +
   theme_bw()
 
-plot_outFOI <- ggplot(data = melt(RACD_out$trans,id.vars="time")) +
+plot_outFOI <- ggplot(data = melt(RACD_out$trans[,1:2],id.vars="time")) +
   geom_line(aes(x=time,y=value,color=variable)) +
   theme_bw()
 
