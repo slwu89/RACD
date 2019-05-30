@@ -56,7 +56,8 @@ extern std::vector<size_t> mosy_I;
 
 // transmision output
 extern std::vector<double> lambda_v;
-// extern std::vector<double> eir_out;
+extern std::vector<double> eir_mean;
+extern std::vector<double> eir_var;
 
 // other output
 extern std::vector<size_t> time_out;
@@ -150,9 +151,12 @@ inline void reset_mosy(const size_t tmax){
 inline void reset_transmision(const size_t tmax){
   lambda_v.clear();
   lambda_v.resize(tmax,0.);
-  //
-  // eir_out.clear();
-  // eir_out.resize(tmax,0.);
+
+  eir_mean.clear();
+  eir_mean.resize(tmax,0.);
+
+  eir_var.clear();
+  eir_var.resize(tmax,0.);
 }
 
 // reset all of the things

@@ -47,7 +47,8 @@ std::vector<size_t> mosy_I;
 
 // transmision output
 std::vector<double> lambda_v;
-// std::vector<double> eir_out;
+std::vector<double> eir_mean;
+std::vector<double> eir_var;
 
 // other output
 std::vector<size_t> time_out;

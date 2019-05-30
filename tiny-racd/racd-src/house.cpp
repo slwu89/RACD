@@ -17,13 +17,16 @@
 #include "human.hpp"
 #include "globals.hpp"
 
+#include "stats.hpp"
+
 
 /* ################################################################################
 #   constructor & destructor
 ################################################################################ */
 
-house::house(const size_t id_) :
-  id(id_), W(0.), Y(0.), Z(0.), C(0.), n(0), EIR(0), IRS(false), IRS_time_off(0.)
+house::house(const size_t id_, RunningStat* global_stat_) :
+  id(id_), W(0.), Y(0.), Z(0.), C(0.), n(0), EIR(0), IRS(false), IRS_time_off(0.),
+  global_stat(global_stat_)
 {};
 
 house::~house(){};

@@ -22,7 +22,7 @@ dwell_df <- data.frame(x=c(1,2),y=c(1,2),psi=rep(0.5,2))
 aqua_df <- data.frame(x=1,y=1)
 
 meanEIR <- 0.01
-N <- 500
+N <- 1e4
 
 RACD_init <- RACD_Setup(N = N,EIR_mean = meanEIR,xy_d = dwell_df,xy_a = aqua_df,theta = RACD_theta)
 
@@ -107,6 +107,11 @@ plot_outA <- ggplot(data = melt(RACD_out$age,id.vars="time")) +
 # ggplot(data = melt(RACD_out$clinical_incidence,id.vars="time")) +
 #   geom_line(aes(x=time,y=value,color=variable)) +
 #   theme_bw()
+
+ggplot(data = melt(RACD_out$trans[,-2],id.vars = c("time","EIR_mean","EIR_var"))) +
+  geom_ribbon(aes(x=time,ymin=pmax(EIR_mean - sqrt(EIR_var),0),ymax=EIR_mean + sqrt(EIR_var)),alpha=0.85) +
+  geom_line(aes(x=time,y=EIR_mean)) +
+  theme_bw()
 
 plot_outFOI <- ggplot(data = melt(RACD_out$trans,id.vars="time")) +
   geom_line(aes(x=time,y=value,color=variable)) +

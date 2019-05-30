@@ -2,6 +2,7 @@
 #include "house.hpp"
 #include "mosquito.hpp"
 #include "human.hpp"
+#include "stats.hpp"
 
 // [[Rcpp::plugins(cpp14)]]
 // [[Rcpp::depends(RcppProgress)]]
@@ -18,9 +19,11 @@ using house_ptr = std::unique_ptr<house>;
 using house_vector = std::vector<house_ptr>;
 static house_vector houses;
 
-
 // the mosquitos
 using mosquito_ptr = std::unique_ptr<mosquitos>;
+
+// global stats
+using RunningStat_ptr = std::unique_ptr<RunningStat>;
 
 
 // IF WEIRD BUGS OCCUR CHANGE AROUND THE ORDER OF PLUGINS
@@ -56,6 +59,8 @@ Rcpp::List tiny_racd(
 
   Rcpp::Rcout << " --- initializing global variables and parameters --- " << std::endl;
 
+  RunningStat_ptr global_stat_ptr = std::make_unique<RunningStat>();
+
   size_t nhouse = house_param.size();
 
   /* clear global variables */
@@ -83,7 +88,7 @@ Rcpp::List tiny_racd(
 
     /* make the house */
     houses.emplace_back(
-      std::make_unique<house>(i)
+      std::make_unique<house>(i,global_stat_ptr.get())
     );
   }
 
@@ -167,6 +172,11 @@ Rcpp::List tiny_racd(
     one_day_births(houses);
     one_day_deaths(houses);
 
+    // tracking before we move on
+    eir_mean.at(tnow) = global_stat_ptr->Mean();
+    eir_var.at(tnow) = global_stat_ptr->Variance();
+    global_stat_ptr->Clear();
+
     // bookkeeping before we move on
     pb.increment();
     tnow++;
@@ -217,7 +227,9 @@ Rcpp::List tiny_racd(
 
   Rcpp::DataFrame trans = Rcpp::DataFrame::create(
     Rcpp::Named("time") = Rcpp::wrap(time_out),
-    Rcpp::Named("lambda_v") = Rcpp::wrap(lambda_v)
+    Rcpp::Named("lambda_v") = Rcpp::wrap(lambda_v),
+    Rcpp::Named("EIR_mean") = Rcpp::wrap(eir_mean),
+    Rcpp::Named("EIR_var") = Rcpp::wrap(eir_var)
   );
 
   return Rcpp::List::create(

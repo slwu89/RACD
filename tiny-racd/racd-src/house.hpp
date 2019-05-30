@@ -21,9 +21,8 @@
 #include <unordered_map>
 #include <algorithm>
 
-// // declare the globals
-// struct globals;
-// using globals_ptr = std::unique_ptr<globals>;
+// gloabl online stats
+class RunningStat;
 
 // declare the human
 struct human;
@@ -52,8 +51,11 @@ typedef struct house {
 
   std::list<human_ptr>                    humans; // who lives here
 
+  // stats
+  RunningStat* const                      global_stat;
+
   // constructor & destructor
-  house(const size_t id_);
+  house(const size_t id_, RunningStat* global_stat_);
 
   ~house();
 } house;
