@@ -11,6 +11,8 @@
 #include <string>
 #include <vector>
 
+#include <unordered_map>
+
 #include <Rcpp.h>
 #include <progress.hpp>
 
@@ -24,6 +26,8 @@ using mosquito_ptr = std::unique_ptr<mosquitos>;
 
 // global stats
 using RunningStat_ptr = std::unique_ptr<RunningStat>;
+using stat_map = std::unordered_map<std::string,RunningStat_ptr>;
+using stat_map_ptr = std::unique_ptr<stat_map>;
 // using global_stats_ptr = std::unordered_map<std::string,RunningStat_ptr>;
 
 
@@ -60,7 +64,8 @@ Rcpp::List tiny_racd(
 
   Rcpp::Rcout << " --- initializing global variables and parameters --- " << std::endl;
 
-  RunningStat_ptr global_stat_ptr = std::make_unique<RunningStat>();
+  stat_map_ptr global_stats = std::make_unique<stat_map>();
+  global_stats->emplace("EIR",std::make_unique<RunningStat>());
 
   size_t nhouse = house_param.size();
 
@@ -89,7 +94,7 @@ Rcpp::List tiny_racd(
 
     /* make the house */
     houses.emplace_back(
-      std::make_unique<house>(i,global_stat_ptr.get())
+      std::make_unique<house>(i,global_stats.get())
     );
   }
 
@@ -174,9 +179,9 @@ Rcpp::List tiny_racd(
     one_day_deaths(houses);
 
     // tracking before we move on
-    eir_mean.at(tnow) = global_stat_ptr->Mean();
-    eir_var.at(tnow) = global_stat_ptr->Variance();
-    global_stat_ptr->Clear();
+    eir_mean.at(tnow) = global_stats->at("EIR")->Mean();
+    eir_var.at(tnow) = global_stats->at("EIR")->Variance();
+    global_stats->at("EIR")->Clear();
 
     // bookkeeping before we move on
     pb.increment();
