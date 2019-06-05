@@ -211,6 +211,7 @@ void update_interventions_house(house_ptr& hh){
   }
 };
 
+// spray the house
 void apply_IRS(house_ptr& hh){
 
   double IRS_decay = parameters.at("IRS_decay");
@@ -218,6 +219,82 @@ void apply_IRS(house_ptr& hh){
   hh->IRS = true;
   hh->IRS_time_off = R::rgeom(IRS_decay);
 
+};
+
+// give ITNs to everyone in the house
+void apply_ITN(house_ptr& hh){
+
+  for(auto& h : hh->humans){
+    give_ITN(h);
+  }
+
+};
+
+// apply MDA; give drugs to everyone in the house
+void apply_MDA(house_ptr& hh){
+
+  for(auto& h : hh->humans){
+    /* susceptibles, asymptomatic patent, and asymptomatic sub-patent go to P (chemoprophylaxis) */
+    if(h->state.compare("S") == 0 || h->state.compare("A") || h->state.compare("U") == 0){
+      h->state = "P";
+    /* incubating and untreated clinical episodes go to T (treated clinical) */
+    } else if(h->state.compare("E") == 0 || h->state.compare("D") == 0){
+      h->state = "T";
+    }
+  }
+
+};
+
+// apply RACD; test people via PCR, only give drugs to those who test positive
+void apply_RACD_PCR(house_ptr& hh){
+
+  for(auto& h : hh->humans){
+
+    /* untreated clinical cases are always caught */
+    if(h->state.compare("D") == 0){
+      h->state = "T";
+    /* patent asymptomatic cases: roll the dice */
+    } else if(h->state.compare("A")){
+      /* PCR test on the person */
+      if(R::runif(0.,1.) < h->prDetectAPCR){
+        h->state = "P";
+      }
+    /* sub-patent asymptomatic cases: roll the dice (just for PCR or LAMP) */
+    } else if(h->state.compare("U")){
+      /* PCR test on the person */
+      if(R::runif(0.,1.) < h->prDetectUPCR){
+        h->state = "P";
+      }
+    }
+
+  }
+
+};
+
+// apply RACD; test people via microscopy, only give drugs to those who test positive
+void apply_RACD_Mic(house_ptr& hh){
+
+  for(auto& h : hh->humans){
+
+    /* untreated clinical cases are always caught */
+    if(h->state.compare("D") == 0){
+      h->state = "T";
+    /* patent asymptomatic cases: roll the dice */
+    } else if(h->state.compare("A")){
+      /* PCR test on the person */
+      if(R::runif(0.,1.) < h->prDetectAMic){
+        h->state = "P";
+      }
+    }
+  }
+
+  /* sub-patent asymptomatic cases are invisible to microscopy */
+
+};
+
+// apply RACD; test people via LAMP, only give drugs to those who test positive
+void apply_RACD_LAMP(house_ptr& hh){
+  Rcpp::stop("can't use RACD with LAMP for Pf detection yet!");
 };
 
 

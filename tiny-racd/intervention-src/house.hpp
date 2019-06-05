@@ -108,7 +108,23 @@ void update_EIR(house_vector& houses);
 
 void update_interventions_house(house_ptr& hh);
 
+// spray the house
 void apply_IRS(house_ptr& hh);
+
+// give ITNs to everyone in the house
+void apply_ITN(house_ptr& hh);
+
+// apply MDA; give drugs to everyone in the house indiscriminately
+void apply_MDA(house_ptr& hh);
+
+// apply RACD; test people via PCR, only give drugs to those who test positive
+void apply_RACD_PCR(house_ptr& hh);
+
+// apply RACD; test people via microscopy, only give drugs to those who test positive
+void apply_RACD_Mic(house_ptr& hh);
+
+// apply RACD; test people via LAMP, only give drugs to those who test positive
+void apply_RACD_LAMP(house_ptr& hh);
 
 
 /* ################################################################################

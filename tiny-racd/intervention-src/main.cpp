@@ -28,12 +28,8 @@ using mosquito_ptr = std::unique_ptr<mosquitos>;
 using RunningStat_ptr = std::unique_ptr<RunningStat>;
 using stat_map = std::unordered_map<std::string,RunningStat_ptr>;
 using stat_map_ptr = std::unique_ptr<stat_map>;
-// using global_stats_ptr = std::unordered_map<std::string,RunningStat_ptr>;
-
 
 // IF WEIRD BUGS OCCUR CHANGE AROUND THE ORDER OF PLUGINS
-
-
 
 // simulation will look something like this
 //
@@ -49,10 +45,7 @@ using stat_map_ptr = std::unique_ptr<stat_map>;
 // update household lvl interventions
 // repeat until tnow > tmax
 
-
-
-
-
+// interface function from R
 // [[Rcpp::export]]
 Rcpp::List tiny_racd(
   const Rcpp::List& humans_param,
