@@ -49,6 +49,8 @@ std::vector<size_t> mosy_I;
 std::vector<double> lambda_v;
 std::vector<double> eir_mean;
 std::vector<double> eir_var;
+std::vector<double> lambda_h_mean;
+std::vector<double> lambda_h_var;
 
 // other output
 std::vector<size_t> time_out;

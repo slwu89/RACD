@@ -66,6 +66,7 @@ Rcpp::List tiny_racd(
 
   stat_map_ptr global_stats = std::make_unique<stat_map>();
   global_stats->emplace("EIR",std::make_unique<RunningStat>());
+  global_stats->emplace("FOI",std::make_unique<RunningStat>());
 
   size_t nhouse = house_param.size();
 
@@ -179,6 +180,8 @@ Rcpp::List tiny_racd(
     one_day_deaths(houses);
 
     // tracking before we move on
+    lambda_h_mean.at(tnow) = global_stats->at("FOI")->Mean();
+    lambda_h_var.at(tnow) = global_stats->at("FOI")->Variance();
     eir_mean.at(tnow) = global_stats->at("EIR")->Mean();
     eir_var.at(tnow) = global_stats->at("EIR")->Variance();
     global_stats->at("EIR")->Clear();
@@ -235,7 +238,9 @@ Rcpp::List tiny_racd(
     Rcpp::Named("time") = Rcpp::wrap(time_out),
     Rcpp::Named("lambda_v") = Rcpp::wrap(lambda_v),
     Rcpp::Named("EIR_mean") = Rcpp::wrap(eir_mean),
-    Rcpp::Named("EIR_var") = Rcpp::wrap(eir_var)
+    Rcpp::Named("EIR_var") = Rcpp::wrap(eir_var),
+    Rcpp::Named("lambda_h_mean") = Rcpp::wrap(lambda_h_mean),
+    Rcpp::Named("lambda_h_var") = Rcpp::wrap(lambda_h_var)
   );
 
   return Rcpp::List::create(

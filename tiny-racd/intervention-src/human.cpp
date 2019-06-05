@@ -326,6 +326,8 @@ void update_lambda(human_ptr& human){
   // track EIR values
   human->house_ptr->global_stat->at("EIR")->Push(human->epsilon);
 
+  // track lambda values
+  human->house_ptr->global_stat->at("FOI")->Push(human->lambda);
 };
 
 /* phi */

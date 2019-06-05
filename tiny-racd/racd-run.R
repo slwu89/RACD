@@ -15,7 +15,7 @@
 rm(list=ls());gc()
 
 library(here)
-source(here("racd-setup.R"))
+source(here::here("racd-setup.R"))
 
 # just a test; dead simple model
 dwell_df <- data.frame(x=c(1,2),y=c(1,2),psi=rep(0.5,2))
@@ -85,7 +85,7 @@ plot_ica <- ggplot(data=data.frame(x=sapply(RACD_init$humans,function(x){x$ICA})
 grid.arrange(plot_ib,plot_id,plot_icm,plot_ica)
 
 # compile the simulation
-sourceCpp(here("intervention-src/main.cpp"))
+sourceCpp(here::here("intervention-src/main.cpp"))
 
 # run the simulation
 RACD_out <- tiny_racd(humans_param = RACD_init$humans,
@@ -95,6 +95,8 @@ RACD_out <- tiny_racd(humans_param = RACD_init$humans,
                       tmax = 365*20)
 
 library(reshape2)
+
+# state variables
 
 plot_outS <- ggplot(data = melt(RACD_out$state,id.vars="time")) +
   geom_line(aes(x=time,y=value,color=variable),alpha=0.75) +
@@ -108,11 +110,6 @@ plot_outA <- ggplot(data = melt(RACD_out$age,id.vars="time")) +
 #   geom_line(aes(x=time,y=value,color=variable)) +
 #   theme_bw()
 
-ggplot(data = melt(RACD_out$trans[,-2],id.vars = c("time","EIR_mean","EIR_var"))) +
-  geom_ribbon(aes(x=time,ymin=pmax(EIR_mean - sqrt(EIR_var),0),ymax=EIR_mean + sqrt(EIR_var)),alpha=0.85) +
-  geom_line(aes(x=time,y=EIR_mean)) +
-  xlab("Time (days)") + ylab("EIR (entomological inoculation rate)") +
-  theme_bw()
 
 plot_outFOI <- ggplot(data = melt(RACD_out$trans[,1:2],id.vars="time")) +
   geom_line(aes(x=time,y=value,color=variable)) +
@@ -123,3 +120,19 @@ plot_outM <- ggplot(data = melt(RACD_out$mosy[,!names(RACD_out$mosy) == "S"],id.
   theme_bw()
 
 grid.arrange(plot_outS,plot_outA,plot_outFOI,plot_outM)
+
+# transmission to humans
+
+plot_EIR <- ggplot(data = melt(RACD_out$trans[,c("time","EIR_mean","EIR_var")],id.vars = c("time","EIR_mean","EIR_var"))) +
+  geom_ribbon(aes(x=time,ymin=pmax(EIR_mean - sqrt(EIR_var),0),ymax=EIR_mean + sqrt(EIR_var)),alpha=0.75) +
+  geom_line(aes(x=time,y=EIR_mean)) +
+  xlab("Time (days)") + ylab("EIR (entomological inoculation rate)") +
+  theme_bw()
+
+plot_FOI_h <- ggplot(data = melt(RACD_out$trans[,c("time","lambda_h_mean","lambda_h_var")],id.vars = c("time","lambda_h_mean","lambda_h_var"))) +
+  geom_ribbon(aes(x=time,ymin=pmax(lambda_h_mean - sqrt(lambda_h_var),0),ymax=lambda_h_mean + sqrt(lambda_h_var)),alpha=0.75) +
+  geom_line(aes(x=time,y=lambda_h_mean)) +
+  xlab("Time (days)") + ylab("FOI on humans") +
+  theme_bw()
+
+grid.arrange(plot_EIR,plot_FOI_h,nrow=1)
