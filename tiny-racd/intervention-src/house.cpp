@@ -235,7 +235,7 @@ void apply_MDA(house_ptr& hh){
 
   for(auto& h : hh->humans){
     /* susceptibles, asymptomatic patent, and asymptomatic sub-patent go to P (chemoprophylaxis) */
-    if(h->state.compare("S") == 0 || h->state.compare("A") || h->state.compare("U") == 0){
+    if(h->state.compare("S") == 0 || h->state.compare("A") == 0 || h->state.compare("U") == 0){
       h->state = "P";
     /* incubating and untreated clinical episodes go to T (treated clinical) */
     } else if(h->state.compare("E") == 0 || h->state.compare("D") == 0){
@@ -254,13 +254,13 @@ void apply_RACD_PCR(house_ptr& hh){
     if(h->state.compare("D") == 0){
       h->state = "T";
     /* patent asymptomatic cases: roll the dice */
-    } else if(h->state.compare("A")){
+  } else if(h->state.compare("A") == 0){
       /* PCR test on the person */
       if(R::runif(0.,1.) < h->prDetectAPCR){
         h->state = "P";
       }
     /* sub-patent asymptomatic cases: roll the dice (just for PCR or LAMP) */
-    } else if(h->state.compare("U")){
+  } else if(h->state.compare("U") == 0){
       /* PCR test on the person */
       if(R::runif(0.,1.) < h->prDetectUPCR){
         h->state = "P";
@@ -280,7 +280,7 @@ void apply_RACD_Mic(house_ptr& hh){
     if(h->state.compare("D") == 0){
       h->state = "T";
     /* patent asymptomatic cases: roll the dice */
-    } else if(h->state.compare("A")){
+  } else if(h->state.compare("A") == 0){
       /* PCR test on the person */
       if(R::runif(0.,1.) < h->prDetectAMic){
         h->state = "P";
