@@ -51,7 +51,10 @@ public:
 protected:
 
   // track the houses (const pointer to the vec)
-  house_vector* const       houses;
+  house_vector* const                 houses;
+
+  // distance matrix between houses
+  std::vector<std::vector<double> >   dmat;
 
 };
 
@@ -60,20 +63,60 @@ protected:
 #   RfMDA: reactive focal mass-drug administration
 ################################################################################ */
 
+class intervention_manager_rfmda : public intervention_manager {
+public:
+
+  /* constructor & destructor */
+  intervention_manager_rfmda(house_vector* houses_);
+  ~intervention_manager_rfmda();
+
+private:
+};
+
 
 /* ################################################################################
 #   RfVC: reactive focal vector control
 ################################################################################ */
+
+class intervention_manager_rfvc : public intervention_manager {
+public:
+
+  /* constructor & destructor */
+  intervention_manager_rfvc(house_vector* houses_);
+  ~intervention_manager_rfvc();
+
+private:
+};
 
 
 /* ################################################################################
 #   RACD w/PCR: reactive case detection using PCR
 ################################################################################ */
 
+class intervention_manager_racd_pcr : public intervention_manager {
+public:
+
+  /* constructor & destructor */
+  intervention_manager_racd_pcr(house_vector* houses_);
+  ~intervention_manager_racd_pcr();
+
+private:
+};
+
 
 /* ################################################################################
 #   RACD w/Mic: reactive case detection using microscopy
 ################################################################################ */
+
+class intervention_manager_racd_Mic : public intervention_manager {
+public:
+
+  /* constructor & destructor */
+  intervention_manager_racd_Mic(house_vector* houses_);
+  ~intervention_manager_racd_Mic();
+
+private:
+};
 
 
 /* ################################################################################

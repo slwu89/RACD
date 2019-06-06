@@ -14,6 +14,10 @@
 
 #include "intervention.hpp"
 
+/* ################################################################################
+#   abstract base intervention manager
+################################################################################ */
+
 intervention_manager::intervention_manager(house_vector* houses_) : houses(houses_) {};
 
 /* define virtual destructor is ok */
@@ -36,3 +40,53 @@ std::unique_ptr<intervention_manager> factory(int type){
   //   Rcpp::stop("invalid 'model' field in 'human_pars'\n");
   // }
 };
+
+
+
+/* ################################################################################
+#   RfMDA: reactive focal mass-drug administration
+################################################################################ */
+
+/* constructor & destructor */
+intervention_manager_rfmda::intervention_manager_rfmda(house_vector* houses_) :
+  intervention_manager(houses_) {};
+
+intervention_manager_rfmda::~intervention_manager_rfmda(){};
+
+
+/* ################################################################################
+#   RfVC: reactive focal vector control
+################################################################################ */
+
+/* constructor & destructor */
+intervention_manager_rfvc::intervention_manager_rfvc(house_vector* houses_) :
+  intervention_manager(houses_) {};
+
+intervention_manager_rfvc::~intervention_manager_rfvc(){};
+
+
+/* ################################################################################
+#   RACD w/PCR: reactive case detection using PCR
+################################################################################ */
+
+/* constructor & destructor */
+intervention_manager_racd_pcr::intervention_manager_racd_pcr(house_vector* houses_) :
+  intervention_manager(houses_) {};
+
+intervention_manager_racd_pcr::~intervention_manager_racd_pcr(){};
+
+
+/* ################################################################################
+#   RACD w/Mic: reactive case detection using microscopy
+################################################################################ */
+
+/* constructor & destructor */
+intervention_manager_racd_Mic::intervention_manager_racd_Mic(house_vector* houses_) :
+  intervention_manager(houses_) {};
+
+intervention_manager_racd_Mic::~intervention_manager_racd_Mic(){};
+
+
+/* ################################################################################
+#   RACD w/LAMP: reactive case detection using LAMP
+################################################################################ */
