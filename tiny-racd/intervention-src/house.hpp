@@ -30,6 +30,9 @@ using stat_map = std::unordered_map<std::string,RunningStat_ptr>;
 struct human;
 using human_ptr = std::unique_ptr<human>;
 
+// houses need to know about the intervention manager
+class intervention_manager;
+
 // a house
 // all expectations are averaging out heterogeneity in the people at this house
 // the reason pi is a hash table is because the humans are in a linked list
@@ -56,8 +59,11 @@ typedef struct house {
   // stats
   stat_map* const                         global_stat;
 
+  // intervention manager
+  intervention_manager* const             int_mgr;
+
   // constructor & destructor
-  house(const size_t id_, stat_map* global_stat_);
+  house(const size_t id_, stat_map* global_stat_, intervention_manager* int_mgr_);
 
   ~house();
 } house;
@@ -106,6 +112,7 @@ void update_EIR(house_vector& houses);
 #   Interventions
 ################################################################################ */
 
+// called in one_day_update
 void update_interventions_house(house_ptr& hh);
 
 // spray the house

@@ -3,6 +3,7 @@
 #include "mosquito.hpp"
 #include "human.hpp"
 #include "stats.hpp"
+#include "intervention.hpp"
 
 // [[Rcpp::plugins(cpp14)]]
 // [[Rcpp::depends(RcppProgress)]]
@@ -29,6 +30,9 @@ using RunningStat_ptr = std::unique_ptr<RunningStat>;
 using stat_map = std::unordered_map<std::string,RunningStat_ptr>;
 using stat_map_ptr = std::unique_ptr<stat_map>;
 
+// interventions
+using int_mgr_ptr = std::unique_ptr<intervention_manager>;
+
 // IF WEIRD BUGS OCCUR CHANGE AROUND THE ORDER OF PLUGINS
 
 // simulation will look something like this
@@ -45,6 +49,8 @@ using stat_map_ptr = std::unique_ptr<stat_map>;
 // update household lvl interventions
 // repeat until tnow > tmax
 
+// intervention parameters
+
 // interface function from R
 // [[Rcpp::export]]
 Rcpp::List tiny_racd(
@@ -52,7 +58,10 @@ Rcpp::List tiny_racd(
   const Rcpp::List& house_param,
   const Rcpp::List& mosy_param,
   const Rcpp::NumericVector& theta,
-  const size_t tmax
+  const size_t tmax,
+  const int int_type,
+  const Rcpp::NumericMatrix& dmat,
+  const double radius
 ){
 
   Rcpp::Rcout << " --- initializing global variables and parameters --- " << std::endl;
@@ -77,6 +86,9 @@ Rcpp::List tiny_racd(
 
   Rcpp::Rcout << " --- initializing simulation objects in memory --- " << std::endl;
 
+  /* make the intervention manager */
+  int_mgr_ptr int_mgr = intervention_manager::factory(int_type,tmax,&houses,nhouse,dmat,radius);
+
   /* make the houses */
   for(size_t i=0; i<nhouse; i++){
 
@@ -88,7 +100,7 @@ Rcpp::List tiny_racd(
 
     /* make the house */
     houses.emplace_back(
-      std::make_unique<house>(i,global_stats.get())
+      std::make_unique<house>(i,global_stats.get(),int_mgr.get())
     );
   }
 
@@ -132,7 +144,7 @@ Rcpp::List tiny_racd(
 
   Rcpp::Rcout << " --- done initializing simulation objects in memory --- " << std::endl;
 
-
+  /* run the simulation */
   Rcpp::Rcout << " --- begin simulation --- " << std::endl;
 
   // main simulation loop
@@ -171,6 +183,10 @@ Rcpp::List tiny_racd(
     one_day_update(houses);
     one_day_births(houses);
     one_day_deaths(houses);
+
+    // interventions
+    int_mgr->one_day_intervention();
+    int_mgr->zero_house_data();
 
     // tracking before we move on
     lambda_h_mean.at(tnow) = global_stats->at("FOI")->Mean();
@@ -241,6 +257,7 @@ Rcpp::List tiny_racd(
     Rcpp::Named("age") = age,
     Rcpp::Named("clinical_incidence") = clinic,
     Rcpp::Named("mosy") = mosy,
-    Rcpp::Named("trans") = trans
+    Rcpp::Named("trans") = trans,
+    Rcpp::Named("intervention") = int_mgr->get_int_status_hist()
   );
 };

@@ -18,15 +18,16 @@
 #include "globals.hpp"
 
 #include "stats.hpp"
+#include "intervention.hpp"
 
 
 /* ################################################################################
 #   constructor & destructor
 ################################################################################ */
 
-house::house(const size_t id_, stat_map* global_stat_) :
+house::house(const size_t id_, stat_map* global_stat_, intervention_manager* int_mgr_) :
   id(id_), W(0.), Y(0.), Z(0.), C(0.), n(0), EIR(0), IRS(false), IRS_time_off(0.),
-  global_stat(global_stat_)
+  global_stat(global_stat_), int_mgr(int_mgr_)
 {};
 
 house::~house(){};
@@ -254,13 +255,13 @@ void apply_RACD_PCR(house_ptr& hh){
     if(h->state.compare("D") == 0){
       h->state = "T";
     /* patent asymptomatic cases: roll the dice */
-  } else if(h->state.compare("A") == 0){
+    } else if(h->state.compare("A") == 0){
       /* PCR test on the person */
       if(R::runif(0.,1.) < h->prDetectAPCR){
         h->state = "P";
       }
     /* sub-patent asymptomatic cases: roll the dice (just for PCR or LAMP) */
-  } else if(h->state.compare("U") == 0){
+    } else if(h->state.compare("U") == 0){
       /* PCR test on the person */
       if(R::runif(0.,1.) < h->prDetectUPCR){
         h->state = "P";
@@ -280,7 +281,7 @@ void apply_RACD_Mic(house_ptr& hh){
     if(h->state.compare("D") == 0){
       h->state = "T";
     /* patent asymptomatic cases: roll the dice */
-  } else if(h->state.compare("A") == 0){
+    } else if(h->state.compare("A") == 0){
       /* PCR test on the person */
       if(R::runif(0.,1.) < h->prDetectAMic){
         h->state = "P";

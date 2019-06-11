@@ -17,6 +17,10 @@
 #include "house.hpp"
 #include "globals.hpp"
 #include "stats.hpp"
+#include "intervention.hpp"
+
+// for ageing
+static const double one_day = 1./365.;
 
 
 /* ################################################################################
@@ -83,6 +87,8 @@ human::~human(){
 ################################################################################ */
 
 // track clinical incidence
+// this function does double duty as it also lets the
+// intervention manager know a case popped up
 void track_cinc(const human_ptr& h){
 
   cinc_All.at(tnow) += 1;
@@ -99,6 +105,9 @@ void track_cinc(const human_ptr& h){
   } else if(h->age >= 15.){
     cinc_15Plus.at(tnow) += 1;
   }
+
+  // let the intervention mgr know about this person's case
+  h->house_ptr->int_mgr->add_cinc(h->house_ptr->id);
 
 };
 
@@ -581,7 +590,7 @@ void one_day_update_human(human_ptr& human){
     infectivity_functions.at(human->state)(human);
 
     // update age
-    human->age += (1./365.);
+    human->age += one_day;
 
     // update immunity
     update_immunity(human);
