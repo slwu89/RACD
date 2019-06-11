@@ -14,11 +14,17 @@
 
 #include "intervention.hpp"
 
+// other headers we need
+#include "house.hpp"
+#include "human.hpp"
+
+
 /* ################################################################################
 #   abstract base intervention manager
 ################################################################################ */
 
-intervention_manager::intervention_manager(house_vector* houses_) : houses(houses_) {};
+intervention_manager::intervention_manager(house_vector* houses_, const Rcpp::NumericMatrix& dmat_, const double radius_) :
+  houses(houses_), dmat(dmat_), radius(radius_), house_cc(houses_->size()), house_int(houses_->size()) {};
 
 /* define virtual destructor is ok */
 intervention_manager::~intervention_manager(){};
@@ -48,10 +54,15 @@ std::unique_ptr<intervention_manager> factory(int type){
 ################################################################################ */
 
 /* constructor & destructor */
-intervention_manager_rfmda::intervention_manager_rfmda(house_vector* houses_) :
-  intervention_manager(houses_) {};
+intervention_manager_rfmda::intervention_manager_rfmda(house_vector* houses_, const Rcpp::NumericMatrix& dmat_, const double radius_) :
+  intervention_manager(houses_,dmat_,radius_) {};
 
 intervention_manager_rfmda::~intervention_manager_rfmda(){};
+
+  // implement the rfVC method
+void intervention_manager_rfmda::one_day_intervention(){
+
+};
 
 
 /* ################################################################################
@@ -59,8 +70,8 @@ intervention_manager_rfmda::~intervention_manager_rfmda(){};
 ################################################################################ */
 
 /* constructor & destructor */
-intervention_manager_rfvc::intervention_manager_rfvc(house_vector* houses_) :
-  intervention_manager(houses_) {};
+intervention_manager_rfvc::intervention_manager_rfvc(house_vector* houses_, const Rcpp::NumericMatrix& dmat_, const double radius_) :
+  intervention_manager(houses_,dmat_,radius_) {};
 
 intervention_manager_rfvc::~intervention_manager_rfvc(){};
 
@@ -70,8 +81,8 @@ intervention_manager_rfvc::~intervention_manager_rfvc(){};
 ################################################################################ */
 
 /* constructor & destructor */
-intervention_manager_racd_pcr::intervention_manager_racd_pcr(house_vector* houses_) :
-  intervention_manager(houses_) {};
+intervention_manager_racd_pcr::intervention_manager_racd_pcr(house_vector* houses_, const Rcpp::NumericMatrix& dmat_, const double radius_) :
+  intervention_manager(houses_,dmat_,radius_) {};
 
 intervention_manager_racd_pcr::~intervention_manager_racd_pcr(){};
 
@@ -81,8 +92,8 @@ intervention_manager_racd_pcr::~intervention_manager_racd_pcr(){};
 ################################################################################ */
 
 /* constructor & destructor */
-intervention_manager_racd_Mic::intervention_manager_racd_Mic(house_vector* houses_) :
-  intervention_manager(houses_) {};
+intervention_manager_racd_Mic::intervention_manager_racd_Mic(house_vector* houses_, const Rcpp::NumericMatrix& dmat_, const double radius_) :
+  intervention_manager(houses_,dmat_,radius_) {};
 
 intervention_manager_racd_Mic::~intervention_manager_racd_Mic(){};
 
