@@ -59,8 +59,41 @@ intervention_manager_rfmda::intervention_manager_rfmda(house_vector* houses_, co
 
 intervention_manager_rfmda::~intervention_manager_rfmda(){};
 
-  // implement the rfVC method
+  // implement the RfMDA method
 void intervention_manager_rfmda::one_day_intervention(){
+
+  // main loop
+  for(int h=0; h<house_cc.size(); h++){
+
+    // if house h is not in the set of houses where clinical incident cases were
+    // picked up yesterday, skip it
+    if(!house_cc[h]){
+      continue;
+    }
+
+    // only intervene on this house if it has not been intervened upon already
+    // eg; if it was in the set of neighbors for a previous centroid house
+    if(!house_int[h]){
+      apply_MDA(houses->at(h));
+      house_int[h] = true;
+    }
+
+    // household h is the centroid of a circle of radius "radius"; find all other
+    // houses in the set of houses in that centroid and intervene upon them
+    for(int h_n=0; h_n<house_cc.size(); h_n++){
+
+      // don't intervene on ourselves, or houses outside the radius, or houses that already got intervention
+      if((h == h_n) || (dmat.at(h,h_n) > radius) || house_int[h]){
+        continue;
+      }
+
+      // intervene here
+      apply_MDA(houses->at(h_n));
+      house_int[h_n] = true;
+
+    }
+
+  }
 
 };
 
