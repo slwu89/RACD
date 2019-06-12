@@ -126,8 +126,8 @@ theta_human <- c(
 ) # Number of houses per breeding site
 
 theta_int <- c(
-  IRS_decay = 1/200,
-  ITN_decay = 1/200
+  IRS_decay = 1/180,
+  ITN_decay = 1/180
 )
 
 # derived parameters

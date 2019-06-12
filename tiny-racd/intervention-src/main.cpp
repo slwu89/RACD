@@ -51,6 +51,17 @@ using int_mgr_ptr = std::unique_ptr<intervention_manager>;
 
 // intervention parameters
 
+// humans_param: humans list
+// house_param: house list
+// mosy_param: entomological list
+// theta: all model constants
+// tmax: max time to run sim
+// int_type: type of intervention
+// tstart: when do interventions start
+// dmat: distance matrix between houses
+// radius: radius of intervention around cases
+// prog_bar: display progress bar?
+
 // interface function from R
 // [[Rcpp::export]]
 Rcpp::List tiny_racd(
@@ -60,6 +71,7 @@ Rcpp::List tiny_racd(
   const Rcpp::NumericVector& theta,
   const size_t tmax,
   const int int_type,
+  const int tstart,
   const Rcpp::NumericMatrix& dmat,
   const double radius,
   const bool prog_bar = true
@@ -69,7 +81,8 @@ Rcpp::List tiny_racd(
 
   stat_map_ptr global_stats = std::make_unique<stat_map>();
   global_stats->emplace("EIR",std::make_unique<RunningStat>());
-  global_stats->emplace("FOI",std::make_unique<RunningStat>());
+  // global_stats->emplace("FOI",std::make_unique<RunningStat>());
+  global_stats->emplace("b",std::make_unique<RunningStat>());
 
   size_t nhouse = house_param.size();
 
@@ -88,7 +101,7 @@ Rcpp::List tiny_racd(
   Rcpp::Rcout << " --- initializing simulation objects in memory --- " << std::endl;
 
   /* make the intervention manager */
-  int_mgr_ptr int_mgr = intervention_manager::factory(int_type,tmax,&houses,nhouse,dmat,radius);
+  int_mgr_ptr int_mgr = intervention_manager::factory(int_type,tmax,tstart,&houses,nhouse,dmat,radius);
 
   /* make the houses */
   for(size_t i=0; i<nhouse; i++){
@@ -190,8 +203,8 @@ Rcpp::List tiny_racd(
     int_mgr->zero_house_data();
 
     // tracking before we move on
-    lambda_h_mean.at(tnow) = global_stats->at("FOI")->Mean();
-    lambda_h_var.at(tnow) = global_stats->at("FOI")->Variance();
+    b_mean.at(tnow) = global_stats->at("b")->Mean();
+    b_var.at(tnow) = global_stats->at("b")->Variance();
     eir_mean.at(tnow) = global_stats->at("EIR")->Mean();
     eir_var.at(tnow) = global_stats->at("EIR")->Variance();
     global_stats->at("EIR")->Clear();
@@ -249,8 +262,8 @@ Rcpp::List tiny_racd(
     Rcpp::Named("lambda_v") = Rcpp::wrap(lambda_v),
     Rcpp::Named("EIR_mean") = Rcpp::wrap(eir_mean),
     Rcpp::Named("EIR_var") = Rcpp::wrap(eir_var),
-    Rcpp::Named("lambda_h_mean") = Rcpp::wrap(lambda_h_mean),
-    Rcpp::Named("lambda_h_var") = Rcpp::wrap(lambda_h_var)
+    Rcpp::Named("b_mean") = Rcpp::wrap(b_mean),
+    Rcpp::Named("b_var") = Rcpp::wrap(b_var)
   );
 
   return Rcpp::List::create(

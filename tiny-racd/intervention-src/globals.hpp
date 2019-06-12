@@ -58,8 +58,10 @@ extern std::vector<size_t> mosy_I;
 extern std::vector<double> lambda_v;
 extern std::vector<double> eir_mean;
 extern std::vector<double> eir_var;
-extern std::vector<double> lambda_h_mean;
-extern std::vector<double> lambda_h_var;
+// extern std::vector<double> lambda_h_mean;
+// extern std::vector<double> lambda_h_var;
+extern std::vector<double> b_mean;
+extern std::vector<double> b_var;
 
 // other output
 extern std::vector<size_t> time_out;
@@ -160,11 +162,17 @@ inline void reset_transmision(const size_t tmax){
   eir_var.clear();
   eir_var.resize(tmax,0.);
 
-  lambda_h_mean.clear();
-  lambda_h_mean.resize(tmax,0.);
+  // lambda_h_mean.clear();
+  // lambda_h_mean.resize(tmax,0.);
+  //
+  // lambda_h_var.clear();
+  // lambda_h_var.resize(tmax,0.);
 
-  lambda_h_var.clear();
-  lambda_h_var.resize(tmax,0.);
+  b_mean.clear();
+  b_mean.resize(tmax,0.);
+
+  b_var.clear();
+  b_var.resize(tmax,0.);
 }
 
 // reset all of the things
