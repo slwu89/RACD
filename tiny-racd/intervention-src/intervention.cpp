@@ -41,12 +41,16 @@ std::unique_ptr<intervention_manager> intervention_manager::factory(int type, co
 
   // 0: RfMDA, 1: RfVC, 2: RACD w/PCR, 3: RACD w/Mic, 4: RACD w/LAMP
   if(type == 0){
+    Rcpp::Rcout << "intervention strategy set to: RfMDA\n";
     return std::make_unique<intervention_manager_rfmda>(tmax,houses_,nh_,dmat_,radius_);
   } else if(type == 1){
+    Rcpp::Rcout << "intervention strategy set to: RfVC\n";
     return std::make_unique<intervention_manager_rfvc>(tmax,houses_,nh_,dmat_,radius_);
   } else if(type == 2){
+    Rcpp::Rcout << "intervention strategy set to: RACD w/PCR\n";
     return std::make_unique<intervention_manager_racd_pcr>(tmax,houses_,nh_,dmat_,radius_);
   } else if(type == 3){
+    Rcpp::Rcout << "intervention strategy set to: RACD w/Mic\n";
     return std::make_unique<intervention_manager_racd_Mic>(tmax,houses_,nh_,dmat_,radius_);
   } else if (type == 4){
     Rcpp::stop("RACD w/LAMP not implemented yet!");

@@ -218,7 +218,7 @@ void apply_IRS(house_ptr& hh){
   double IRS_decay = parameters.at("IRS_decay");
 
   hh->IRS = true;
-  hh->IRS_time_off = R::rgeom(IRS_decay);
+  hh->IRS_time_off = tnow + R::rgeom(IRS_decay);
 
 };
 

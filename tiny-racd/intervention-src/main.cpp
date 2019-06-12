@@ -61,7 +61,8 @@ Rcpp::List tiny_racd(
   const size_t tmax,
   const int int_type,
   const Rcpp::NumericMatrix& dmat,
-  const double radius
+  const double radius,
+  const bool prog_bar = true
 ){
 
   Rcpp::Rcout << " --- initializing global variables and parameters --- " << std::endl;
@@ -148,7 +149,7 @@ Rcpp::List tiny_racd(
   Rcpp::Rcout << " --- begin simulation --- " << std::endl;
 
   // main simulation loop
-  Progress pb(tmax,true);
+  Progress pb(tmax,prog_bar);
   while(tnow < tmax){
 
     // check for worried users

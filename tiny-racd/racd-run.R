@@ -85,7 +85,7 @@ plot_ica <- ggplot(data=data.frame(x=sapply(RACD_init$humans,function(x){x$ICA})
 grid.arrange(plot_ib,plot_id,plot_icm,plot_ica)
 
 # compile the simulation
-sourceCpp(here::here("intervention-src/main.cpp"))
+sourceCpp(here::here("racd-src/main.cpp"))
 
 # run the simulation
 RACD_out <- tiny_racd(humans_param = RACD_init$humans,

@@ -633,6 +633,6 @@ void give_ITN(human_ptr& human){
   double ITN_decay = parameters.at("ITN_decay");
 
   human->ITN = true;
-  human->ITN_time_off = R::rgeom(ITN_decay);
+  human->ITN_time_off = tnow + R::rgeom(ITN_decay);
 
 };

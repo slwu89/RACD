@@ -33,6 +33,8 @@ xy_d <- data.frame(x=xy_rmh$x[xy_rmh$marks=="dwelling"],y=xy_rmh$y[xy_rmh$marks=
 dist_xy <- crossdist(X = as.ppp(xy_a,W = rmh_window),Y = as.ppp(xy_d,W = rmh_window))
 sigma_a <- apply(dist_xy,1,min)
 
+dmat_dwell <- crossdist(X = as.ppp(xy_d,W = rmh_window),Y = as.ppp(xy_d,W = rmh_window))
+
 aqua_df <- data.frame(x=xy_a$x,y=xy_a$y,sigma=sigma_a)
 dwell_df <- data.frame(x=xy_d$x,y=xy_d$y)
 
