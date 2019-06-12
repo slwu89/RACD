@@ -92,32 +92,30 @@ intervention_manager_rfmda::~intervention_manager_rfmda(){};
 // implement the RfMDA method
 void intervention_manager_rfmda::one_day_intervention(){
 
-  // main loop
+  // outermost loop
   for(int h=0; h<nh; h++){
 
-    // if house h is not in the set of houses where clinical incident cases were
-    // picked up today, skip it
+    // if there was no clinical incidence here today, skip it
     if(!house_cc[h]){
       continue;
     }
 
-    // only intervene on this house if it has not been intervened upon already
-    // eg; if it was in the set of neighbors for a previous centroid house
+    // else this house is in the set of centroids for intervention radii
+    // first apply the intervention to the people living here if it hasn't been intervened upon already
     if(!house_int[h]){
       apply_MDA(houses->at(h));
       house_int[h] = true;
     }
 
-    // household h is the centroid of a circle of radius "radius"; find all other
-    // houses in the set of houses in that centroid and intervene upon them
+    // intervene on this house's neighbors
     for(int h_n=0; h_n<nh; h_n++){
 
-      // don't intervene on ourselves, or houses outside the radius, or houses that already got intervention
-      if((h == h_n) || (dmat.at(h,h_n) > radius) || house_int[h]){
+      // dont intervene on ourselves or houses too far away or houses which have already been intervened upon
+      if((h == h_n) || (dmat.at(h,h_n) > radius) || house_int[h_n]){
         continue;
       }
 
-      // intervene here
+      // do the intervention
       apply_MDA(houses->at(h_n));
       house_int[h_n] = true;
 
@@ -162,7 +160,7 @@ void intervention_manager_rfvc::one_day_intervention(){
     for(int h_n=0; h_n<nh; h_n++){
 
       // don't intervene on ourselves, or houses outside the radius, or houses that already got intervention
-      if((h == h_n) || (dmat.at(h,h_n) > radius) || house_int[h]){
+      if((h == h_n) || (dmat.at(h,h_n) > radius) || house_int[h_n]){
         continue;
       }
 
@@ -211,7 +209,7 @@ void intervention_manager_racd_pcr::one_day_intervention(){
     for(int h_n=0; h_n<nh; h_n++){
 
       // don't intervene on ourselves, or houses outside the radius, or houses that already got intervention
-      if((h == h_n) || (dmat.at(h,h_n) > radius) || house_int[h]){
+      if((h == h_n) || (dmat.at(h,h_n) > radius) || house_int[h_n]){
         continue;
       }
 
@@ -260,7 +258,7 @@ void intervention_manager_racd_Mic::one_day_intervention(){
     for(int h_n=0; h_n<nh; h_n++){
 
       // don't intervene on ourselves, or houses outside the radius, or houses that already got intervention
-      if((h == h_n) || (dmat.at(h,h_n) > radius) || house_int[h]){
+      if((h == h_n) || (dmat.at(h,h_n) > radius) || house_int[h_n]){
         continue;
       }
 
