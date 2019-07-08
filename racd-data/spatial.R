@@ -22,6 +22,7 @@ ggplot(data = pops,aes(value,fill=as.factor(ea_no))) +
 library(spatstat)
 library(spatstat.local)
 library(splines)
+library(sp)
 
 ea_no <- unique(spat_ER$ea_no)
 distances <- pbmclapply(ea_no,function(ea){
@@ -31,6 +32,9 @@ distances <- pbmclapply(ea_no,function(ea){
   })
   dmat
 })
+
+dist_flat <- unlist(distances)
+dist_flat <- dist_flat[dist_flat!=0]
 
 sites <- solapply(X = ea_no,function(ea){
   coords <- spat_ER[spat_ER$ea_no==ea,c("longitude","latitude")]
@@ -50,4 +54,13 @@ sites <- solapply(X = ea_no,function(ea){
 
 # try and estimate LGCP on multiple replicates
 sites_dat <- hyperframe(Points = sites)
-fit_trend <- mppm(Points ~ 1,data = sites_dat)
+K_hat <- with(sites_dat,Kest(Points,ratio = TRUE))
+K_all <- pool(as.anylist(K_hat))
+
+lgcp_est <- lgcp.estK(X = K_all,rmax = 26)
+
+lgcp_est_m1 <- lgcp.estK(X = K_all,rmax = 26,covmodel=list(model="matern", nu=0.3))
+lgcp_est_m2 <- lgcp.estK(X = K_all,rmax = 26,covmodel=list(model="matern", nu=0.5))
+lgcp_est_m3 <- lgcp.estK(X = K_all,rmax = 26,covmodel=list(model="matern", nu=0.8))
+
+sim <- rLGCP(model = "exp",mu = 0.02,var = lgcp_est$clustpar[["var"]], scale = lgcp_est$clustpar[["scale"]],win = owin(xrange = c(0,10),yrange = c(0,10)))
