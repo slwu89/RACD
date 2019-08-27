@@ -58,6 +58,7 @@ using int_mgr_ptr = std::unique_ptr<intervention_manager>;
 // tmax: max time to run sim
 // int_type: type of intervention
 // tstart: when do interventions start
+// tend: when do interventions end
 // dmat: distance matrix between houses
 // radius: radius of intervention around cases
 // prog_bar: display progress bar?
@@ -72,6 +73,7 @@ Rcpp::List tiny_racd(
   const size_t tmax,
   const int int_type,
   const int tstart,
+  const int tend,
   const Rcpp::NumericMatrix& dmat,
   const double radius,
   const bool prog_bar = true
@@ -101,7 +103,7 @@ Rcpp::List tiny_racd(
   Rcpp::Rcout << " --- initializing simulation objects in memory --- " << std::endl;
 
   /* make the intervention manager */
-  int_mgr_ptr int_mgr = intervention_manager::factory(int_type,tmax,tstart,&houses,nhouse,dmat,radius);
+  int_mgr_ptr int_mgr = intervention_manager::factory(int_type,tmax,tstart,tend,&houses,nhouse,dmat,radius);
 
   /* make the houses */
   for(size_t i=0; i<nhouse; i++){

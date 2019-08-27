@@ -26,8 +26,8 @@
 #   abstract base intervention manager
 ################################################################################ */
 
-intervention_manager::intervention_manager(const size_t tmax_, const int tstart_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_) :
-  houses(houses_), nh(nh_), dmat(dmat_), radius(radius_), tstart(tstart_), house_cc(nh), house_int(nh), int_status_hist(tmax_,nh) {};
+intervention_manager::intervention_manager(const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_) :
+  houses(houses_), nh(nh_), dmat(dmat_), radius(radius_), tstart(tstart_), tend(tend_), house_cc(nh), house_int(nh), int_status_hist(tmax_,nh) {};
 
 /* define virtual destructor is ok */
 intervention_manager::~intervention_manager(){};
@@ -37,21 +37,21 @@ intervention_manager::~intervention_manager(){};
 // intervention_manager& intervention_manager::operator=(intervention_manager&&) = default;
 
 /* factory method */
-std::unique_ptr<intervention_manager> intervention_manager::factory(int type, const size_t tmax_, const int tstart_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_){
+std::unique_ptr<intervention_manager> intervention_manager::factory(int type, const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_){
 
   // 0: RfMDA, 1: RfVC, 2: RACD w/PCR, 3: RACD w/Mic, 4: RACD w/LAMP
   if(type == 0){
     Rcpp::Rcout << "intervention strategy set to: RfMDA\n";
-    return std::make_unique<intervention_manager_rfmda>(tmax_,tstart_,houses_,nh_,dmat_,radius_);
+    return std::make_unique<intervention_manager_rfmda>(tmax_,tstart_,tend_,houses_,nh_,dmat_,radius_);
   } else if(type == 1){
     Rcpp::Rcout << "intervention strategy set to: RfVC\n";
-    return std::make_unique<intervention_manager_rfvc>(tmax_,tstart_,houses_,nh_,dmat_,radius_);
+    return std::make_unique<intervention_manager_rfvc>(tmax_,tstart_,tend_,houses_,nh_,dmat_,radius_);
   } else if(type == 2){
     Rcpp::Rcout << "intervention strategy set to: RACD w/PCR\n";
-    return std::make_unique<intervention_manager_racd_pcr>(tmax_,tstart_,houses_,nh_,dmat_,radius_);
+    return std::make_unique<intervention_manager_racd_pcr>(tmax_,tstart_,tend_,houses_,nh_,dmat_,radius_);
   } else if(type == 3){
     Rcpp::Rcout << "intervention strategy set to: RACD w/Mic\n";
-    return std::make_unique<intervention_manager_racd_Mic>(tmax_,tstart_,houses_,nh_,dmat_,radius_);
+    return std::make_unique<intervention_manager_racd_Mic>(tmax_,tstart_,tend_,houses_,nh_,dmat_,radius_);
   } else if (type == 4){
     Rcpp::stop("RACD w/LAMP not implemented yet!");
   } else{
@@ -64,7 +64,7 @@ std::unique_ptr<intervention_manager> intervention_manager::factory(int type, co
 void intervention_manager::zero_house_data(){
 
   // only need to check this after interventions begin
-  if(tnow >= tstart){
+  if(tnow >= tstart & tnow < (tend+1)){
 
     for(size_t h=0; h<nh; h++){
       // house h was a centroid (and by def. was intervened upon)
@@ -94,8 +94,8 @@ void intervention_manager::add_cinc(size_t h){
 ################################################################################ */
 
 /* constructor & destructor */
-intervention_manager_rfmda::intervention_manager_rfmda(const size_t tmax_, const int tstart_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_) :
-  intervention_manager(tmax_,tstart_,houses_,nh_,dmat_,radius_) {};
+intervention_manager_rfmda::intervention_manager_rfmda(const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_) :
+  intervention_manager(tmax_,tstart_,tend_,houses_,nh_,dmat_,radius_) {};
 
 intervention_manager_rfmda::~intervention_manager_rfmda(){};
 
@@ -103,7 +103,7 @@ intervention_manager_rfmda::~intervention_manager_rfmda(){};
 void intervention_manager_rfmda::one_day_intervention(){
 
   // make sure intervention started
-  if(tnow >= tstart){
+  if(tnow >= tstart & tnow < tend){
 
     // outermost loop
     for(int h=0; h<nh; h++){
@@ -146,8 +146,8 @@ void intervention_manager_rfmda::one_day_intervention(){
 ################################################################################ */
 
 /* constructor & destructor */
-intervention_manager_rfvc::intervention_manager_rfvc(const size_t tmax_, const int tstart_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_) :
-  intervention_manager(tmax_,tstart_,houses_,nh_,dmat_,radius_) {};
+intervention_manager_rfvc::intervention_manager_rfvc(const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_) :
+  intervention_manager(tmax_,tstart_,tend_,houses_,nh_,dmat_,radius_) {};
 
 intervention_manager_rfvc::~intervention_manager_rfvc(){};
 
@@ -155,7 +155,7 @@ intervention_manager_rfvc::~intervention_manager_rfvc(){};
 void intervention_manager_rfvc::one_day_intervention(){
 
   // make sure intervention started
-  if(tnow >= tstart){
+  if(tnow >= tstart & tnow < tend & tnow < tend){
 
     // main loop
     for(int h=0; h<nh; h++){
@@ -201,8 +201,8 @@ void intervention_manager_rfvc::one_day_intervention(){
 ################################################################################ */
 
 /* constructor & destructor */
-intervention_manager_racd_pcr::intervention_manager_racd_pcr(const size_t tmax_, const int tstart_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_) :
-  intervention_manager(tmax_,tstart_,houses_,nh_,dmat_,radius_) {};
+intervention_manager_racd_pcr::intervention_manager_racd_pcr(const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_) :
+  intervention_manager(tmax_,tstart_,tend_,houses_,nh_,dmat_,radius_) {};
 
 intervention_manager_racd_pcr::~intervention_manager_racd_pcr(){};
 
@@ -210,7 +210,7 @@ intervention_manager_racd_pcr::~intervention_manager_racd_pcr(){};
 void intervention_manager_racd_pcr::one_day_intervention(){
 
   // make sure intervention started
-  if(tnow >= tstart){
+  if(tnow >= tstart & tnow < tend){
 
     // main loop
     for(int h=0; h<nh; h++){
@@ -256,8 +256,8 @@ void intervention_manager_racd_pcr::one_day_intervention(){
 ################################################################################ */
 
 /* constructor & destructor */
-intervention_manager_racd_Mic::intervention_manager_racd_Mic(const size_t tmax_, const int tstart_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_) :
-  intervention_manager(tmax_,tstart_,houses_,nh_,dmat_,radius_) {};
+intervention_manager_racd_Mic::intervention_manager_racd_Mic(const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_) :
+  intervention_manager(tmax_,tstart_,tend_,houses_,nh_,dmat_,radius_) {};
 
 intervention_manager_racd_Mic::~intervention_manager_racd_Mic(){};
 
@@ -265,7 +265,7 @@ intervention_manager_racd_Mic::~intervention_manager_racd_Mic(){};
 void intervention_manager_racd_Mic::one_day_intervention(){
 
   // make sure intervention started
-  if(tnow >= tstart){
+  if(tnow >= tstart & tnow < tend){
 
     // main loop
     for(int h=0; h<nh; h++){
