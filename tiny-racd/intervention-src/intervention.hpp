@@ -117,13 +117,16 @@ class intervention_manager_rfvc : public intervention_manager {
 public:
 
   /* constructor & destructor */
-  intervention_manager_rfvc(const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_);
+  intervention_manager_rfvc(const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_, const int max_house_);
   ~intervention_manager_rfvc();
 
   // implement the rfVC method
   virtual void one_day_intervention();
 
 private:
+  // the RfVC protocol is to only spray 7 houses maximum in the 500m, so need to stop afterwards
+  int   max_house; // max houses to spray
+  int   house_count; // current houses sprayed
 };
 
 
@@ -166,6 +169,51 @@ private:
 /* ################################################################################
 #   RACD w/LAMP: reactive case detection using LAMP
 ################################################################################ */
+
+
+/* ################################################################################
+#   RACD w/Mic + RfVC:
+#   reactive case detection using LAMP + reactive focal vector control
+################################################################################ */
+
+class intervention_manager_racdMic_rfvc : public intervention_manager {
+public:
+
+  /* constructor & destructor */
+  intervention_manager_racdMic_rfvc(const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_, const int max_house_);
+  ~intervention_manager_racdMic_rfvc();
+
+  // implement the rfVC method
+  virtual void one_day_intervention();
+
+private:
+  // the RfVC protocol is to only spray 7 houses maximum in the 500m, so need to stop afterwards
+  int   max_house; // max houses to spray
+  int   house_count; // current houses sprayed
+};
+
+
+/* ################################################################################
+#   RfMDA + RfVC:
+#   reactive focal mass-drug administration + reactive focal vector control
+################################################################################ */
+
+class intervention_manager_rfmda_rfvc : public intervention_manager {
+public:
+
+  /* constructor & destructor */
+  intervention_manager_rfmda_rfvc(const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_, const int max_house_);
+  ~intervention_manager_rfmda_rfvc();
+
+  // implement the rfVC method
+  virtual void one_day_intervention();
+
+private:
+  // the RfVC protocol is to only spray 7 houses maximum in the 500m, so need to stop afterwards
+  int   max_house; // max houses to spray
+  int   house_count; // current houses sprayed
+};
+
 
 
 #endif

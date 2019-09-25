@@ -1,3 +1,4 @@
+rm(list=ls());gc()
 library(here)
 library(geosphere)
 library(readr)
@@ -35,6 +36,13 @@ distances <- pbmclapply(ea_no,function(ea){
 
 dist_flat <- unlist(distances)
 dist_flat <- dist_flat[dist_flat!=0]
+
+near_neighbor <- sapply(distances,function(x){
+  apply(x,1,function(y){
+    min(y[y!=0])
+  })
+})
+near_neighbor <- unlist(near_neighbor)
 
 sites <- solapply(X = ea_no,function(ea){
   coords <- spat_ER[spat_ER$ea_no==ea,c("longitude","latitude")]

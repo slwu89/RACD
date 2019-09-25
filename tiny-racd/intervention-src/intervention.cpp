@@ -45,7 +45,7 @@ std::unique_ptr<intervention_manager> intervention_manager::factory(int type, co
     return std::make_unique<intervention_manager_rfmda>(tmax_,tstart_,tend_,houses_,nh_,dmat_,radius_);
   } else if(type == 1){
     Rcpp::Rcout << "intervention strategy set to: RfVC\n";
-    return std::make_unique<intervention_manager_rfvc>(tmax_,tstart_,tend_,houses_,nh_,dmat_,radius_);
+    return std::make_unique<intervention_manager_rfvc>(tmax_,tstart_,tend_,houses_,nh_,dmat_,radius_,7);
   } else if(type == 2){
     Rcpp::Rcout << "intervention strategy set to: RACD w/PCR\n";
     return std::make_unique<intervention_manager_racd_pcr>(tmax_,tstart_,tend_,houses_,nh_,dmat_,radius_);
@@ -54,7 +54,13 @@ std::unique_ptr<intervention_manager> intervention_manager::factory(int type, co
     return std::make_unique<intervention_manager_racd_Mic>(tmax_,tstart_,tend_,houses_,nh_,dmat_,radius_);
   } else if (type == 4){
     Rcpp::stop("RACD w/LAMP not implemented yet!");
-  } else{
+  } else if(type == 5){
+    Rcpp::Rcout << "intervention strategy set to: RACD w/Mic + RfVC\n";
+    return std::make_unique<intervention_manager_racdMic_rfvc>(tmax_,tstart_,tend_,houses_,nh_,dmat_,radius_,7);
+  } else if(type == 6){
+    Rcpp::Rcout << "intervention strategy set to: RfMDA + RfVC:\n";
+    return std::make_unique<intervention_manager_rfmda_rfvc>(tmax_,tstart_,tend_,houses_,nh_,dmat_,radius_,7);
+  } else {
     Rcpp::stop("intervention type must be an integer in (0,1,2,3,4)");
   }
 
@@ -111,26 +117,29 @@ void intervention_manager_rfmda::one_day_intervention(){
       // if there was no clinical incidence here today, skip it
       if(!house_cc[h]){
         continue;
-      }
+      // house had clinical incidence
+      } else {
 
-      // else this house is in the set of centroids for intervention radii
-      // first apply the intervention to the people living here if it hasn't been intervened upon already
-      if(!house_int[h]){
-        apply_MDA(houses->at(h));
-        house_int[h] = true;
-      }
-
-      // intervene on this house's neighbors
-      for(int h_n=0; h_n<nh; h_n++){
-
-        // dont intervene on ourselves or houses too far away or houses which have already been intervened upon
-        if((h == h_n) || (dmat.at(h,h_n) > radius) || house_int[h_n]){
-          continue;
+        // else this house is in the set of centroids for intervention radii
+        // first apply the intervention to the people living here if it hasn't been intervened upon already
+        if(!house_int[h]){
+          apply_MDA(houses->at(h));
+          house_int[h] = true;
         }
 
-        // do the intervention
-        apply_MDA(houses->at(h_n));
-        house_int[h_n] = true;
+        // intervene on this house's neighbors
+        for(int h_n=0; h_n<nh; h_n++){
+
+          // dont intervene on ourselves or houses too far away or houses which have already been intervened upon
+          if((h == h_n) || (dmat.at(h,h_n) > radius) || house_int[h_n]){
+            continue;
+          } else {
+            // do the intervention
+            apply_MDA(houses->at(h_n));
+            house_int[h_n] = true;
+          }
+
+        }
 
       }
 
@@ -146,8 +155,8 @@ void intervention_manager_rfmda::one_day_intervention(){
 ################################################################################ */
 
 /* constructor & destructor */
-intervention_manager_rfvc::intervention_manager_rfvc(const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_) :
-  intervention_manager(tmax_,tstart_,tend_,houses_,nh_,dmat_,radius_) {};
+intervention_manager_rfvc::intervention_manager_rfvc(const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_, const int max_house_) :
+  intervention_manager(tmax_,tstart_,tend_,houses_,nh_,dmat_,radius_), max_house(max_house_), house_count(0) {};
 
 intervention_manager_rfvc::~intervention_manager_rfvc(){};
 
@@ -164,27 +173,37 @@ void intervention_manager_rfvc::one_day_intervention(){
       // picked up today, skip it
       if(!house_cc[h]){
         continue;
-      }
+      } else {
 
-      // only intervene on this house if it has not been intervened upon already
-      // eg; if it was in the set of neighbors for a previous centroid house
-      if(!house_int[h]){
-        apply_IRS(houses->at(h));
-        house_int[h] = true;
-      }
-
-      // household h is the centroid of a circle of radius "radius"; find all other
-      // houses in the set of houses in that centroid and intervene upon them
-      for(int h_n=0; h_n<nh; h_n++){
-
-        // don't intervene on ourselves, or houses outside the radius, or houses that already got intervention
-        if((h == h_n) || (dmat.at(h,h_n) > radius) || house_int[h_n]){
-          continue;
+        // only intervene on this house if it has not been intervened upon already
+        // eg; if it was in the set of neighbors for a previous centroid house
+        if(!house_int[h]){
+          apply_IRS(houses->at(h));
+          house_int[h] = true;
         }
 
-        // intervene here
-        apply_IRS(houses->at(h_n));
-        house_int[h_n] = true;
+        house_count = 1; // houses sprayed so far (including me)
+
+        // household h is the centroid of a circle of radius "radius"; find all other
+        // houses in the set of houses in that centroid and intervene upon them
+        for(int h_n=0; h_n<nh; h_n++){
+
+          // don't intervene on ourselves, or houses outside the radius, or houses that already got intervention
+          if((h == h_n) || (dmat.at(h,h_n) > radius) || house_int[h_n]){
+            continue;
+          } else {
+            // intervene here
+            apply_IRS(houses->at(h_n));
+            house_int[h_n] = true;
+            house_count += 1;
+          }
+
+          // if at any point we fulfill our goal to spray 7 neighbors, just break the loop
+          if(house_count == max_house){
+            break;
+          }
+
+        }
 
       }
 
@@ -219,28 +238,28 @@ void intervention_manager_racd_pcr::one_day_intervention(){
       // picked up today, skip it
       if(!house_cc[h]){
         continue;
-      }
-
-      // only intervene on this house if it has not been intervened upon already
-      // eg; if it was in the set of neighbors for a previous centroid house
-      if(!house_int[h]){
-        apply_RACD_PCR(houses->at(h));
-        house_int[h] = true;
-      }
-
-      // household h is the centroid of a circle of radius "radius"; find all other
-      // houses in the set of houses in that centroid and intervene upon them
-      for(int h_n=0; h_n<nh; h_n++){
-
-        // don't intervene on ourselves, or houses outside the radius, or houses that already got intervention
-        if((h == h_n) || (dmat.at(h,h_n) > radius) || house_int[h_n]){
-          continue;
+      } else {
+        // only intervene on this house if it has not been intervened upon already
+        // eg; if it was in the set of neighbors for a previous centroid house
+        if(!house_int[h]){
+          apply_RACD_PCR(houses->at(h));
+          house_int[h] = true;
         }
 
-        // intervene here
-        apply_RACD_PCR(houses->at(h_n));
-        house_int[h_n] = true;
+        // household h is the centroid of a circle of radius "radius"; find all other
+        // houses in the set of houses in that centroid and intervene upon them
+        for(int h_n=0; h_n<nh; h_n++){
 
+          // don't intervene on ourselves, or houses outside the radius, or houses that already got intervention
+          if((h == h_n) || (dmat.at(h,h_n) > radius) || house_int[h_n]){
+            continue;
+          } else {
+            // intervene here
+            apply_RACD_PCR(houses->at(h_n));
+            house_int[h_n] = true;
+          }
+
+        }
       }
 
     }
@@ -274,28 +293,28 @@ void intervention_manager_racd_Mic::one_day_intervention(){
       // picked up today, skip it
       if(!house_cc[h]){
         continue;
-      }
-
-      // only intervene on this house if it has not been intervened upon already
-      // eg; if it was in the set of neighbors for a previous centroid house
-      if(!house_int[h]){
-        apply_RACD_Mic(houses->at(h));
-        house_int[h] = true;
-      }
-
-      // household h is the centroid of a circle of radius "radius"; find all other
-      // houses in the set of houses in that centroid and intervene upon them
-      for(int h_n=0; h_n<nh; h_n++){
-
-        // don't intervene on ourselves, or houses outside the radius, or houses that already got intervention
-        if((h == h_n) || (dmat.at(h,h_n) > radius) || house_int[h_n]){
-          continue;
+      } else {
+        // only intervene on this house if it has not been intervened upon already
+        // eg; if it was in the set of neighbors for a previous centroid house
+        if(!house_int[h]){
+          apply_RACD_Mic(houses->at(h));
+          house_int[h] = true;
         }
 
-        // intervene here
-        apply_RACD_Mic(houses->at(h_n));
-        house_int[h_n] = true;
+        // household h is the centroid of a circle of radius "radius"; find all other
+        // houses in the set of houses in that centroid and intervene upon them
+        for(int h_n=0; h_n<nh; h_n++){
 
+          // don't intervene on ourselves, or houses outside the radius, or houses that already got intervention
+          if((h == h_n) || (dmat.at(h,h_n) > radius) || house_int[h_n]){
+            continue;
+          } else {
+            // intervene here
+            apply_RACD_Mic(houses->at(h_n));
+            house_int[h_n] = true;
+          }
+
+        }
       }
 
     }
@@ -308,3 +327,135 @@ void intervention_manager_racd_Mic::one_day_intervention(){
 /* ################################################################################
 #   RACD w/LAMP: reactive case detection using LAMP
 ################################################################################ */
+
+
+/* ################################################################################
+#   RACD w/Mic + RfVC:
+#   reactive case detection using LAMP + reactive focal vector control
+################################################################################ */
+
+/* constructor & destructor */
+intervention_manager_racdMic_rfvc::intervention_manager_racdMic_rfvc(const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_, const int max_house_) :
+  intervention_manager(tmax_,tstart_,tend_,houses_,nh_,dmat_,radius_), max_house(max_house_), house_count(0) {};
+
+intervention_manager_racdMic_rfvc::~intervention_manager_racdMic_rfvc(){};
+
+// implement the rfVC method
+void intervention_manager_racdMic_rfvc::one_day_intervention(){
+
+  // make sure intervention started
+  if(tnow >= tstart & tnow < tend & tnow < tend){
+
+    // main loop
+    for(int h=0; h<nh; h++){
+
+      // if house h is not in the set of houses where clinical incident cases were
+      // picked up today, skip it
+      if(!house_cc[h]){
+        continue;
+      } else {
+
+        // only intervene on this house if it has not been intervened upon already
+        // eg; if it was in the set of neighbors for a previous centroid house
+        if(!house_int[h]){
+          apply_RACD_Mic(houses->at(h));
+          apply_IRS(houses->at(h));
+          house_int[h] = true;
+        }
+
+        house_count = 1; // houses sprayed so far (including me)
+
+        // household h is the centroid of a circle of radius "radius"; find all other
+        // houses in the set of houses in that centroid and intervene upon them
+        for(int h_n=0; h_n<nh; h_n++){
+
+          // don't intervene on ourselves, or houses outside the radius, or houses that already got intervention
+          if((h == h_n) || (dmat.at(h,h_n) > radius) || house_int[h_n]){
+            continue;
+          } else {
+            // intervene here
+            apply_RACD_Mic(houses->at(h_n));
+            house_int[h_n] = true;
+            // spraying
+            if(house_count < max_house){
+              apply_IRS(houses->at(h_n));
+              house_count += 1;
+            }
+          }
+
+        }
+
+      }
+
+    }
+
+
+  }
+
+};
+
+
+/* ################################################################################
+#   RfMDA + RfVC:
+#   reactive focal mass-drug administration + reactive focal vector control
+################################################################################ */
+
+/* constructor & destructor */
+intervention_manager_rfmda_rfvc::intervention_manager_rfmda_rfvc(const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_, const int max_house_) :
+  intervention_manager(tmax_,tstart_,tend_,houses_,nh_,dmat_,radius_), max_house(max_house_), house_count(0) {};
+
+intervention_manager_rfmda_rfvc::~intervention_manager_rfmda_rfvc(){};
+
+// implement the rfVC method
+void intervention_manager_rfmda_rfvc::one_day_intervention(){
+
+  // make sure intervention started
+  if(tnow >= tstart & tnow < tend & tnow < tend){
+
+    // main loop
+    for(int h=0; h<nh; h++){
+
+      // if house h is not in the set of houses where clinical incident cases were
+      // picked up today, skip it
+      if(!house_cc[h]){
+        continue;
+      } else {
+
+        // only intervene on this house if it has not been intervened upon already
+        // eg; if it was in the set of neighbors for a previous centroid house
+        if(!house_int[h]){
+          apply_MDA(houses->at(h));
+          apply_IRS(houses->at(h));
+          house_int[h] = true;
+        }
+
+        house_count = 1; // houses sprayed so far (including me)
+
+        // household h is the centroid of a circle of radius "radius"; find all other
+        // houses in the set of houses in that centroid and intervene upon them
+        for(int h_n=0; h_n<nh; h_n++){
+
+          // don't intervene on ourselves, or houses outside the radius, or houses that already got intervention
+          if((h == h_n) || (dmat.at(h,h_n) > radius) || house_int[h_n]){
+            continue;
+          } else {
+            // intervene here
+            apply_MDA(houses->at(h_n));
+            house_int[h_n] = true;
+            // spraying
+            if(house_count < max_house){
+              apply_IRS(houses->at(h_n));
+              house_count += 1;
+            }
+          }
+
+        }
+
+      }
+
+    }
+
+
+  }
+
+};
