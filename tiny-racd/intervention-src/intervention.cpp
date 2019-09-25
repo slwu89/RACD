@@ -61,7 +61,7 @@ std::unique_ptr<intervention_manager> intervention_manager::factory(int type, co
     Rcpp::Rcout << "intervention strategy set to: RfMDA + RfVC:\n";
     return std::make_unique<intervention_manager_rfmda_rfvc>(tmax_,tstart_,tend_,houses_,nh_,dmat_,radius_,7);
   } else {
-    Rcpp::stop("intervention type must be an integer in (0,1,2,3,4)");
+    Rcpp::stop("intervention type must be an integer in (0,1,2,3,4,5,6)");
   }
 
 };
