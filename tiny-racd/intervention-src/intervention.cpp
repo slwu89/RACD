@@ -40,7 +40,10 @@ intervention_manager::~intervention_manager(){};
 std::unique_ptr<intervention_manager> intervention_manager::factory(int type, const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_){
 
   // 0: RfMDA, 1: RfVC, 2: RACD w/PCR, 3: RACD w/Mic, 4: RACD w/LAMP
-  if(type == 0){
+  if(type == -1){
+    Rcpp::Rcout << "null intervention manager\n";
+    return std::make_unique<intervention_manager_null>(0,0,0,houses_,nh_,null_dmat,0.);
+  } else if(type == 0){
     Rcpp::Rcout << "intervention strategy set to: RfMDA\n";
     return std::make_unique<intervention_manager_rfmda>(tmax_,tstart_,tend_,houses_,nh_,dmat_,radius_);
   } else if(type == 1){
@@ -93,6 +96,22 @@ void intervention_manager::zero_house_data(){
 void intervention_manager::add_cinc(size_t h){
   house_cc[h] = true;
 };
+
+
+/* ################################################################################
+#   NULL: no intervention
+################################################################################ */
+
+Rcpp::NumericMatrix null_dmat(1,1);
+
+/* constructor & destructor */
+intervention_manager_null::intervention_manager_null(const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_) :
+  intervention_manager(tmax_,tstart_,tend_,houses_,nh_,dmat_,radius_) {};
+
+intervention_manager_null::~intervention_manager_null(){};
+
+// implement the RfMDA method
+void intervention_manager_null::one_day_intervention(){};
 
 
 /* ################################################################################

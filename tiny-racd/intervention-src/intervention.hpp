@@ -92,6 +92,26 @@ protected:
 
 
 /* ################################################################################
+#   NULL: no intervention
+################################################################################ */
+
+extern Rcpp::NumericMatrix null_dmat;
+
+class intervention_manager_null : public intervention_manager {
+public:
+
+  /* constructor & destructor */
+  intervention_manager_null(const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_);
+  ~intervention_manager_null();
+
+  // implement the null method
+  virtual void one_day_intervention();
+
+private:
+};
+
+
+/* ################################################################################
 #   RfMDA: reactive focal mass-drug administration
 ################################################################################ */
 
