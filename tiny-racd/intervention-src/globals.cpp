@@ -15,6 +15,11 @@
 
 // definitions of the things we declared extern in the header
 
+// // age-stratified output
+// Rcpp::IntegerMatrix state_age(7,6);
+// Rcpp::rownames(state_age) = Rcpp::CharacterVector::create("S","E","T","D","A","U","P");
+// Rcpp::colnames(state_age) = Rcpp::CharacterVector::create("all","2-10","0-5","5-10","10-15","15+");
+
 // output: states
 std::vector<size_t> state_S;
 std::vector<size_t> state_E;

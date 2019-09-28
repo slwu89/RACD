@@ -24,6 +24,9 @@
 
 // output for humans
 
+// age-stratified output
+// extern Rcpp::IntegerMatrix state_age;
+
 // output: states
 extern std::vector<size_t> state_S;
 extern std::vector<size_t> state_E;
