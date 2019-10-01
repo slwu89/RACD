@@ -18,7 +18,9 @@
 
 
 /* constructor & destructor */
-globals::globals(){};
+globals::globals() : NHOUSE(0), tnow(0), tmax(0), global_hid(0), CC(0.), WW(0.), ZZ(0.)
+{};
+
 globals::~globals(){};
 
 /* utility methods */
@@ -143,4 +145,12 @@ void globals::push_mosy(const int S, const int E, const int I){
 
 void globals::push_lambda_v(const double lambda_v_t){
   lambda_v.at(tnow) = lambda_v_t;
+};
+
+void globals::push_cinc_age(const size_t j){
+  if(j == 0 ){
+    Rcpp::stop("error: 'push_cinc_age' needs j > 0 for indexing\n");
+  }
+  cinc_age.at(tnow,0) += 1;
+  cinc_age.at(tnow,j) += 1;
 };

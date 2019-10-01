@@ -1,4 +1,14 @@
 # RACD
+
+## to-do
+  * make sure people aren't getting ITNs when we do IRS
+  * RfVC happens once a season; need to have a lag window where we don't re-spray immediately
+  * need to add importation at some rate
+  * need to add more failure probabilities for the main interventions
+
+
+
+<!-- # RACD
 stochastic simulation of reactive case detection for p. falciparum
 
 * RACD is an R package that implements the individual based model in C++11/14 (requires C++11/14 compatible compiler). It can be installed from github with `devtools::install_github(repo = "slwu89/RACD",subdir = "RACD")`
@@ -45,4 +55,4 @@ New and changed parameters from initial version of model
 
 ## Classes
 
-### Human
+### Human -->

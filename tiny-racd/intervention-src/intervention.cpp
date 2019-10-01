@@ -72,6 +72,8 @@ std::unique_ptr<intervention_manager> intervention_manager::factory(int type, co
 // after assigning tomorrow's interventions, zero out the data structures tracking them
 void intervention_manager::zero_house_data(){
 
+  size_t tnow = globals::instance().get_tnow();
+
   // only need to check this after interventions begin
   if(tnow >= tstart & tnow < (tend+1)){
 
@@ -127,6 +129,8 @@ intervention_manager_rfmda::~intervention_manager_rfmda(){};
 // implement the RfMDA method
 void intervention_manager_rfmda::one_day_intervention(){
 
+  size_t tnow = globals::instance().get_tnow();
+
   // make sure intervention started
   if(tnow >= tstart & tnow < tend){
 
@@ -181,6 +185,8 @@ intervention_manager_rfvc::~intervention_manager_rfvc(){};
 
 // implement the rfVC method
 void intervention_manager_rfvc::one_day_intervention(){
+
+  size_t tnow = globals::instance().get_tnow();
 
   // make sure intervention started
   if(tnow >= tstart & tnow < tend & tnow < tend){
@@ -247,6 +253,8 @@ intervention_manager_racd_pcr::~intervention_manager_racd_pcr(){};
 // implement the RACD w/PCR method
 void intervention_manager_racd_pcr::one_day_intervention(){
 
+  size_t tnow = globals::instance().get_tnow();
+
   // make sure intervention started
   if(tnow >= tstart & tnow < tend){
 
@@ -301,6 +309,8 @@ intervention_manager_racd_Mic::~intervention_manager_racd_Mic(){};
 
 // implement the RACD w/Mic method
 void intervention_manager_racd_Mic::one_day_intervention(){
+
+  size_t tnow = globals::instance().get_tnow();
 
   // make sure intervention started
   if(tnow >= tstart & tnow < tend){
@@ -364,6 +374,8 @@ void intervention_manager_racdMic_rfvc::one_day_intervention(){
 
   // make sure intervention started
   if(tnow >= tstart & tnow < tend & tnow < tend){
+
+    size_t tnow = globals::instance().get_tnow();
 
     // main loop
     for(int h=0; h<nh; h++){
@@ -430,6 +442,8 @@ void intervention_manager_rfmda_rfvc::one_day_intervention(){
 
   // make sure intervention started
   if(tnow >= tstart & tnow < tend & tnow < tend){
+
+    size_t tnow = globals::instance().get_tnow();
 
     // main loop
     for(int h=0; h<nh; h++){

@@ -81,11 +81,12 @@ public:
   void                    inc_ZZ(double ZZ_delta){ZZ += ZZ_delta;}
   double                  get_ZZ(){return ZZ;}
 
-  void                    push_state_age(); // call this at end of each iteration
   Rcpp::List              get_state_age(){return state_age;}
 
   Rcpp::IntegerMatrix&    get_state_age_tnow(){return state_age_tnow;}
+
   Rcpp::IntegerMatrix&    get_cinc_age(){return cinc_age;}
+  void                    push_cinc_age(const size_t j);
 
   Rcpp::IntegerMatrix&    get_mosquito(){return mosquito;}
   void                    push_mosy(const int S, const int E, const int I);
