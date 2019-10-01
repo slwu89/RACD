@@ -5,82 +5,142 @@
  #   / _, _/ ___ / /___/ /_/ /
  #  /_/ |_/_/  |_\____/_____/
  #
- #  Sean Wu & John M. Marshall
- #  April 2019
+ #  Sean Wu
+ #  slwu89@berkeley.edu
+ #  September 2019
  #
  #  stuff the whole program needs to see
 */
 
 #include "globals.hpp"
 
-// definitions of the things we declared extern in the header
+#include "stats.hpp"
 
-// // age-stratified output
-// Rcpp::IntegerMatrix state_age(7,6);
-// Rcpp::rownames(state_age) = Rcpp::CharacterVector::create("S","E","T","D","A","U","P");
-// Rcpp::colnames(state_age) = Rcpp::CharacterVector::create("all","2-10","0-5","5-10","10-15","15+");
 
-// output: states
-std::vector<size_t> state_S;
-std::vector<size_t> state_E;
-std::vector<size_t> state_T;
-std::vector<size_t> state_D;
-std::vector<size_t> state_A;
-std::vector<size_t> state_U;
-std::vector<size_t> state_P;
+/* constructor & destructor */
+globals::globals(){};
+globals::~globals(){};
 
-// output: pop sizes
-std::vector<size_t> num_All;
-std::vector<size_t> num_2_10;
-std::vector<size_t> num_0_5;
-std::vector<size_t> num_5_10;
-std::vector<size_t> num_10_15;
-std::vector<size_t> num_15Plus;
+/* utility methods */
+globals& globals::instance(){
+    static globals instance;
+    return instance;
+};
 
-// output: clinical incidence
-std::vector<size_t> cinc_All;
-std::vector<size_t> cinc_2_10;
-std::vector<size_t> cinc_0_5;
-std::vector<size_t> cinc_5_10;
-std::vector<size_t> cinc_10_15;
-std::vector<size_t> cinc_15Plus;
 
-// output for mosquitos
-std::vector<size_t> mosy_S;
-std::vector<size_t> mosy_E;
-std::vector<size_t> mosy_I;
+/* ################################################################################
+#   utility and initialization
+################################################################################ */
 
-// transmision output
-std::vector<double> lambda_v;
-std::vector<double> eir_mean;
-std::vector<double> eir_var;
-// std::vector<double> lambda_h_mean;
-// std::vector<double> lambda_h_var;
-std::vector<double> b_mean;
-std::vector<double> b_var;
 
-// other output
-std::vector<size_t> time_out;
+// set up size of output objects
+void globals::set_output(const size_t tmax_){
+  if(NHOUSE == 0){
+    Rcpp::stop("call 'globals::set_output' after assigning 'NHOUSE'!");
+  }
 
-// parameters
-std::unordered_map<std::string,double> parameters;
+  tnow = 0;
+  tmax = tmax_;
 
-// current simulation time
-size_t tnow;
+  // mean/var calc
+  init_stats();
 
-// id for people
-size_t global_hid;
+  // biting
+  psi.assign(NHOUSE,0.);
+  EIR.assign(NHOUSE,0.);
 
-// transmission: mosy -> human
+  // output: states
+  state_age_tnow = Rcpp::IntegerMatrix(7,6);
+  Rcpp::rownames(state_age_tnow) = Rcpp::CharacterVector::create("S","E","T","D","A","U","P");
+  Rcpp::colnames(state_age_tnow) = Rcpp::CharacterVector::create("all","2-10","0-5","5-10","10-15","15+");
 
-// psi (biting weights) and EIR for each house
-std::vector<double>   psi;
-std::vector<double>   EIR;
+  state_age = Rcpp::List(tmax,state_age_tnow);
 
-size_t NHOUSE;
+  cinc_age = Rcpp::IntegerMatrix(tmax,6);
+  Rcpp::colnames(cinc_age) = Rcpp::CharacterVector::create("all","2-10","0-5","5-10","10-15","15+");
 
-// transmission: human -> mosy
+  mosquito = Rcpp::IntegerMatrix(tmax,3);
+  Rcpp::colnames(mosquito) = Rcpp::CharacterVector::create("S","E","I");
 
-double      CC; // P(bite will cause infection in mosquito) --- expectation of this prob over all landscape/individual heterogeneities
-double      WW; // avg probability to bite and survive
-double      ZZ; // avg probability to bite
+  // output: rates
+  lambda_v.assign(tmax,0.);
+
+  eir = Rcpp::NumericMatrix(tmax,2);
+  b = Rcpp::NumericMatrix(tmax,2);
+  Rcpp::colnames(eir) = Rcpp::CharacterVector::create("mean","var");
+  Rcpp::colnames(b) = Rcpp::CharacterVector::create("mean","var");
+};
+
+// call this when we're ready to return everything to R
+Rcpp::List globals::get_output(){
+
+  return Rcpp::List::create(
+    Rcpp::Named("state_age") = state_age,
+    Rcpp::Named("clinical_incidence") = cinc_age,
+    Rcpp::Named("mosquito") = mosquito,
+    Rcpp::Named("lambda_v") = lambda_v,
+    Rcpp::Named("EIR") = eir,
+    Rcpp::Named("b") = b
+  );
+
+};
+
+// set up the paramters hash table
+void globals::set_parameters(const Rcpp::NumericVector& theta){
+
+  /* put parameters in hash table */
+  Rcpp::CharacterVector theta_names = theta.names();
+
+  parameters.reserve(theta_names.size());
+
+  for(size_t i=0; i<theta.size(); i++){
+    parameters.emplace(theta_names.at(i),theta.at(i));
+  }
+};
+
+// running statistics
+void globals::init_stats(){
+  running_stats.emplace("EIR",RunningStat());
+  running_stats.emplace("b",RunningStat());
+};
+
+void globals::push_stats(){
+
+  eir.at(tnow,0) = running_stats["EIR"].Mean();
+  eir.at(tnow,1) = running_stats["EIR"].Variance();
+
+  b.at(tnow,0) = running_stats["b"].Mean();
+  b.at(tnow,1) = running_stats["b"].Variance();
+
+  running_stats["EIR"].Clear();
+  running_stats["b"].Clear();
+};
+
+// called by mosquito::feeding_cycle
+void globals::update_EIR(const double bites){
+  for(size_t h=0; h<NHOUSE; h++){
+    EIR[h] = psi[h] * bites;
+  }
+};
+
+// do this at the very bottom of the loop (just before the clock ticks to tomorrow)
+void globals::iterate(){
+  state_age.at(tnow) = state_age_tnow;
+  state_age_tnow.fill(0);
+  tnow++;
+};
+
+
+/* ################################################################################
+#   logging
+################################################################################ */
+
+void globals::push_mosy(const int S, const int E, const int I){
+  mosquito.at(tnow,0) = S;
+  mosquito.at(tnow,1) = E;
+  mosquito.at(tnow,2) = I;
+};
+
+void globals::push_lambda_v(const double lambda_v_t){
+  lambda_v.at(tnow) = lambda_v_t;
+};

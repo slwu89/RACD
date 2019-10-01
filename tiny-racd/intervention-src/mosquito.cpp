@@ -37,10 +37,14 @@ mosquitos::~mosquitos(){};
 ################################################################################ */
 
 void track_mosquito(const mosquito_ptr& mosy){
-  mosy_S.at(tnow) = mosy->SV;
-  mosy_E.at(tnow) = mosy->EV;
-  mosy_I.at(tnow) = mosy->IV;
-  lambda_v.at(tnow) = mosy->lambdaV;
+
+  globals::instance().push_mosy(mosy->SV, mosy->EV, mosy->IV);
+  globals::instance().push_lambda_v(mosy->lambdaV);
+
+  // mosy_S.at(tnow) = mosy->SV;
+  // mosy_E.at(tnow) = mosy->EV;
+  // mosy_I.at(tnow) = mosy->IV;
+  // lambda_v.at(tnow) = mosy->lambdaV;
 };
 
 
@@ -54,11 +58,22 @@ void feeding_cycle(mosquito_ptr& mosy){
   const double dt = 1.;
 
   /* constants */
-  double Q0 = parameters.at("Q0");
-  double tau1 = parameters.at("tau1");
-  double tau2 = parameters.at("tau2");
-  double muV = parameters.at("muV");
-  double eggOV = parameters.at("eggOV");
+  double Q0 = globals::instance().get_pmap().at("Q0");
+  double tau1 = globals::instance().get_pmap().at("tau1");
+  double tau2 = globals::instance().get_pmap().at("tau2");
+  double muV = globals::instance().get_pmap().at("muV");
+  double eggOV = globals::instance().get_pmap().at("eggOV");
+
+  // biting & human -> mosquito transmission
+  double WW = globals::instance().get_WW();
+  double ZZ = globals::instance().get_ZZ();
+  double CC = globals::instance().get_CC();
+
+  // double Q0 = parameters.at("Q0");
+  // double tau1 = parameters.at("tau1");
+  // double tau2 = parameters.at("tau2");
+  // double muV = parameters.at("muV");
+  // double eggOV = parameters.at("eggOV");
 
   /* P(successful feed) */
   mosy->W = (1.0 - Q0) + (Q0*WW);
@@ -88,10 +103,11 @@ void feeding_cycle(mosquito_ptr& mosy){
 
   /* calculate EIR (m->h) */
   double bites = mosy->a * (double)mosy->IV * dt;
+  globals::instance().update_EIR(bites);
 
-  for(size_t h=0; h<NHOUSE; h++){
-    EIR.at(h) = psi.at(h) * bites;
-  }
+  // for(size_t h=0; h<NHOUSE; h++){
+  //   EIR.at(h) = psi.at(h) * bites;
+  // }
 
   // // debugging
   // if(tnow < 30){
@@ -104,17 +120,17 @@ void euler_step(mosquito_ptr& mosy){
 
   const double dt = 1.0;
 
-  double muEL = parameters.at("muEL");
-  double durEL = parameters.at("durEL");
+  double muEL = globals::instance().get_pmap().at("muEL");
+  double durEL = globals::instance().get_pmap().at("durEL");
 
-  double gamma = parameters.at("gamma");
-  double muLL = parameters.at("muLL");
-  double durLL = parameters.at("durLL");
+  double gamma = globals::instance().get_pmap().at("gamma");
+  double muLL = globals::instance().get_pmap().at("muLL");
+  double durLL = globals::instance().get_pmap().at("durLL");
 
-  double muPL = parameters.at("muPL");
-  double durPL = parameters.at("durPL");
+  double muPL = globals::instance().get_pmap().at("muPL");
+  double durPL = globals::instance().get_pmap().at("durPL");
 
-  double durEV = parameters.at("durEV");
+  double durEV = globals::instance().get_pmap().at("durEV");
 
   /* ########################################
   # EARLY-STAGE LARVAL INSTARS (EL)

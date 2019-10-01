@@ -79,9 +79,11 @@ using house_vector = std::vector<house_ptr>;
 #   tracking output
 ################################################################################ */
 
-void track_state(const house_vector& houses);
+// void track_state(const house_vector& houses);
+//
+// void track_age(const house_vector& houses);
 
-void track_age(const house_vector& houses);
+void track_state_age(const house_vector& houses);
 
 
 /* ################################################################################

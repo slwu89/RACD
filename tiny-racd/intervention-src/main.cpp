@@ -209,6 +209,7 @@ Rcpp::List tiny_racd(
     b_var.at(tnow) = global_stats->at("b")->Variance();
     eir_mean.at(tnow) = global_stats->at("EIR")->Mean();
     eir_var.at(tnow) = global_stats->at("EIR")->Variance();
+    global_stats->at("b")->Clear();
     global_stats->at("EIR")->Clear();
 
     // bookkeeping before we move on
