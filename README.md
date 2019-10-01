@@ -15,7 +15,7 @@ stochastic simulation of reactive case detection for p. falciparum
 
 We are currently working to extend the RACD package to include mosquito dynamics (a standalone mosquito simulator can be found in Auxiliary folder).
 
-<!-- ## RACD Work Queue (from JM)
+## RACD Work Queue (from JM)
 1. Calculate mosquito population size required to generate required EIR - DONE
 2. Link vector model to human model in malaria IBM (see MalariaODEVectorsOnlyMay30.R, reference https://parasitesandvectors.biomedcentral.com/articles/10.1186/1756-3305-4-153) - IN PROGRESS
 3. Incorporate targeted interventions (all 3 interventions: RACD, etc.) - NEED TO HEAR FROM MICHELLE
@@ -23,7 +23,7 @@ We are currently working to extend the RACD package to include mosquito dynamics
 5. Incorporate possibility for seasonality in mosquito numbers - NOT YET (easy though, just implement forcing on K)
 6. Validate human model - HOW TO VALIDATE?
 7. Make sure that functions all make sense - NOTHING YET
-8. Validate modified treatment node in human model - NOT SURE WHAT THIS MEANS -->
+8. Validate modified treatment node in human model - NOT SURE WHAT THIS MEANS
 
 ## RACD References
 * Human Model:
