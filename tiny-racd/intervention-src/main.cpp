@@ -86,6 +86,7 @@ Rcpp::List tiny_racd(
   const int int_type,
   const int tstart,
   const int tend,
+  const int tdelay,
   const Rcpp::NumericMatrix& dmat,
   const double radius,
   const bool prog_bar = true
@@ -118,6 +119,7 @@ Rcpp::List tiny_racd(
   globals::instance().set_NHOUSE(nhouse);
   globals::instance().set_output(tmax);
   globals::instance().set_parameters(theta);
+  globals::instance().init_lookup();
 
 
   Rcpp::Rcout << " --- done initializing global variables and parameters --- " << std::endl;
@@ -125,7 +127,7 @@ Rcpp::List tiny_racd(
   Rcpp::Rcout << " --- initializing simulation objects in memory --- " << std::endl;
 
   /* make the intervention manager */
-  int_mgr_ptr int_mgr = intervention_manager::factory(int_type,tmax,tstart,tend,&houses,nhouse,dmat,radius);
+  int_mgr_ptr int_mgr = intervention_manager::factory(int_type,tmax,tstart,tend,&houses,nhouse,dmat,radius,tdelay);
 
   /* make the houses */
   for(size_t i=0; i<nhouse; i++){
