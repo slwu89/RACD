@@ -19,6 +19,7 @@
 #include <string>
 #include <array>
 #include <unordered_map>
+#include <algorithm>
 
 #include <Rcpp.h>
 
@@ -54,6 +55,10 @@ public:
 
   // do this at the very bottom of the loop (just before the clock ticks to tomorrow)
   void                    iterate();
+
+  // lookup table sampling
+  void                    init_lookup();
+  int                     sample_lookup();
 
   // accessors
   void                    set_NHOUSE(const size_t NHOUSE_){NHOUSE = NHOUSE_;}
@@ -129,6 +134,10 @@ private:
   double                  CC; // P(bite will cause infection in mosquito) --- expectation of this prob over all landscape/individual heterogeneities
   double                  WW; // avg probability to bite and survive
   double                  ZZ; // avg probability to bite
+
+  // sampling discrete distribution (Devoye 3.1 The table look-up principle)
+  // in his notation, NHOUSE = M
+  std::vector<int>        lookup_tab;
 
   /* output */
   // state

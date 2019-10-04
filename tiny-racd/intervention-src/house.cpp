@@ -410,6 +410,7 @@ void one_day_deaths(house_vector& houses){
 // the respawn point
 void one_day_births(house_vector& houses){
 
+  // BIRTHS
   int hpop = std::accumulate( globals::instance().get_state_age_tnow().column(0).begin(),  globals::instance().get_state_age_tnow().column(0).end(),0);
   // size_t hpop = num_All.at(tnow);
   double mu = globals::instance().get_pmap().at("mu");
@@ -463,6 +464,14 @@ void one_day_births(house_vector& houses){
 
     }
 
+  }
+
+  // IMPORTATION
+  double import_rate = globals::instance().get_pmap().at("import_rate");
+  int import_case = (int)R::rpois(import_rate);
+
+  if(import_case > 0){
+    // rmultinom(mosy->EL, mosy->EL_probs.data(), 3, mosy->EL_transitions.data());
   }
 
 };

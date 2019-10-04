@@ -133,6 +133,17 @@ void globals::iterate(){
   tnow++;
 };
 
+// lookup table sampling
+void globals::init_lookup(){
+  lookup_tab = std::vector<int>(NHOUSE);
+  std::iota(lookup_tab.begin(), lookup_tab.end(),0);
+};
+
+int globals::sample_lookup(){
+  double u = R::runif(0., 1.);
+  return lookup_tab[std::floor((int)NHOUSE * u)];
+}
+
 
 /* ################################################################################
 #   logging
