@@ -56,14 +56,14 @@ typedef struct house {
 
   std::list<human_ptr>                    humans; // who lives here
 
-  // stats
-  stat_map* const                         global_stat;
+  // // stats
+  // stat_map* const                         global_stat;
 
   // intervention manager
   intervention_manager* const             int_mgr;
 
   // constructor & destructor
-  house(const size_t id_, stat_map* global_stat_, intervention_manager* int_mgr_);
+  house(const size_t id_, intervention_manager* int_mgr_);
 
   ~house();
 } house;

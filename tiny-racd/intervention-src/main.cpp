@@ -1,3 +1,16 @@
+/*
+ #      ____  ___   __________
+ #     / __ \/   | / ____/ __ \
+ #    / /_/ / /| |/ /   / / / /
+ #   / _, _/ ___ / /___/ /_/ /
+ #  /_/ |_/_/  |_\____/_____/
+ #
+ #  Sean Wu & John M. Marshall
+ #  October 2019
+ #
+ #  main simulation interface
+*/
+
 #include "globals.hpp"
 #include "house.hpp"
 #include "mosquito.hpp"
@@ -11,7 +24,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-
 #include <unordered_map>
 
 #include <Rcpp.h>
@@ -25,10 +37,10 @@ static house_vector houses;
 // the mosquitos
 using mosquito_ptr = std::unique_ptr<mosquitos>;
 
-// global stats
-using RunningStat_ptr = std::unique_ptr<RunningStat>;
-using stat_map = std::unordered_map<std::string,RunningStat_ptr>;
-using stat_map_ptr = std::unique_ptr<stat_map>;
+// // global stats
+// using RunningStat_ptr = std::unique_ptr<RunningStat>;
+// using stat_map = std::unordered_map<std::string,RunningStat_ptr>;
+// using stat_map_ptr = std::unique_ptr<stat_map>;
 
 // interventions
 using int_mgr_ptr = std::unique_ptr<intervention_manager>;
@@ -81,22 +93,32 @@ Rcpp::List tiny_racd(
 
   Rcpp::Rcout << " --- initializing global variables and parameters --- " << std::endl;
 
-  stat_map_ptr global_stats = std::make_unique<stat_map>();
-  global_stats->emplace("EIR",std::make_unique<RunningStat>());
-  // global_stats->emplace("FOI",std::make_unique<RunningStat>());
-  global_stats->emplace("b",std::make_unique<RunningStat>());
+  // stat_map_ptr global_stats = std::make_unique<stat_map>();
+  // global_stats->emplace("EIR",std::make_unique<RunningStat>());
+  // // global_stats->emplace("FOI",std::make_unique<RunningStat>());
+  // global_stats->emplace("b",std::make_unique<RunningStat>());
+  //
+  // size_t nhouse = house_param.size();
+  //
+  // /* clear global variables */
+  // reset_globals(tmax,nhouse);
+  // houses.reserve(nhouse);
 
+  // /* put parameters in hash table */
+  // Rcpp::CharacterVector theta_names = theta.names();
+  // for(size_t i=0; i<theta.size(); i++){
+  //   parameters.emplace(theta_names.at(i),theta.at(i));
+  // }
+
+  // vector of houses is static variable
   size_t nhouse = house_param.size();
-
-  /* clear global variables */
-  reset_globals(tmax,nhouse);
   houses.reserve(nhouse);
 
-  /* put parameters in hash table */
-  Rcpp::CharacterVector theta_names = theta.names();
-  for(size_t i=0; i<theta.size(); i++){
-    parameters.emplace(theta_names.at(i),theta.at(i));
-  }
+  // set global output and parameters
+  globals::instance().set_NHOUSE(nhouse);
+  globals::instance().set_output(tmax);
+  globals::instance().set_parameters(theta);
+
 
   Rcpp::Rcout << " --- done initializing global variables and parameters --- " << std::endl;
 
@@ -111,12 +133,12 @@ Rcpp::List tiny_racd(
     /* biting weight */
     double psi_i = Rcpp::as<double>(Rcpp::as<Rcpp::List>(house_param[i])["psi"]);
 
-    // psi.emplace_back(0.);
-    psi[i] = (double)psi_i;
+    globals::instance().get_psi().at(i) = psi_i;
+    // psi[i] = (double)psi_i;
 
     /* make the house */
     houses.emplace_back(
-      std::make_unique<house>(i,global_stats.get(),int_mgr.get())
+      std::make_unique<house>(i,int_mgr.get())
     );
   }
 
@@ -165,18 +187,20 @@ Rcpp::List tiny_racd(
 
   // main simulation loop
   Progress pb(tmax,prog_bar);
-  while(tnow < tmax){
+  // while(tnow < tmax){
+  while(globals::instance().tcheck()){
 
     // check for worried users
-    if(tnow % 5 == 0){
+    if(globals::instance().get_tnow() % 5 == 0){
       if(Progress::check_abort()){
         Rcpp::stop("user abort detected");
       }
     }
 
     // track human output
-    track_state(houses);
-    track_age(houses);
+    // track_state(houses);
+    // track_age(houses);
+    track_state_age(houses);
 
     // track mosquito output
     track_mosquito(mosy_pop);
@@ -204,77 +228,83 @@ Rcpp::List tiny_racd(
     int_mgr->one_day_intervention();
     int_mgr->zero_house_data();
 
-    // tracking before we move on
-    b_mean.at(tnow) = global_stats->at("b")->Mean();
-    b_var.at(tnow) = global_stats->at("b")->Variance();
-    eir_mean.at(tnow) = global_stats->at("EIR")->Mean();
-    eir_var.at(tnow) = global_stats->at("EIR")->Variance();
-    global_stats->at("b")->Clear();
-    global_stats->at("EIR")->Clear();
+    // // tracking before we move on
+    // b_mean.at(tnow) = global_stats->at("b")->Mean();
+    // b_var.at(tnow) = global_stats->at("b")->Variance();
+    // eir_mean.at(tnow) = global_stats->at("EIR")->Mean();
+    // eir_var.at(tnow) = global_stats->at("EIR")->Variance();
+    // global_stats->at("b")->Clear();
+    // global_stats->at("EIR")->Clear();
 
     // bookkeeping before we move on
     pb.increment();
-    tnow++;
+    // tnow++;
+    globals::instance().iterate();
   }
 
   Rcpp::Rcout << std::endl << " --- end simulation --- " << std::endl;
 
   houses.clear();
 
-  // return output
-  Rcpp::DataFrame state = Rcpp::DataFrame::create(
-    Rcpp::Named("time") = Rcpp::wrap(time_out),
-    Rcpp::Named("S") = Rcpp::wrap(state_S),
-    Rcpp::Named("E") = Rcpp::wrap(state_E),
-    Rcpp::Named("T") = Rcpp::wrap(state_T),
-    Rcpp::Named("D") = Rcpp::wrap(state_D),
-    Rcpp::Named("A") = Rcpp::wrap(state_A),
-    Rcpp::Named("U") = Rcpp::wrap(state_U),
-    Rcpp::Named("P") = Rcpp::wrap(state_P)
-  );
-
-  Rcpp::DataFrame age = Rcpp::DataFrame::create(
-    Rcpp::Named("time") = Rcpp::wrap(time_out),
-    Rcpp::Named("all") = Rcpp::wrap(num_All),
-    Rcpp::Named("2_10") = Rcpp::wrap(num_2_10),
-    Rcpp::Named("0_5") = Rcpp::wrap(num_0_5),
-    Rcpp::Named("5_10") = Rcpp::wrap(num_5_10),
-    Rcpp::Named("10_15") = Rcpp::wrap(num_10_15),
-    Rcpp::Named("15+") = Rcpp::wrap(num_15Plus)
-  );
-
-  Rcpp::DataFrame clinic = Rcpp::DataFrame::create(
-    Rcpp::Named("time") = Rcpp::wrap(time_out),
-    Rcpp::Named("all") = Rcpp::wrap(cinc_All),
-    Rcpp::Named("2_10") = Rcpp::wrap(cinc_2_10),
-    Rcpp::Named("0_5") = Rcpp::wrap(cinc_0_5),
-    Rcpp::Named("5_10") = Rcpp::wrap(cinc_5_10),
-    Rcpp::Named("10_15") = Rcpp::wrap(cinc_10_15),
-    Rcpp::Named("15+") = Rcpp::wrap(cinc_15Plus)
-  );
-
-  Rcpp::DataFrame mosy = Rcpp::DataFrame::create(
-    Rcpp::Named("time") = Rcpp::wrap(time_out),
-    Rcpp::Named("S") = Rcpp::wrap(mosy_S),
-    Rcpp::Named("E") = Rcpp::wrap(mosy_E),
-    Rcpp::Named("I") = Rcpp::wrap(mosy_I)
-  );
-
-  Rcpp::DataFrame trans = Rcpp::DataFrame::create(
-    Rcpp::Named("time") = Rcpp::wrap(time_out),
-    Rcpp::Named("lambda_v") = Rcpp::wrap(lambda_v),
-    Rcpp::Named("EIR_mean") = Rcpp::wrap(eir_mean),
-    Rcpp::Named("EIR_var") = Rcpp::wrap(eir_var),
-    Rcpp::Named("b_mean") = Rcpp::wrap(b_mean),
-    Rcpp::Named("b_var") = Rcpp::wrap(b_var)
-  );
+  // // return output
+  // Rcpp::DataFrame state = Rcpp::DataFrame::create(
+  //   Rcpp::Named("time") = Rcpp::wrap(time_out),
+  //   Rcpp::Named("S") = Rcpp::wrap(state_S),
+  //   Rcpp::Named("E") = Rcpp::wrap(state_E),
+  //   Rcpp::Named("T") = Rcpp::wrap(state_T),
+  //   Rcpp::Named("D") = Rcpp::wrap(state_D),
+  //   Rcpp::Named("A") = Rcpp::wrap(state_A),
+  //   Rcpp::Named("U") = Rcpp::wrap(state_U),
+  //   Rcpp::Named("P") = Rcpp::wrap(state_P)
+  // );
+  //
+  // Rcpp::DataFrame age = Rcpp::DataFrame::create(
+  //   Rcpp::Named("time") = Rcpp::wrap(time_out),
+  //   Rcpp::Named("all") = Rcpp::wrap(num_All),
+  //   Rcpp::Named("2_10") = Rcpp::wrap(num_2_10),
+  //   Rcpp::Named("0_5") = Rcpp::wrap(num_0_5),
+  //   Rcpp::Named("5_10") = Rcpp::wrap(num_5_10),
+  //   Rcpp::Named("10_15") = Rcpp::wrap(num_10_15),
+  //   Rcpp::Named("15+") = Rcpp::wrap(num_15Plus)
+  // );
+  //
+  // Rcpp::DataFrame clinic = Rcpp::DataFrame::create(
+  //   Rcpp::Named("time") = Rcpp::wrap(time_out),
+  //   Rcpp::Named("all") = Rcpp::wrap(cinc_All),
+  //   Rcpp::Named("2_10") = Rcpp::wrap(cinc_2_10),
+  //   Rcpp::Named("0_5") = Rcpp::wrap(cinc_0_5),
+  //   Rcpp::Named("5_10") = Rcpp::wrap(cinc_5_10),
+  //   Rcpp::Named("10_15") = Rcpp::wrap(cinc_10_15),
+  //   Rcpp::Named("15+") = Rcpp::wrap(cinc_15Plus)
+  // );
+  //
+  // Rcpp::DataFrame mosy = Rcpp::DataFrame::create(
+  //   Rcpp::Named("time") = Rcpp::wrap(time_out),
+  //   Rcpp::Named("S") = Rcpp::wrap(mosy_S),
+  //   Rcpp::Named("E") = Rcpp::wrap(mosy_E),
+  //   Rcpp::Named("I") = Rcpp::wrap(mosy_I)
+  // );
+  //
+  // Rcpp::DataFrame trans = Rcpp::DataFrame::create(
+  //   Rcpp::Named("time") = Rcpp::wrap(time_out),
+  //   Rcpp::Named("lambda_v") = Rcpp::wrap(lambda_v),
+  //   Rcpp::Named("EIR_mean") = Rcpp::wrap(eir_mean),
+  //   Rcpp::Named("EIR_var") = Rcpp::wrap(eir_var),
+  //   Rcpp::Named("b_mean") = Rcpp::wrap(b_mean),
+  //   Rcpp::Named("b_var") = Rcpp::wrap(b_var)
+  // );
+  //
+  // return Rcpp::List::create(
+  //   Rcpp::Named("state") = state,
+  //   Rcpp::Named("age") = age,
+  //   Rcpp::Named("clinical_incidence") = clinic,
+  //   Rcpp::Named("mosy") = mosy,
+  //   Rcpp::Named("trans") = trans,
+  //   Rcpp::Named("intervention") = int_mgr->get_int_status_hist()
+  // );
 
   return Rcpp::List::create(
-    Rcpp::Named("state") = state,
-    Rcpp::Named("age") = age,
-    Rcpp::Named("clinical_incidence") = clinic,
-    Rcpp::Named("mosy") = mosy,
-    Rcpp::Named("trans") = trans,
+    Rcpp::Named("state_hist") = globals::instance().get_output(),
     Rcpp::Named("intervention") = int_mgr->get_int_status_hist()
   );
 };

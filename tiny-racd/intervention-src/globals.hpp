@@ -63,6 +63,7 @@ public:
 
   size_t                  get_tnow(){return tnow;}
   void                    inc_tnow(){tnow++;}
+  bool                    tcheck(){return tnow < tmax;}
 
   size_t                  get_global_hid(){return global_hid++;}
 

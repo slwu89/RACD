@@ -127,6 +127,7 @@ void globals::update_EIR(const double bites){
 
 // do this at the very bottom of the loop (just before the clock ticks to tomorrow)
 void globals::iterate(){
+  push_stats();
   state_age.at(tnow) = state_age_tnow;
   state_age_tnow.fill(0);
   tnow++;
