@@ -21,10 +21,10 @@
 #include <unordered_map>
 #include <algorithm>
 
-// gloabl online stats
-class RunningStat;
-using RunningStat_ptr = std::unique_ptr<RunningStat>;
-using stat_map = std::unordered_map<std::string,RunningStat_ptr>;
+// // gloabl online stats
+// class RunningStat;
+// using RunningStat_ptr = std::unique_ptr<RunningStat>;
+// using stat_map = std::unordered_map<std::string,RunningStat_ptr>;
 
 // declare the human
 struct human;

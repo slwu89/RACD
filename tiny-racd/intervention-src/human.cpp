@@ -351,10 +351,10 @@ void update_lambda(human_ptr& human){
   human->lambda = EIR_h * b;
 
   // track EIR values
-  globals::instance().get_stats().at("EIR")->Push(human->epsilon);
+  globals::instance().get_stats().at("EIR").Push(human->epsilon);
 
   // track b values
-  globals::instance().get_stats().at("b")->Push(b);
+  globals::instance().get_stats().at("b").Push(b);
 };
 
 /* phi */

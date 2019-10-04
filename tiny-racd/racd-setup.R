@@ -99,6 +99,14 @@ c_initial <- function(human,theta){
 }
 
 
+# calculate the IB,ID,ICA for imported cases
+imported_immune <- function(EIR,theta){
+  init <- immune_initial(a = 21, EIR = epsilon, theta = theta)
+  names(init) <- paste0(names(init),"_imp")
+  return(init)
+}
+
+
 RACD_Setup <- function(N, EIR_mean, xy_d, xy_a, theta){
 
 	# extract variables that we need and assign here
