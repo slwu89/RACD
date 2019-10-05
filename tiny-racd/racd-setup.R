@@ -101,7 +101,7 @@ c_initial <- function(human,theta){
 
 # calculate the IB,ID,ICA for imported cases
 imported_immune <- function(EIR,theta){
-  init <- immune_initial(a = 21, EIR = epsilon, theta = theta)
+  init <- immune_initial(a = 21, EIR = EIR, theta = theta)
   names(init) <- paste0(names(init),"_imp")
   return(init)
 }
