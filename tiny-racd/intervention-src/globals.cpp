@@ -56,8 +56,6 @@ void globals::set_output(const size_t tmax_){
   Rcpp::rownames(state_age_tnow) = Rcpp::CharacterVector::create("S","E","T","D","A","U","P");
   Rcpp::colnames(state_age_tnow) = Rcpp::CharacterVector::create("all","2-10","0-5","5-10","10-15","15+");
 
-  state_age = Rcpp::List(tmax,state_age_tnow);
-
   cinc_age = Rcpp::IntegerMatrix(tmax,6);
   Rcpp::colnames(cinc_age) = Rcpp::CharacterVector::create("all","2-10","0-5","5-10","10-15","15+");
 
@@ -128,7 +126,7 @@ void globals::update_EIR(const double bites){
 // do this at the very bottom of the loop (just before the clock ticks to tomorrow)
 void globals::iterate(){
   push_stats();
-  state_age.at(tnow) = state_age_tnow;
+  state_age.push_back(Rcpp::clone(state_age_tnow));
   state_age_tnow.fill(0);
   tnow++;
 };

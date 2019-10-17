@@ -89,6 +89,7 @@ public:
 
   Rcpp::List              get_state_age(){return state_age;}
 
+  void                    push_state_age_tnow(const int i, const int j){state_age_tnow.at(i,j) += 1;}
   Rcpp::IntegerMatrix&    get_state_age_tnow(){return state_age_tnow;}
 
   Rcpp::IntegerMatrix&    get_cinc_age(){return cinc_age;}

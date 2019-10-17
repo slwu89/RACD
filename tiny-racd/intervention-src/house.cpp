@@ -91,7 +91,7 @@ house::~house(){};
 // };
 
 void track_state_age(const house_vector& houses){
-
+// Rcpp::Rcout << "track_state_age\n";
   // i:state j:age
   size_t i;
   size_t j;
@@ -133,8 +133,10 @@ void track_state_age(const house_vector& houses){
       }
 
       // log output (once for all, and then for my age-class)
-      globals::instance().get_state_age_tnow().at(i,0) += 1;
-      globals::instance().get_state_age_tnow().at(i,j) += 1;
+      // globals::instance().get_state_age_tnow().at(i,0) += 1;
+      // globals::instance().get_state_age_tnow().at(i,j) += 1;
+      globals::instance().push_state_age_tnow(i,0);
+      globals::instance().push_state_age_tnow(i,j);
     }
   }
 
