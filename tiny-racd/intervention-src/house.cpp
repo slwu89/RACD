@@ -37,62 +37,8 @@ house::~house(){};
 #   tracking output
 ################################################################################ */
 
-// void track_state(const house_vector& houses){
-//
-//   time_out.at(tnow) = tnow;
-//
-//   for(auto& hh : houses){
-//     for(auto& h : hh->humans){
-//       if(h->state.compare("S") == 0){
-//         state_S.at(tnow) += 1;
-//       } else if(h->state.compare("E") == 0){
-//         state_E.at(tnow) += 1;
-//       } else if(h->state.compare("T") == 0){
-//         state_T.at(tnow) += 1;
-//       } else if(h->state.compare("D") == 0){
-//         state_D.at(tnow) += 1;
-//       } else if(h->state.compare("A") == 0){
-//         state_A.at(tnow) += 1;
-//       } else if(h->state.compare("U") == 0){
-//         state_U.at(tnow) += 1;
-//       } else if(h->state.compare("P") == 0){
-//         state_P.at(tnow) += 1;
-//       } else {
-//         Rcpp::stop("incorrect state detected");
-//       }
-//     }
-//   }
-//
-// };
-//
-// void track_age(const house_vector& houses){
-//
-//   for(auto& hh : houses){
-//     for(auto& h : hh->humans){
-//
-//       if((h->age >= 2.) && (h->age < 10.)){
-//         num_2_10.at(tnow) += 1;
-//       }
-//       if(h->age < 5.) {
-//         num_0_5.at(tnow) += 1;
-//       } else if((h->age >= 5.) && (h->age < 10.)){
-//         num_5_10.at(tnow) += 1;
-//       } else if((h->age >= 10.) && (h->age < 15.)){
-//         num_10_15.at(tnow) += 1;
-//       } else if(h->age >= 15.){
-//         num_15Plus.at(tnow) += 1;
-//       }
-//
-//       num_All.at(tnow) += 1;
-//
-//     }
-//   }
-//
-// };
-
 void track_state_age(const house_vector& houses){
-// Rcpp::Rcout << "track_state_age\n";
-  // i:state j:age
+
   size_t i;
   size_t j;
 
@@ -136,8 +82,6 @@ void track_state_age(const house_vector& houses){
       }
 
       // log output (once for all, and then for my age-class)
-      // globals::instance().get_state_age_tnow().at(i,0) += 1;
-      // globals::instance().get_state_age_tnow().at(i,j) += 1;
       globals::instance().push_state_age_tnow(i,0);
       globals::instance().push_state_age_tnow(i,j);
     }
@@ -220,10 +164,6 @@ void update_biting(house_vector& houses){
   globals::instance().zero_WW();
   globals::instance().zero_ZZ();
 
-  // CC = 0.;
-  // WW = 0.;
-  // ZZ = 0.;
-
   for(auto& hh : houses){
 
     /* normalize biting weights (pi) */
@@ -249,16 +189,6 @@ void update_biting(house_vector& houses){
     /* global Z is a weighted average of household level Z's */
     globals::instance().inc_ZZ(psi_h * hh->Z);
 
-    // double psi_h = psi[hh->id];
-    //
-    // /* global CC is weighted average of household level C's */
-    // CC += psi_h * hh->C;
-    //
-    // /* global W is a weighted average of household level W's */
-    // WW += psi_h * hh->W;
-    //
-    // /* global Z is a weighted average of household level Z's */
-    // WW += psi_h * hh->Z;
   }
 
 };

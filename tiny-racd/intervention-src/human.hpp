@@ -11,8 +11,8 @@
  #  the human
 */
 
-#ifndef human_hpp
-#define human_hpp
+#ifndef HUMAN_HPP
+#define HUMAN_HPP
 
 #include <Rcpp.h>
 

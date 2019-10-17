@@ -41,10 +41,6 @@ void track_mosquito(const mosquito_ptr& mosy){
   globals::instance().push_mosy(mosy->SV, mosy->EV, mosy->IV);
   globals::instance().push_lambda_v(mosy->lambdaV);
 
-  // mosy_S.at(tnow) = mosy->SV;
-  // mosy_E.at(tnow) = mosy->EV;
-  // mosy_I.at(tnow) = mosy->IV;
-  // lambda_v.at(tnow) = mosy->lambdaV;
 };
 
 
@@ -68,12 +64,6 @@ void feeding_cycle(mosquito_ptr& mosy){
   double WW = globals::instance().get_WW();
   double ZZ = globals::instance().get_ZZ();
   double CC = globals::instance().get_CC();
-
-  // double Q0 = parameters.at("Q0");
-  // double tau1 = parameters.at("tau1");
-  // double tau2 = parameters.at("tau2");
-  // double muV = parameters.at("muV");
-  // double eggOV = parameters.at("eggOV");
 
   /* P(successful feed) */
   mosy->W = (1.0 - Q0) + (Q0*WW);
@@ -104,15 +94,6 @@ void feeding_cycle(mosquito_ptr& mosy){
   /* calculate EIR (m->h) */
   double bites = mosy->a * (double)mosy->IV * dt;
   globals::instance().update_EIR(bites);
-
-  // for(size_t h=0; h<NHOUSE; h++){
-  //   EIR.at(h) = psi.at(h) * bites;
-  // }
-
-  // // debugging
-  // if(tnow < 30){
-  //   Rcpp::Rcout << " --- W: " << mosy->W << " C: " << CC << " Z: " << mosy->Z << " mu: " << mosy->mu << " Q0: " << Q0 << " bites: " << bites << " --- \n";
-  // }
 };
 
 // one-day update function

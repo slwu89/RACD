@@ -63,9 +63,6 @@ human::human(const double age_,
       ITN(false),
       ITN_time_off(0.)
 {
-  // // after we take our id, increment for the next person!
-  // global_hid++;
-
   // add my biting to the hash table
   double a0 = globals::instance().get_pmap().at("a0");
   double rho = globals::instance().get_pmap().at("rho");
@@ -77,9 +74,7 @@ human::human(const double age_,
 
 };
 
-human::~human(){
-  // Rcpp::Rcout << "human: " << id << " is dying because they are dead: " << alive << " in house: " << house_ptr->id << "\n";
-};
+human::~human(){};
 
 
 /* ################################################################################
@@ -90,21 +85,6 @@ human::~human(){
 // this function does double duty as it also lets the
 // intervention manager know a case popped up
 void track_cinc(const human_ptr& h){
-
-  // cinc_All.at(tnow) += 1;
-  //
-  // if((h->age >= 2.) && (h->age < 10.)){
-  //   cinc_2_10.at(tnow) += 1;
-  // }
-  // if(h->age < 5.) {
-  //   cinc_0_5.at(tnow) += 1;
-  // } else if((h->age >= 5.) && (h->age < 10.)){
-  //   cinc_5_10.at(tnow) += 1;
-  // } else if((h->age >= 10.) && (h->age < 15.)){
-  //   cinc_10_15.at(tnow) += 1;
-  // } else if(h->age >= 15.){
-  //   cinc_15Plus.at(tnow) += 1;
-  // }
 
   size_t j;
 

@@ -11,8 +11,8 @@
  #  the house
 */
 
-#ifndef house_hpp
-#define house_hpp
+#ifndef HOUSE_HPP
+#define HOUSE_HPP
 
 #include <Rcpp.h>
 
@@ -20,11 +20,6 @@
 #include <list>
 #include <unordered_map>
 #include <algorithm>
-
-// // gloabl online stats
-// class RunningStat;
-// using RunningStat_ptr = std::unique_ptr<RunningStat>;
-// using stat_map = std::unordered_map<std::string,RunningStat_ptr>;
 
 // declare the human
 struct human;
@@ -56,9 +51,6 @@ typedef struct house {
 
   std::list<human_ptr>                    humans; // who lives here
 
-  // // stats
-  // stat_map* const                         global_stat;
-
   // intervention manager
   intervention_manager* const             int_mgr;
 
@@ -78,10 +70,6 @@ using house_vector = std::vector<house_ptr>;
 /* ################################################################################
 #   tracking output
 ################################################################################ */
-
-// void track_state(const house_vector& houses);
-//
-// void track_age(const house_vector& houses);
 
 void track_state_age(const house_vector& houses);
 

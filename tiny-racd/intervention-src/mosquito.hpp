@@ -11,8 +11,8 @@
  #  the mosquitos
 */
 
-#ifndef mosquitos_hpp
-#define mosquitos_hpp
+#ifndef MOSQUITO_HPP
+#define MOSQUITO_HPP
 
 #include <Rcpp.h>
 #include <Rmath.h>
