@@ -90,10 +90,12 @@ public:
   Rcpp::List              get_state_age(){return state_age;}
 
   void                    push_state_age_tnow(const int i, const int j){state_age_tnow.at(i,j) += 1;}
+  void                    push_state_2_10_tnow(const int i){state_age_tnow.at(i,1) += 1;}
   Rcpp::IntegerMatrix&    get_state_age_tnow(){return state_age_tnow;}
 
   Rcpp::IntegerMatrix&    get_cinc_age(){return cinc_age;}
   void                    push_cinc_age(const size_t j);
+  void                    push_cinc_2_10(){cinc_age.at(tnow,1) += 1;}
 
   Rcpp::IntegerMatrix&    get_mosquito(){return mosquito;}
   void                    push_mosy(const int S, const int E, const int I);

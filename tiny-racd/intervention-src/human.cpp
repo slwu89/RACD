@@ -109,8 +109,9 @@ void track_cinc(const human_ptr& h){
   size_t j;
 
   if((h->age >= 2.) && (h->age < 10.)){
-    j = 1;
+    globals::instance().push_cinc_2_10();
   }
+
   if(h->age < 5.) {
     j = 2;
   } else if((h->age >= 5.) && (h->age < 10.)){
@@ -119,6 +120,8 @@ void track_cinc(const human_ptr& h){
     j = 4;
   } else if(h->age >= 15.){
     j = 5;
+  } else {
+    Rcpp::stop("invalid age for human");
   }
 
   globals::instance().push_cinc_age(j);

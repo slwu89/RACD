@@ -120,8 +120,9 @@ void track_state_age(const house_vector& houses){
 
       // get their age category
       if((h->age >= 2.) && (h->age < 10.)){
-        j = 1;
+        globals::instance().push_state_2_10_tnow(i);
       }
+
       if(h->age < 5.) {
         j = 2;
       } else if((h->age >= 5.) && (h->age < 10.)){
@@ -130,6 +131,8 @@ void track_state_age(const house_vector& houses){
         j = 4;
       } else if(h->age >= 15.){
         j = 5;
+      } else {
+        Rcpp::stop("invalid age for human");
       }
 
       // log output (once for all, and then for my age-class)
