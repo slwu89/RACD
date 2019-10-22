@@ -31,13 +31,15 @@ Rcpp::List immmune_ode(
   // dx/dt
   Rcpp::NumericVector dx(3);
 
+  const double yr = 365.;
+
   // params
-  double durB = Rcpp::as<double>(theta["dB"]) / 365.; // Inverse decay rate (years)
-  double uB = Rcpp::as<double>(theta["uB"]) / 365.; // Duration in which immunity is not boosted (years)
-  double durD = Rcpp::as<double>(theta["dID"]) / 365.; // Inverse decay rate (years)
-  double uD = Rcpp::as<double>(theta["uD"]) / 365.; // Duration in which immunity is not boosted (years)
-  double durC = Rcpp::as<double>(theta["dC"]) / 365.; // Inverse decay rate (years)
-  double uC = Rcpp::as<double>(theta["uC"]) / 365.; // Duration in which immunity is not boosted (years)
+  double durB = Rcpp::as<double>(theta["dB"]) / yr; // Inverse decay rate (years)
+  double uB = Rcpp::as<double>(theta["uB"]) / yr; // Duration in which immunity is not boosted (years)
+  double durD = Rcpp::as<double>(theta["dID"]) / yr; // Inverse decay rate (years)
+  double uD = Rcpp::as<double>(theta["uD"]) / yr; // Duration in which immunity is not boosted (years)
+  double durC = Rcpp::as<double>(theta["dC"]) / yr; // Inverse decay rate (years)
+  double uC = Rcpp::as<double>(theta["uC"]) / yr; // Duration in which immunity is not boosted (years)
   double b0 = Rcpp::as<double>(theta["b0"]);
   double b1 = Rcpp::as<double>(theta["b1"]);
   double IB0 = Rcpp::as<double>(theta["IB0"]);
@@ -48,7 +50,7 @@ Rcpp::List immmune_ode(
   double a0 = Rcpp::as<double>(theta["a0"]);
   double agemod = (1. - rho*std::exp(-time/a0));
 
-  double EIR = EIR_h * agemod * 365.; // my EIR (years)
+  double EIR = EIR_h * agemod * yr; // my EIR (years)
   double b = b0*(b1 + ((1.-b1)/(1. + std::pow((IB/IB0),kappaB))));
   double lambda = EIR * b;
 
@@ -84,33 +86,35 @@ Rcpp::List state_ode(
   // dx/dt
   Rcpp::NumericVector dx(8);
 
+  const double yr = 365.;
+
   // Parameters:
   double fT = Rcpp::as<double>(theta["fT"]); // Proportion of clinical disease cases successfully treated
 
   // Model parameters taken from Griffin et al. (2014):
   // Human infection durations:
-  double dT = Rcpp::as<double>(theta["dT"]) / 365.; // Duration of treated clinical disease (years)
-  double dD = Rcpp::as<double>(theta["dD"]) / 365.; // Duration of untreated clinical disease (years)
-  double dA = Rcpp::as<double>(theta["dA"]) / 365.; // Duration of patent infection (years)
-  double dU = Rcpp::as<double>(theta["dU"]) / 365.; // Duration of sub-patent infection (years) (fitted)
-  double dP = Rcpp::as<double>(theta["dP"]) / 365.; // Duration of prophylactic protection following treatment (years)
+  double dT = Rcpp::as<double>(theta["dT"]) / yr; // Duration of treated clinical disease (years)
+  double dD = Rcpp::as<double>(theta["dD"]) / yr; // Duration of untreated clinical disease (years)
+  double dA = Rcpp::as<double>(theta["dA"]) / yr; // Duration of patent infection (years)
+  double dU = Rcpp::as<double>(theta["dU"]) / yr; // Duration of sub-patent infection (years) (fitted)
+  double dP = Rcpp::as<double>(theta["dP"]) / yr; // Duration of prophylactic protection following treatment (years)
 
   // Immunity reducing probability of infection:
   double b0 = Rcpp::as<double>(theta["b0"]); // Probabiliy with no immunity (fitted)
   double b1 = Rcpp::as<double>(theta["b1"]); // Maximum relative reduction
-  double dB = Rcpp::as<double>(theta["dB"]) / 365.; // Inverse of decay rate (years)
+  double dB = Rcpp::as<double>(theta["dB"]) / yr; // Inverse of decay rate (years)
   double IB0 = Rcpp::as<double>(theta["IB0"]); // Scale parameter (fitted)
   double kappaB = Rcpp::as<double>(theta["kappaB"]); // Shape parameter (fitted)
-  double uB = Rcpp::as<double>(theta["uB"]) / 365.; // Duration in which immunity is not boosted (years) (fitted)
+  double uB = Rcpp::as<double>(theta["uB"]) / yr; // Duration in which immunity is not boosted (years) (fitted)
 
   // Immunity reducing probability of clinical disease:
   double phi0 = Rcpp::as<double>(theta["phi0"]); // Probability with no immunity
   double phi1 = Rcpp::as<double>(theta["phi1"]); // Maximum relative reduction
-  double dC = Rcpp::as<double>(theta["dC"]) / 365.; // Inverse decay rate (years)
+  double dC = Rcpp::as<double>(theta["dC"]) / yr; // Inverse decay rate (years)
   double IC0 = Rcpp::as<double>(theta["IC0"]); // Scale parameter
   double kappaC = Rcpp::as<double>(theta["kappaC"]); // Shape parameter
-  double uC = Rcpp::as<double>(theta["uC"]) / 365.; // Duration in which immunity is not boosted (years)
-  double dM = Rcpp::as<double>(theta["dM"]) / 365.; // Inverse decay rate of maternal immunity (years)
+  double uC = Rcpp::as<double>(theta["uC"]) / yr; // Duration in which immunity is not boosted (years)
+  double dM = Rcpp::as<double>(theta["dM"]) / yr; // Inverse decay rate of maternal immunity (years)
   double initICA20 = Rcpp::as<double>(theta["initICA20"]);
 
   double ICM = initICA20 * std::exp(-time/dM);
@@ -120,7 +124,7 @@ Rcpp::List state_ode(
   double a0 = Rcpp::as<double>(theta["a0"]);
   double agemod = (1. - rho*std::exp(-time/a0));
 
-  double EIR = EIR_h * agemod * 365.; // my EIR (years)
+  double EIR = EIR_h * agemod * yr; // my EIR (years)
   double b = b0*(b1 + ((1.-b1)/(1. + std::pow((IB/IB0),kappaB))));
   double lambda = EIR * b;
   double phi = phi0 * (phi1 + ((1. - phi1)/(1. + std::pow(((ICA+ICM)/IC0),kappaC))));
