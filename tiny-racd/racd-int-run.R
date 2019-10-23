@@ -41,13 +41,15 @@ RACD_out <- tiny_racd(humans_param = RACD_init$humans,
                       house_param = RACD_init$houses,
                       mosy_param = RACD_init$mosy,
                       theta = RACD_theta,
-                      tmax = 365*5,
+                      tmax = 365*30,
                       int_type = 1,
                       tstart = 365*10,
                       tend = 365*20,
                       tdelay = 5,
                       dmat = dmat_dwell,
                       radius = radius,
+                      p_index = 0.95,
+                      p_neighbor = 0.9,
                       prog_bar = TRUE)
 
 out_stateage <- melt(RACD_out$state_hist$state_age)
@@ -79,6 +81,6 @@ ggplot(data = out_mosy) +
 
 ggplot(data = out_eir_b) +
   geom_line(aes(x=day,y=mean,color=par)) +
-  geom_linerange(aes(x=day,ymin=pmax(mean-sqrt(var),0),ymax=mean+sqrt(var),color=par),alpha=0.05) +
+  geom_linerange(aes(x=day,ymin=pmax(mean-sqrt(var),0),ymax=mean+sqrt(var),color=par),alpha=0.005) +
   facet_wrap(. ~ par) +
   theme_bw()

@@ -35,12 +35,36 @@ class intervention_manager {
 public:
 
   /* constructor & destructor */
-  intervention_manager(const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_, const int tdelay_);
+  intervention_manager(
+    const size_t tmax_,
+    const int tstart_,
+    const int tend_,
+    house_vector* houses_,
+    const size_t nh_,
+    const Rcpp::NumericMatrix& dmat_,
+    const double radius_,
+    const int tdelay_,
+    const double p_index_,
+    const double p_neighbor_
+  );
+
   virtual ~intervention_manager() = 0;
 
   /* factory method (stamp out the type of intervention we want) */
   // NOTE: IF IT DOESNT COMPILE DO THE CONSTRUCTOR INLINE!!!!!!
-  static std::unique_ptr<intervention_manager> factory(int type, const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_, const int tdelay_);
+  static std::unique_ptr<intervention_manager> factory(
+    int type,
+    const size_t tmax_,
+    const int tstart_,
+    const int tend_,
+    house_vector* houses_,
+    const size_t nh_,
+    const Rcpp::NumericMatrix& dmat_,
+    const double radius_,
+    const int tdelay_,
+    const double p_index_,
+    const double p_neighbor_
+  );
 
   /* move operators */
   intervention_manager(intervention_manager&&) = default;
@@ -92,6 +116,10 @@ protected:
   // history tracking things
   Rcpp::IntegerMatrix                 int_status_hist;
 
+  // probability of being able to intervene
+  double                              p_index;
+  double                              p_neighbor;
+
 };
 
 
@@ -105,7 +133,19 @@ class intervention_manager_null : public intervention_manager {
 public:
 
   /* constructor & destructor */
-  intervention_manager_null(const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_, const int tdelay_);
+  intervention_manager_null(
+    const size_t tmax_,
+    const int tstart_,
+    const int tend_,
+    house_vector* houses_,
+    const size_t nh_,
+    const Rcpp::NumericMatrix& dmat_,
+    const double radius_,
+    const int tdelay_,
+    const double p_index_,
+    const double p_neighbor_
+  );
+
   ~intervention_manager_null();
 
   // implement the null method
@@ -123,7 +163,19 @@ class intervention_manager_rfmda : public intervention_manager {
 public:
 
   /* constructor & destructor */
-  intervention_manager_rfmda(const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_, const int tdelay_);
+  intervention_manager_rfmda(
+    const size_t tmax_,
+    const int tstart_,
+    const int tend_,
+    house_vector* houses_,
+    const size_t nh_,
+    const Rcpp::NumericMatrix& dmat_,
+    const double radius_,
+    const int tdelay_,
+    const double p_index_,
+    const double p_neighbor_
+  );
+
   ~intervention_manager_rfmda();
 
   // implement the RfMDA method
@@ -141,7 +193,20 @@ class intervention_manager_rfvc : public intervention_manager {
 public:
 
   /* constructor & destructor */
-  intervention_manager_rfvc(const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_, const int max_house_, const int tdelay_);
+  intervention_manager_rfvc(
+    const size_t tmax_,
+    const int tstart_,
+    const int tend_,
+    house_vector* houses_,
+    const size_t nh_,
+    const Rcpp::NumericMatrix& dmat_,
+    const double radius_,
+    const int max_house_,
+    const int tdelay_,
+    const double p_index_,
+    const double p_neighbor_
+  );
+
   ~intervention_manager_rfvc();
 
   // implement the rfVC method
@@ -162,7 +227,19 @@ class intervention_manager_racd_pcr : public intervention_manager {
 public:
 
   /* constructor & destructor */
-  intervention_manager_racd_pcr(const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_, const int tdelay_);
+  intervention_manager_racd_pcr(
+    const size_t tmax_,
+    const int tstart_,
+    const int tend_,
+    house_vector* houses_,
+    const size_t nh_,
+    const Rcpp::NumericMatrix& dmat_,
+    const double radius_,
+    const int tdelay_,
+    const double p_index_,
+    const double p_neighbor_
+  );
+
   ~intervention_manager_racd_pcr();
 
   // implement the RACD w/pcr method
@@ -180,7 +257,19 @@ class intervention_manager_racd_Mic : public intervention_manager {
 public:
 
   /* constructor & destructor */
-  intervention_manager_racd_Mic(const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_, const int tdelay_);
+  intervention_manager_racd_Mic(
+    const size_t tmax_,
+    const int tstart_,
+    const int tend_,
+    house_vector* houses_,
+    const size_t nh_,
+    const Rcpp::NumericMatrix& dmat_,
+    const double radius_,
+    const int tdelay_,
+    const double p_index_,
+    const double p_neighbor_
+  );
+
   ~intervention_manager_racd_Mic();
 
   // implement the RACD w/Mic method
@@ -204,7 +293,20 @@ class intervention_manager_racdMic_rfvc : public intervention_manager {
 public:
 
   /* constructor & destructor */
-  intervention_manager_racdMic_rfvc(const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_, const int max_house_, const int tdelay_);
+  intervention_manager_racdMic_rfvc(
+    const size_t tmax_,
+    const int tstart_,
+    const int tend_,
+    house_vector* houses_,
+    const size_t nh_,
+    const Rcpp::NumericMatrix& dmat_,
+    const double radius_,
+    const int max_house_,
+    const int tdelay_,
+    const double p_index_,
+    const double p_neighbor_
+  );
+
   ~intervention_manager_racdMic_rfvc();
 
   // implement the rfVC method
@@ -226,7 +328,20 @@ class intervention_manager_rfmda_rfvc : public intervention_manager {
 public:
 
   /* constructor & destructor */
-  intervention_manager_rfmda_rfvc(const size_t tmax_, const int tstart_, const int tend_, house_vector* houses_, const size_t nh_, const Rcpp::NumericMatrix& dmat_, const double radius_, const int max_house_, const int tdelay_);
+  intervention_manager_rfmda_rfvc(
+    const size_t tmax_,
+    const int tstart_,
+    const int tend_,
+    house_vector* houses_,
+    const size_t nh_,
+    const Rcpp::NumericMatrix& dmat_,
+    const double radius_,
+    const int max_house_,
+    const int tdelay_,
+    const double p_index_,
+    const double p_neighbor_
+  );
+
   ~intervention_manager_rfmda_rfvc();
 
   // implement the rfVC method
