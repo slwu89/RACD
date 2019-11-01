@@ -34,8 +34,23 @@ plot(clusterfield(kppm(samp_clust,~x,"MatClust"),locations = samp_clust),main=pa
 points(samp_clust,col="white")
 points(samp_habitats,pch=17,col="white")
 
-# X <- spatstat::rMatClust(kappa = 10,scale = 50/1e3,mu = 10,win = spatstat::square(r = 1))
-# plot(X,main=paste0(X$n," points"))
+# ddist_lst <- vector("list",1e3)
+# for(i in 1:1e3){
+#   samp_clust <- spatstat::rMatClust(kappa = 10,scale = 50/1e3,mu = 10,win = spatstat::square(r = 1))
+#   while(samp_clust$n != 100L){
+#     samp_clust <- spatstat::rMatClust(kappa = 10,scale = 50/1e3,mu = 10,win = spatstat::square(r = 1))
+#   }
+#   
+#   ddist <- crossdist(samp_clust,samp_clust)
+#   ddist_lst[[i]] <- ddist[upper.tri(ddist)]
+# }
+# 
+# ddist_flat <- unlist(ddist_lst)
+# ddist_ecdf <- ecdf(ddist_flat)
+# hist(ddist_flat)
+# plot(density(ddist_flat,from = 0))
+# x <- seq(0,1.5,by=0.005)
+# plot(x,ddist_ecdf(x),type="l")
 
 # random (CSR)
 

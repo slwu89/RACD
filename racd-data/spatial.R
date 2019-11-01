@@ -37,6 +37,11 @@ distances <- pbmclapply(ea_no,function(ea){
 dist_flat <- unlist(distances)
 dist_flat <- dist_flat[dist_flat!=0]
 
+ddist_flat <- lapply(X = distances,FUN = function(d){
+  d[upper.tri(d,diag = F)]
+})
+ddist_flat <- unlist(ddist_flat)
+
 near_neighbor <- sapply(distances,function(x){
   apply(x,1,function(y){
     min(y[y!=0])
