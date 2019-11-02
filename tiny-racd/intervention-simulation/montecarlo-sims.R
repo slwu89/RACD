@@ -114,7 +114,7 @@ landscape$regular$dwellings$psi <- psi_d[,1]/sum(psi_d[,1])
 ###############################################################################
 
 EIR_vals <- c(0.001,0.003,0.005)
-interventions <- c(control=-1,racd=2,rfmda=0,rfmda_rfvc=6,rfvc=1)
+interventions <- c(racd=2,rfmda=0,rfmda_rfvc=6,rfvc=1)
 p_range <- seq(0.2,0.8,by=0.2)
 import_range <- (1/365)*c(1,2,5,10,20)
 
@@ -124,7 +124,7 @@ import_range <- (1/365)*c(1,2,5,10,20)
 ###############################################################################
 
 source(here::here("racd-setup.R"))
-Rcpp::sourceCpp(here::here("intervention-src/main.cpp"),rebuild = TRUE)
+# Rcpp::sourceCpp(here::here("intervention-src/main.cpp"),rebuild = TRUE)
 
 ###############################################################################
 # run the simulations
@@ -133,22 +133,22 @@ Rcpp::sourceCpp(here::here("intervention-src/main.cpp"),rebuild = TRUE)
 ii <- 1
 
 n_iter <- length(landscape)*length(EIR_vals)*length(interventions)*(length(p_range)^2)*length(import_range)
-# run_names <- character(n_iter)
-# 
-# cl <- makeCluster(4)
-# clusterSetRNGStream(cl = cl,iseed = 42L)
-# 
-# clusterEvalQ(cl,{
-#   Rcpp::sourceCpp(here::here("intervention-src/main.cpp"),rebuild = TRUE)
-# })
+run_names <- character(n_iter)
 
-# begin factorial sweep
-l=1
-e=1
-i=1
-im=1
-p_ix=1
-p_n=1
+cl <- makeCluster(4)
+clusterSetRNGStream(cl = cl,iseed = 42L)
+
+clusterEvalQ(cl,{
+  Rcpp::sourceCpp(here::here("intervention-src/main.cpp"),rebuild = TRUE)
+})
+
+# # begin factorial sweep
+# l=1
+# e=1
+# i=1
+# im=1
+# p_ix=1
+# p_n=1
 
 for(l in 1:length(landscape)){
 
@@ -185,70 +185,57 @@ for(l in 1:length(landscape)){
             p_index <- p_range[p_ix]
             p_neighbor <- p_range[p_n]
             
-            mc_reps <- vector("list",10)
-            for(iii in 1:10){
-              
-              tryCatch({
-                mc_reps[[iii]] <- tiny_racd(humans_param = RACD_init$humans,
-                                            house_param = RACD_init$houses,
-                                            mosy_param = RACD_init$mosy,
-                                            theta = RACD_theta,
-                                            tmax = (365*2)+100,
-                                            int_type = int_type,
-                                            tstart = 101,
-                                            tend = 100+365,
-                                            tdelay = 60,
-                                            dmat = dmat_dwell,
-                                            radius = 500/2e3,
-                                            p_index = p_index,
-                                            p_neighbor = p_neighbor,
-                                            prog_bar = FALSE)
-              }, error=function(e){cat("C++ EXCEPTION DETECTED\n")})
-              
-                # mc_reps[[iii]] <- tiny_racd(humans_param = RACD_init$humans,
-                #                           house_param = RACD_init$houses,
-                #                           mosy_param = RACD_init$mosy,
-                #                           theta = RACD_theta,
-                #                           tmax = (365*2)+100,
-                #                           int_type = int_type,
-                #                           tstart = 101,
-                #                           tend = 100+365,
-                #                           tdelay = 60,
-                #                           dmat = dmat_dwell,
-                #                           radius = 500/2e3,
-                #                           p_index = p_index,
-                #                           p_neighbor = p_neighbor,
-                #                           prog_bar = FALSE)
-              }
-              
-              saveRDS(object = mc_reps,file = paste0("/Users/slwu89/Dropbox/racd_out/",this_run,".rds"))
-              rm(mc_reps);gc()
+            # mc_reps <- vector("list",10)
+            # for(iii in 1:10){
+            #   
+            #   tryCatch({
+            #     mc_reps[[iii]] <- tiny_racd(humans_param = RACD_init$humans,
+            #                                 house_param = RACD_init$houses,
+            #                                 mosy_param = RACD_init$mosy,
+            #                                 theta = RACD_theta,
+            #                                 tmax = (365*2)+100,
+            #                                 int_type = int_type,
+            #                                 tstart = 101,
+            #                                 tend = 100+365,
+            #                                 tdelay = 60,
+            #                                 dmat = dmat_dwell,
+            #                                 radius = 500/2e3,
+            #                                 p_index = p_index,
+            #                                 p_neighbor = p_neighbor,
+            #                                 prog_bar = FALSE)
+            #   }, error=function(e){cat("C++ EXCEPTION DETECTED\n")})
+            #   
+            #   }
+            #   
+            #   saveRDS(object = mc_reps,file = paste0("/Users/slwu89/Dropbox/racd_out/",this_run,".rds"))
+            #   rm(mc_reps);gc()
               
 
-            # clusterExport(cl = cl,varlist = c("RACD_init","RACD_theta","dmat_dwell","int_type","p_index","p_neighbor"))
-            # 
-            # mc_reps_cores <- clusterEvalQ(cl,{
-            #   
-            #   mc_reps <- vector("list",6)
-            #   for(i in 1:6){
-            #     mc_reps[[i]] <- tiny_racd(humans_param = RACD_init$humans,
-            #                               house_param = RACD_init$houses,
-            #                               mosy_param = RACD_init$mosy,
-            #                               theta = RACD_theta,
-            #                               tmax = (365*2)+100,
-            #                               int_type = int_type,
-            #                               tstart = 101,
-            #                               tend = 100+365,
-            #                               tdelay = 60,
-            #                               dmat = dmat_dwell,
-            #                               radius = 500/2e3,
-            #                               p_index = p_index,
-            #                               p_neighbor = p_neighbor,
-            #                               prog_bar = FALSE)  
-            #   }
-            #   return(mc_reps)
-            #   
-            # })
+            clusterExport(cl = cl,varlist = c("RACD_init","RACD_theta","dmat_dwell","int_type","p_index","p_neighbor"))
+
+            mc_reps_cores <- clusterEvalQ(cl,{
+              mc_reps <- vector("list",6)
+              for(i in 1:6){
+                mc_reps[[i]] <- tiny_racd(humans_param = RACD_init$humans,
+                                          house_param = RACD_init$houses,
+                                          mosy_param = RACD_init$mosy,
+                                          theta = RACD_theta,
+                                          tmax = (365*2)+100,
+                                          int_type = int_type,
+                                          tstart = 101,
+                                          tend = 100+365,
+                                          tdelay = 60,
+                                          dmat = dmat_dwell,
+                                          radius = 500/2e3,
+                                          p_index = p_index,
+                                          p_neighbor = p_neighbor,
+                                          prog_bar = FALSE)
+              }
+              return(mc_reps)
+            })
+            
+            saveRDS(object = mc_reps_cores,file = paste0("/Users/slwu89/Dropbox/racd_out/",this_run,".rds"))
+            rm(mc_reps);gc()
             
             cat(" --- finished factorial cell ",ii," of ",n_iter," --- \n")
             ii <- ii + 1
@@ -263,6 +250,6 @@ for(l in 1:length(landscape)){
 
   }
 } # end factorial sweep
-# 
-# stopCluster(cl)
-# rm(cl);gc()
+
+stopCluster(cl)
+rm(cl);gc()

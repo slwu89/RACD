@@ -8,8 +8,8 @@ library(viridis)
 library(foreach)
 library(doSNOW)
 
-nd <- 20 # num dwellings
-na <- 40 # num aquatic habitats
+nd <- 100 # num dwellings
+na <- 20 # num aquatic habitats
 
 # xy_d <- rpoispp(lambda = nd,win = owin(c(0,1),c(0,1)))
 # xy_a <- rpoispp(lambda = na,win = owin(c(0,1),c(0,1)))
