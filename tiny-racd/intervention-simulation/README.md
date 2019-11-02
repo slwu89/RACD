@@ -17,3 +17,5 @@ to spread bites to a large geographic region.
 
 The radius for spatial targeting is 500m. There are about 4 people per house, and about 100 hourses per EA. Standardize the bounding box to 2km.
 The consecutive lag for IRS is 60 days.
+
+We will use 100 day burn-in period, and begin simulation after that, for 1 year of intervention, and 1 year of evaluation.

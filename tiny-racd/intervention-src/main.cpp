@@ -205,6 +205,7 @@ Rcpp::List tiny_racd(
     // track_state(houses);
     // track_age(houses);
     // Rcpp::Rcout << " --- track_state_age(houses); --- " << std::endl;
+    Rcpp::Rcout << " --- track_state_age(houses); --- \n";
     track_state_age(houses);
 
     // track mosquito output

@@ -34,7 +34,7 @@ imm_import <- imported_immune(EIR = meanEIR,theta = RACD_theta)
 RACD_theta <- c(RACD_theta,imm_import,import_rate=0.01) 
 
 # compile the simulation
-sourceCpp(here::here("intervention-src/main.cpp"))
+sourceCpp(here::here("intervention-src/main.cpp"),rebuild = TRUE)
 
 # run the simulation
 RACD_out <- tiny_racd(humans_param = RACD_init$humans,
@@ -42,7 +42,7 @@ RACD_out <- tiny_racd(humans_param = RACD_init$humans,
                       mosy_param = RACD_init$mosy,
                       theta = RACD_theta,
                       tmax = 365*30,
-                      int_type = 1,
+                      int_type = -1,
                       tstart = 365*10,
                       tend = 365*20,
                       tdelay = 5,
