@@ -204,40 +204,40 @@ Rcpp::List tiny_racd(
     // track human output
     // track_state(houses);
     // track_age(houses);
-    // Rcpp::Rcout << " --- track_state_age(houses); --- " << std::endl;
-    Rcpp::Rcout << " --- track_state_age(houses); --- \n";
+    Rcpp::Rcout << " --- track_state_age(houses); --- " << std::endl;
+    // Rcpp::Rcout << " --- track_state_age(houses); --- \n";
     track_state_age(houses);
 
     // track mosquito output
-    // Rcpp::Rcout << " --- track_mosquito(mosy_pop); --- " << std::endl;
+    Rcpp::Rcout << " --- track_mosquito(mosy_pop); --- " << std::endl;
     track_mosquito(mosy_pop);
 
     // update house -> mosy state variables
-    // Rcpp::Rcout << " --- update_biting(houses); --- " << std::endl;
+    Rcpp::Rcout << " --- update_biting(houses); --- " << std::endl;
     update_biting(houses);
 
     // run mosquito biting (mosy -> house transmission but to global)
-    // Rcpp::Rcout << " --- feeding_cycle(mosy_pop); --- " << std::endl;
+    Rcpp::Rcout << " --- feeding_cycle(mosy_pop); --- " << std::endl;
     feeding_cycle(mosy_pop);
 
     // mosy -> house
-    // Rcpp::Rcout << " --- update_EIR(houses); --- " << std::endl;
+    Rcpp::Rcout << " --- update_EIR(houses); --- " << std::endl;
     update_EIR(houses);
 
     // AFTER THIS POINT HUMANS/MOSY ARE CONDITIONALLY INDEPENDENT OF EACH OTHER
 
     // mosquito sim
-    // Rcpp::Rcout << " --- euler_step(mosy_pop); --- " << std::endl;
+    Rcpp::Rcout << " --- euler_step(mosy_pop); --- " << std::endl;
     euler_step(mosy_pop);
 
     // human simulation functions
-    // Rcpp::Rcout << " --- one_day_update(houses); --- " << std::endl;
+    Rcpp::Rcout << " --- one_day_update(houses); --- " << std::endl;
     one_day_update(houses);
     one_day_births(houses);
     one_day_deaths(houses);
 
     // interventions
-    // Rcpp::Rcout << " --- int_mgr->one_day_intervention(); --- " << std::endl;
+    Rcpp::Rcout << " --- int_mgr->one_day_intervention(); --- " << std::endl;
     int_mgr->one_day_intervention();
     int_mgr->zero_house_data();
 
