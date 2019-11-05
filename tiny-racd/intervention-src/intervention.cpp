@@ -80,7 +80,7 @@ std::unique_ptr<intervention_manager> intervention_manager::factory(
   // 0: RfMDA, 1: RfVC, 2: RACD w/PCR, 3: RACD w/Mic, 4: RACD w/LAMP
   if(type == -1){
     Rcpp::Rcout << "null intervention manager\n";
-    return std::make_unique<intervention_manager_null>(0,0,0,houses_,nh_,null_dmat,0.,tdelay_,1.,1.);
+    return std::make_unique<intervention_manager_null>(0,0,0,houses_,nh_,dmat_,0.,tdelay_,1.,1.);
   } else if(type == 0){
     Rcpp::Rcout << "intervention strategy set to: RfMDA\n";
     return std::make_unique<intervention_manager_rfmda>(tmax_,tstart_,tend_,houses_,nh_,dmat_,radius_,tdelay_,p_index_,p_neighbor_);
@@ -142,8 +142,6 @@ void intervention_manager::add_cinc(size_t h){
 #   NULL: no intervention
 ################################################################################ */
 
-Rcpp::NumericMatrix null_dmat(1,1);
-
 /* constructor & destructor */
 intervention_manager_null::intervention_manager_null(
   const size_t tmax_,
@@ -163,6 +161,11 @@ intervention_manager_null::~intervention_manager_null(){};
 
 // implement the RfMDA method
 void intervention_manager_null::one_day_intervention(){};
+
+// we want to override some of the virtual methods
+void intervention_manager_null::zero_house_data(){};
+
+void intervention_manager_null::add_cinc(size_t h){};
 
 
 /* ################################################################################

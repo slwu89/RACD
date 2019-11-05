@@ -44,6 +44,8 @@ void globals::set_output(const size_t tmax_){
   tnow = 0;
   tmax = tmax_;
 
+  state_age = Rcpp::List();
+
   // mean/var calc
   init_stats();
 

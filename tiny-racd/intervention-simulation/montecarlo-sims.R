@@ -115,7 +115,7 @@ landscape$regular$dwellings$psi <- psi_d[,1]/sum(psi_d[,1])
 
 EIR_vals <- c(0.001,0.003,0.005)
 interventions <- c(racd=2,rfmda=0,rfmda_rfvc=6,rfvc=1)
-p_range <- seq(0.2,0.8,by=0.2)
+p_range <- seq(0.2,0.8,by=0.1)
 import_range <- (1/365)*c(1,2,5,10,20)
 
 
@@ -164,58 +164,34 @@ for(l in 1:length(landscape)){
     
     # calculate immunity parameters for imported cases
     imm_import <- imported_immune(EIR = EIR,theta = RACD_theta)
-    RACD_theta <- c(RACD_theta,imm_import,import_rate=NaN) 
+    RACD_theta <- c(RACD_theta,imm_import,import_rate=NaN)
 
     for(i in 1:length(interventions)){
 
+      # for(im in 1:length(import_range)){
       for(im in 1:length(import_range)){
 
         for(p_ix in 1:length(p_range)){
+        # for(p_ix in 1:length(p_range)){
 
           for(p_n in 1:length(p_range)){
+          # for(p_n in 1:length(p_range)){
 
             this_run <- paste0("landscape-",names(landscape)[l],"_EIR-",EIR_vals[e],"_intervention-",names(interventions)[i],
                                "_import-",round(import_range[im],3),"_pi-",p_range[p_ix],"_pn-",p_range[p_n]
                                )
-            # run_names[ii] <- this_run
             
             # do the MC iterations (4*6=24)
             int_type <- interventions[i]
             RACD_theta[["import_rate"]] <- import_range[im]
             p_index <- p_range[p_ix]
             p_neighbor <- p_range[p_n]
-            
-            # mc_reps <- vector("list",10)
-            # for(iii in 1:10){
-            #   
-            #   tryCatch({
-            #     mc_reps[[iii]] <- tiny_racd(humans_param = RACD_init$humans,
-            #                                 house_param = RACD_init$houses,
-            #                                 mosy_param = RACD_init$mosy,
-            #                                 theta = RACD_theta,
-            #                                 tmax = (365*2)+100,
-            #                                 int_type = int_type,
-            #                                 tstart = 101,
-            #                                 tend = 100+365,
-            #                                 tdelay = 60,
-            #                                 dmat = dmat_dwell,
-            #                                 radius = 500/2e3,
-            #                                 p_index = p_index,
-            #                                 p_neighbor = p_neighbor,
-            #                                 prog_bar = FALSE)
-            #   }, error=function(e){cat("C++ EXCEPTION DETECTED\n")})
-            #   
-            #   }
-            #   
-            #   saveRDS(object = mc_reps,file = paste0("/Users/slwu89/Dropbox/racd_out/",this_run,".rds"))
-            #   rm(mc_reps);gc()
-              
-
             clusterExport(cl = cl,varlist = c("RACD_init","RACD_theta","dmat_dwell","int_type","p_index","p_neighbor"))
-
+            
+            # run simulations
             mc_reps_cores <- clusterEvalQ(cl,{
-              mc_reps <- vector("list",6)
-              for(i in 1:6){
+              mc_reps <- vector("list",4)
+              for(i in 1:4){
                 mc_reps[[i]] <- tiny_racd(humans_param = RACD_init$humans,
                                           house_param = RACD_init$houses,
                                           mosy_param = RACD_init$mosy,
@@ -233,9 +209,9 @@ for(l in 1:length(landscape)){
               }
               return(mc_reps)
             })
-            
+
             saveRDS(object = mc_reps_cores,file = paste0("/Users/slwu89/Dropbox/racd_out/",this_run,".rds"))
-            rm(mc_reps);gc()
+            rm(mc_reps_cores);gc()
             
             cat(" --- finished factorial cell ",ii," of ",n_iter," --- \n")
             ii <- ii + 1

@@ -78,10 +78,10 @@ public:
   virtual void                        one_day_intervention() = 0;
 
   // after assigning tomorrow's interventions, zero out the data structures tracking them
-  void                                zero_house_data();
+  virtual void                        zero_house_data();
 
   // this is for humans to tell the intervention_manager that a clinical case popped up at their house today
-  void                                add_cinc(size_t h);
+  virtual void                        add_cinc(size_t h);
 
   // history
   Rcpp::IntegerMatrix                 get_int_status_hist(){return int_status_hist;}
@@ -127,8 +127,6 @@ protected:
 #   NULL: no intervention
 ################################################################################ */
 
-extern Rcpp::NumericMatrix null_dmat;
-
 class intervention_manager_null : public intervention_manager {
 public:
 
@@ -150,6 +148,10 @@ public:
 
   // implement the null method
   virtual void one_day_intervention();
+
+  // override the default methods
+  virtual void zero_house_data();
+  virtual void add_cinc(size_t h);
 
 private:
 };
