@@ -68,49 +68,45 @@ psi_d <- foreach(xy = iter(landscape$clustered$dwellings,by="row"),.combine = "r
 
 landscape$clustered$dwellings$psi <- psi_d[,1]/sum(psi_d[,1])
 
-# plot(clusterfield(kppm(lscape_clust_d,~x,"MatClust"),locations = lscape_clust_d),main=paste0(lscape_clust_d$n," dwellings: clustered process"))
-# points(lscape_clust_d,col="white")
-# points(lscape_clust_h,pch=17,col="white")
-
-# compute risk surface
-grid_res <- 1/50
-grid_clust <- expand.grid(x=seq(0-grid_res,1+grid_res,by=grid_res),y=seq(0-grid_res,1+grid_res,by=grid_res))
-
-cl <- parallel::makeCluster(4)
-doSNOW::registerDoSNOW(cl)
-
-pb <- txtProgressBar(max = nrow(grid_clust)*nrow(landscape$clustered$habitats), style = 3)
-progress <- function(n) setTxtProgressBar(pb, n)
-opts <- list(progress = progress)
-
-landscape$clustered$psi_surface <- foreach(xy = iter(grid_clust,by="row"),.combine = "rbind",.inorder = TRUE) %:%
-  foreach(hab = iter(landscape$clustered$habitats,by = "row"),.combine = "+", .options.snow = opts) %dopar% {
-    dist <- as.matrix(dist(x = rbind(as.vector(xy),c(hab$x,hab$y))))[1,2]
-    psi <- dnorm(dist,mean=0,sd=hab$sigma)
-    psi
-  }
-
-stopCluster(cl)
-rm(cl);gc()
-
-# plot the risk surface
-surface <- as.data.frame(landscape$clustered$psi_surface)
-
-grid_clust$psi <- surface$V1
-
-# the surface
-gg_psi_clust <- ggplot() +
-  geom_raster(aes(x=x,y=y,fill=psi),data=grid_clust) +
-  stat_contour(aes(x=x,y=y,z=psi),colour=grey(0.5,0.5),size=0.25,data = grid_clust,geom = "contour") +
-  geom_point(aes(x=x,y=y,size=cut(psi,breaks=quantile(psi),include.lowest = T)),shape=17,colour=grey(0.9,0.9),data=landscape$clustered$dwellings) +
-  geom_point(aes(x=x,y=y),shape=16,colour=grey(0.75,0.75),size=1.85,data=landscape$clustered$habitats) +
-  scale_fill_viridis() +
-  geom_contour() +
-  theme_bw() +
-  guides(size = FALSE) +
-  theme(axis.title.x=element_blank(),axis.title.y=element_blank())
-
-ggsave(filename = here::here("graphics/psi_surface_clust.pdf"),plot = gg_psi_clust,dpi = 320,width = 10,height = 8)
+# # compute risk surface
+# grid_res <- 1/50
+# grid_clust <- expand.grid(x=seq(0-grid_res,1+grid_res,by=grid_res),y=seq(0-grid_res,1+grid_res,by=grid_res))
+# 
+# cl <- parallel::makeCluster(4)
+# doSNOW::registerDoSNOW(cl)
+# 
+# pb <- txtProgressBar(max = nrow(grid_clust)*nrow(landscape$clustered$habitats), style = 3)
+# progress <- function(n) setTxtProgressBar(pb, n)
+# opts <- list(progress = progress)
+# 
+# landscape$clustered$psi_surface <- foreach(xy = iter(grid_clust,by="row"),.combine = "rbind",.inorder = TRUE) %:%
+#   foreach(hab = iter(landscape$clustered$habitats,by = "row"),.combine = "+", .options.snow = opts) %dopar% {
+#     dist <- as.matrix(dist(x = rbind(as.vector(xy),c(hab$x,hab$y))))[1,2]
+#     psi <- dnorm(dist,mean=0,sd=hab$sigma)
+#     psi
+#   }
+# 
+# stopCluster(cl)
+# rm(cl);gc()
+# 
+# # plot the risk surface
+# surface <- as.data.frame(landscape$clustered$psi_surface)
+# 
+# grid_clust$psi <- surface$V1
+# 
+# # the surface
+# gg_psi_clust <- ggplot() +
+#   geom_raster(aes(x=x,y=y,fill=psi),data=grid_clust) +
+#   stat_contour(aes(x=x,y=y,z=psi),colour=grey(0.5,0.5),size=0.25,data = grid_clust,geom = "contour") +
+#   geom_point(aes(x=x,y=y,size=cut(psi,breaks=quantile(psi),include.lowest = T)),shape=17,colour=grey(0.9,0.9),data=landscape$clustered$dwellings) +
+#   geom_point(aes(x=x,y=y),shape=16,colour=grey(0.75,0.75),size=1.85,data=landscape$clustered$habitats) +
+#   scale_fill_viridis() +
+#   geom_contour() +
+#   theme_bw() +
+#   guides(size = FALSE) +
+#   theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+# 
+# ggsave(filename = here::here("graphics/psi_surface_clust.pdf"),plot = gg_psi_clust,dpi = 320,width = 10,height = 8)
 
 
 ###############################################################################
@@ -136,44 +132,44 @@ psi_d <- foreach(xy = iter(landscape$CSR$dwellings,by="row"),.combine = "rbind",
 
 landscape$CSR$dwellings$psi <- psi_d[,1]/sum(psi_d[,1])
 
-# compute risk surface
-grid_CSR <- expand.grid(x=seq(0-grid_res,1+grid_res,by=grid_res),y=seq(0-grid_res,1+grid_res,by=grid_res))
-
-cl <- parallel::makeCluster(4)
-doSNOW::registerDoSNOW(cl)
-
-pb <- txtProgressBar(max = nrow(grid_CSR)*nrow(landscape$CSR$habitats), style = 3)
-progress <- function(n) setTxtProgressBar(pb, n)
-opts <- list(progress = progress)
-
-landscape$CSR$psi_surface <- foreach(xy = iter(grid_CSR,by="row"),.combine = "rbind",.inorder = TRUE) %:%
-  foreach(hab = iter(landscape$CSR$habitats,by = "row"),.combine = "+", .options.snow = opts) %dopar% {
-    dist <- as.matrix(dist(x = rbind(as.vector(xy),c(hab$x,hab$y))))[1,2]
-    psi <- dnorm(dist,mean=0,sd=hab$sigma)
-    psi
-  }
-
-stopCluster(cl)
-rm(cl);gc()
-
-# plot the risk surface
-surface <- as.data.frame(landscape$CSR$psi_surface)
-
-grid_CSR$psi <- surface$V1
-
-# the surface
-gg_psi_CSR <- ggplot() +
-  geom_raster(aes(x=x,y=y,fill=psi),data=grid_CSR) +
-  stat_contour(aes(x=x,y=y,z=psi),colour=grey(0.5,0.5),size=0.25,data = grid_CSR,geom = "contour") +
-  geom_point(aes(x=x,y=y,size=cut(psi,breaks=quantile(psi),include.lowest = T)),shape=17,colour=grey(0.9,0.9),data=landscape$CSR$dwellings) +
-  geom_point(aes(x=x,y=y),shape=16,colour=grey(0.75,0.75),size=1.85,data=landscape$CSR$habitats) +
-  scale_fill_viridis() +
-  geom_contour() +
-  theme_bw() +
-  guides(size = FALSE) +
-  theme(axis.title.x=element_blank(),axis.title.y=element_blank())
-
-ggsave(filename = here::here("graphics/psi_surface_CSR.pdf"),plot = gg_psi_CSR,dpi = 320,width = 10,height = 8)
+# # compute risk surface
+# grid_CSR <- expand.grid(x=seq(0-grid_res,1+grid_res,by=grid_res),y=seq(0-grid_res,1+grid_res,by=grid_res))
+# 
+# cl <- parallel::makeCluster(4)
+# doSNOW::registerDoSNOW(cl)
+# 
+# pb <- txtProgressBar(max = nrow(grid_CSR)*nrow(landscape$CSR$habitats), style = 3)
+# progress <- function(n) setTxtProgressBar(pb, n)
+# opts <- list(progress = progress)
+# 
+# landscape$CSR$psi_surface <- foreach(xy = iter(grid_CSR,by="row"),.combine = "rbind",.inorder = TRUE) %:%
+#   foreach(hab = iter(landscape$CSR$habitats,by = "row"),.combine = "+", .options.snow = opts) %dopar% {
+#     dist <- as.matrix(dist(x = rbind(as.vector(xy),c(hab$x,hab$y))))[1,2]
+#     psi <- dnorm(dist,mean=0,sd=hab$sigma)
+#     psi
+#   }
+# 
+# stopCluster(cl)
+# rm(cl);gc()
+# 
+# # plot the risk surface
+# surface <- as.data.frame(landscape$CSR$psi_surface)
+# 
+# grid_CSR$psi <- surface$V1
+# 
+# # the surface
+# gg_psi_CSR <- ggplot() +
+#   geom_raster(aes(x=x,y=y,fill=psi),data=grid_CSR) +
+#   stat_contour(aes(x=x,y=y,z=psi),colour=grey(0.5,0.5),size=0.25,data = grid_CSR,geom = "contour") +
+#   geom_point(aes(x=x,y=y,size=cut(psi,breaks=quantile(psi),include.lowest = T)),shape=17,colour=grey(0.9,0.9),data=landscape$CSR$dwellings) +
+#   geom_point(aes(x=x,y=y),shape=16,colour=grey(0.75,0.75),size=1.85,data=landscape$CSR$habitats) +
+#   scale_fill_viridis() +
+#   geom_contour() +
+#   theme_bw() +
+#   guides(size = FALSE) +
+#   theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+# 
+# ggsave(filename = here::here("graphics/psi_surface_CSR.pdf"),plot = gg_psi_CSR,dpi = 320,width = 10,height = 8)
 
 
 ###############################################################################
@@ -202,44 +198,44 @@ psi_d <- foreach(xy = iter(landscape$regular$dwellings,by="row"),.combine = "rbi
 
 landscape$regular$dwellings$psi <- psi_d[,1]/sum(psi_d[,1])
 
-# compute risk surface
-grid_reg <- expand.grid(x=seq(0-grid_res,1+grid_res,by=grid_res),y=seq(0-grid_res,1+grid_res,by=grid_res))
-
-cl <- parallel::makeCluster(4)
-doSNOW::registerDoSNOW(cl)
-
-pb <- txtProgressBar(max = nrow(grid_reg)*nrow(landscape$regular$habitats), style = 3)
-progress <- function(n) setTxtProgressBar(pb, n)
-opts <- list(progress = progress)
-
-landscape$regular$psi_surface <- foreach(xy = iter(grid_reg,by="row"),.combine = "rbind",.inorder = TRUE) %:%
-  foreach(hab = iter(landscape$regular$habitats,by = "row"),.combine = "+", .options.snow = opts) %dopar% {
-    dist <- as.matrix(dist(x = rbind(as.vector(xy),c(hab$x,hab$y))))[1,2]
-    psi <- dnorm(dist,mean=0,sd=hab$sigma)
-    psi
-  }
-
-stopCluster(cl)
-rm(cl);gc()
-
-# plot the risk surface
-surface <- as.data.frame(landscape$regular$psi_surface)
-
-grid_reg$psi <- surface$V1
-
-# the surface
-gg_psi_reg <- ggplot() +
-  geom_raster(aes(x=x,y=y,fill=psi),data=grid_reg) +
-  stat_contour(aes(x=x,y=y,z=psi),colour=grey(0.5,0.5),size=0.25,data = grid_reg,geom = "contour") +
-  geom_point(aes(x=x,y=y,size=cut(psi,breaks=quantile(psi),include.lowest = T)),shape=17,colour=grey(0.9,0.9),data=landscape$regular$dwellings) +
-  geom_point(aes(x=x,y=y),shape=16,colour=grey(0.75,0.75),size=1.85,data=landscape$regular$habitats) +
-  scale_fill_viridis() +
-  geom_contour() +
-  theme_bw() +
-  guides(size = FALSE) +
-  theme(axis.title.x=element_blank(),axis.title.y=element_blank())
-
-ggsave(filename = here::here("graphics/psi_surface_reg.pdf"),plot = gg_psi_reg,dpi = 320,width = 10,height = 8)
+# # compute risk surface
+# grid_reg <- expand.grid(x=seq(0-grid_res,1+grid_res,by=grid_res),y=seq(0-grid_res,1+grid_res,by=grid_res))
+# 
+# cl <- parallel::makeCluster(4)
+# doSNOW::registerDoSNOW(cl)
+# 
+# pb <- txtProgressBar(max = nrow(grid_reg)*nrow(landscape$regular$habitats), style = 3)
+# progress <- function(n) setTxtProgressBar(pb, n)
+# opts <- list(progress = progress)
+# 
+# landscape$regular$psi_surface <- foreach(xy = iter(grid_reg,by="row"),.combine = "rbind",.inorder = TRUE) %:%
+#   foreach(hab = iter(landscape$regular$habitats,by = "row"),.combine = "+", .options.snow = opts) %dopar% {
+#     dist <- as.matrix(dist(x = rbind(as.vector(xy),c(hab$x,hab$y))))[1,2]
+#     psi <- dnorm(dist,mean=0,sd=hab$sigma)
+#     psi
+#   }
+# 
+# stopCluster(cl)
+# rm(cl);gc()
+# 
+# # plot the risk surface
+# surface <- as.data.frame(landscape$regular$psi_surface)
+# 
+# grid_reg$psi <- surface$V1
+# 
+# # the surface
+# gg_psi_reg <- ggplot() +
+#   geom_raster(aes(x=x,y=y,fill=psi),data=grid_reg) +
+#   stat_contour(aes(x=x,y=y,z=psi),colour=grey(0.5,0.5),size=0.25,data = grid_reg,geom = "contour") +
+#   geom_point(aes(x=x,y=y,size=cut(psi,breaks=quantile(psi),include.lowest = T)),shape=17,colour=grey(0.9,0.9),data=landscape$regular$dwellings) +
+#   geom_point(aes(x=x,y=y),shape=16,colour=grey(0.75,0.75),size=1.85,data=landscape$regular$habitats) +
+#   scale_fill_viridis() +
+#   geom_contour() +
+#   theme_bw() +
+#   guides(size = FALSE) +
+#   theme(axis.title.x=element_blank(),axis.title.y=element_blank())
+# 
+# ggsave(filename = here::here("graphics/psi_surface_reg.pdf"),plot = gg_psi_reg,dpi = 320,width = 10,height = 8)
 
 
 ###############################################################################
@@ -452,6 +448,8 @@ rm(cl,lscape,dmat_dwell,RACD_init,imm_import,RACD_theta);gc()
 #
 ###############################################################################
 
+library(data.table)
+
 ###############################################################################
 # clustering
 ###############################################################################
@@ -492,8 +490,6 @@ for(i in 1:length(out_clust)){
   colnames(stateage_clust[[i]])[5] <- "run"
   stateage_clust[[i]] <- as.data.table(stateage_clust[[i]])
 }
-
-library(data.table)
 
 stateage_clust <- parallel::mclapply(X = stateage_clust,FUN = function(dt){
   dt[,
@@ -553,8 +549,6 @@ for(i in 1:length(out_CSR)){
   stateage_CSR[[i]] <- as.data.table(stateage_CSR[[i]])
 }
 
-library(data.table)
-
 stateage_CSR <- parallel::mclapply(X = stateage_CSR,FUN = function(dt){
   dt[,
      j=.(hi = quantile(count,0.975),lo = quantile(count,0.025),mean = mean(count)),
@@ -588,7 +582,7 @@ for(i in 1:length(files_2read)){
   out_regular[[i]] <- do.call(c,out_regular[[i]])
 }
 
-
+# time series
 stateage_regular <- vector("list",length(out_regular))
 names(stateage_regular) <- sapply(strsplit(names(out_regular),"_"),function(x){
   if(length(x)==2){
@@ -613,8 +607,6 @@ for(i in 1:length(out_regular)){
   stateage_regular[[i]] <- as.data.table(stateage_regular[[i]])
 }
 
-library(data.table)
-
 stateage_regular <- parallel::mclapply(X = stateage_regular,FUN = function(dt){
   dt[,
      j=.(hi = quantile(count,0.975),lo = quantile(count,0.025),mean = mean(count)),
@@ -632,7 +624,74 @@ gg_stateage_intervention_regular <- ggplot(data = stateage_regular_mt) +
 ggsave(filename = here::here("graphics/state-age-int-regular.pdf"),plot = gg_stateage_intervention_regular,dpi = 320,width = 12,height = 10)
 
 
+###############################################################################
+#
+# ANALYSIS OF MC SIMULATION: CUMULATIVE INCIDENCE
+#
+###############################################################################
 
+# clustered
+cum_inc_clust <- lapply(X = out_clust,FUN = function(int_lst){
+  sapply(int_lst,function(df){
+    colSums(df$state_hist$clinical_incidence)
+  })
+})
+names(cum_inc_clust) <- names(stateage_regular)
+
+cum_inc_clust <- lapply(cum_inc_clust,function(mat){
+  mat_sum <- apply(X = mat,FUN = function(x){
+    quantile(x = x,probs = c(0.025,0.975))
+  },MARGIN = 1)
+  mat_sum <- rbind(mat_sum,rowMeans(mat))
+  rownames(mat_sum)[3] <- "mean"
+  as.data.table(reshape2::melt(t(mat_sum)))
+})
+
+cum_inc_clust <- rbindlist(cum_inc_clust,idcol = "intervention")
+
+# CSR
+cum_inc_CSR <- lapply(X = out_CSR,FUN = function(int_lst){
+  sapply(int_lst,function(df){
+    colSums(df$state_hist$clinical_incidence)
+  })
+})
+names(cum_inc_CSR) <- names(stateage_regular)
+
+cum_inc_CSR <- lapply(cum_inc_CSR,function(mat){
+  mat_sum <- apply(X = mat,FUN = function(x){
+    quantile(x = x,probs = c(0.025,0.975))
+  },MARGIN = 1)
+  mat_sum <- rbind(mat_sum,rowMeans(mat))
+  rownames(mat_sum)[3] <- "mean"
+  as.data.table(reshape2::melt(t(mat_sum)))
+})
+
+cum_inc_CSR <- rbindlist(cum_inc_CSR,idcol = "intervention")
+
+# regular
+cum_inc_regular <- lapply(X = out_regular,FUN = function(int_lst){
+  sapply(int_lst,function(df){
+    colSums(df$state_hist$clinical_incidence)
+  })
+})
+names(cum_inc_regular) <- names(stateage_regular)
+
+cum_inc_regular <- lapply(cum_inc_regular,function(mat){
+  mat_sum <- apply(X = mat,FUN = function(x){
+    quantile(x = x,probs = c(0.025,0.975))
+  },MARGIN = 1)
+  mat_sum <- rbind(mat_sum,rowMeans(mat))
+  rownames(mat_sum)[3] <- "mean"
+  as.data.table(reshape2::melt(t(mat_sum)))
+})
+
+cum_inc_regular <- rbindlist(cum_inc_regular,idcol = "intervention")
+
+
+
+
+
+ggplot(data = cum_inc_regular[i=.(Var1 == "all"),])
 
 
 # ###############################################################################
