@@ -687,11 +687,22 @@ cum_inc_regular <- lapply(cum_inc_regular,function(mat){
 
 cum_inc_regular <- rbindlist(cum_inc_regular,idcol = "intervention")
 
+cum_inc_all <- rbindlist(list(cluster=cum_inc_clust,
+                              CSR=cum_inc_CSR,
+                              regular=cum_inc_regular),idcol = "landscape")
 
+cum_inc_all <- dcast(cum_inc_all[Var1 == "all" & Var2 %in% c("mean","2.5%","97.5%"),],landscape + intervention ~ Var2,value.var = "value")
+colnames(cum_inc_all)[3:4] <- c("lo",'hi')
 
+gg_cum_inc_allages <- ggplot(data = cum_inc_all) +
+  geom_point(aes(x=landscape,y=mean,color=landscape)) +
+  geom_errorbar(aes(x=landscape,ymin=lo,ymax=hi,color=landscape)) +
+  facet_grid(. ~ intervention) + 
+  theme_bw() +
+  guides(color = FALSE)
 
-
-ggplot(data = cum_inc_regular[i=.(Var1 == "all"),])
+ggsave(filename = here::here("graphics/cuminc-allage.pdf"),plot = gg_cum_inc_allages,dpi = 320,width = 12,height = 6)
+  
 
 
 # ###############################################################################
