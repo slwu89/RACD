@@ -89,10 +89,6 @@ euler_step <- function(node,pars,tnow,dt){
     } else {
       IRScov_t <- 0
     }
-    
-    if(IRScov_t > 0 & ITNcov_t > 0){
-      browser()
-    }
 
     # zCom: Probability of a mosquito being repelled from an ITN or IRS-treated house:
     c0 <- 1 - ITNcov_t - IRScov_t + ITNcov_t*IRScov_t
