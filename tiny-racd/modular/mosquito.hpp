@@ -129,4 +129,6 @@ std::vector<int> track_mosquito(SEXP mosy);
 
 double           track_lambdaV(SEXP mosy);
 
+Rcpp::List       mosquito_2list(SEXP mosy);
+
 #endif

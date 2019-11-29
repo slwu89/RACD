@@ -31,9 +31,13 @@ mosquitos::mosquitos(const int EL_, const int LL_, const int PL_, const int SV_,
   IV_probs{0,0}, IV_transitions{0,0},
   EL(EL_), LL(LL_), PL(PL_), SV(SV_), EV(EV_), IV(IV_), K(K_),
   lambdaV(lambdaV_)
-{};
+{
+  Rcpp::Rcout << "mosquitos ctor called at " << this << "\n";
+};
 
-mosquitos::~mosquitos(){};
+mosquitos::~mosquitos(){
+  Rcpp::Rcout << "mosquitos dtor called at " << this << "\n";
+};
 
 /* ################################################################################
 #   initialize mosquito and return to R
@@ -97,16 +101,20 @@ std::vector<double> feeding_cycle(SEXP mosy,
   mosy_ptr->Z = Q0*ZZ;
 
   /* feeding rate */
-  mosy_ptr->f = 1.0 / ((tau1/(1.0 - mosy_ptr->Z)) + tau2);
+  mosy_ptr->f = 1. /(tau1/(1. - mosy_ptr->Z) + tau2);
 
   /* survival */
   double p10 = std::exp(-muV*tau1);
-  mosy_ptr->p1 = (p10*mosy_ptr->W)/(1.0 - (mosy_ptr->Z*p10));
+  if(mosy_ptr->Z > (1. -  p10*mosy_ptr->W)/p10){
+    std::string msg = "error: Z " + std::to_string(mosy_ptr->Z) + " is greater than 1 - p10*W / p10: " + std::to_string((1. -  p10*mosy_ptr->W)/p10) + ", p1 will have negative probabilities";
+    Rcpp::stop(msg);
+  }
+  mosy_ptr->p1 = p10*mosy_ptr->W/(1.0 - mosy_ptr->Z*p10);
   mosy_ptr->p2 = std::exp(-muV*tau2);
   mosy_ptr->mu = -mosy_ptr->f*std::log(mosy_ptr->p1 * mosy_ptr->p2);
 
   /* proportion of successful bites on humans & HBR */
-  mosy_ptr->Q = 1.0 - ((1.0 - Q0)/mosy_ptr->W);
+  mosy_ptr->Q = 1.-(1.-Q0)/mosy_ptr->W;
   mosy_ptr->a = mosy_ptr->f*mosy_ptr->Q;
 
   /* calculate egg laying rate */
@@ -282,4 +290,58 @@ double           track_lambdaV(SEXP mosy){
   Rcpp::XPtr<mosquitos> mosy_ptr(mosy);
 
   return mosy_ptr->lambdaV;
+};
+
+// [[Rcpp::export]]
+Rcpp::List       mosquito_2list(SEXP mosy){
+
+  // grab the pointer to mosquitos
+  Rcpp::XPtr<mosquitos> mosy_ptr(mosy);
+
+  // probs/transitions
+  Rcpp::List prob_trans = Rcpp::List::create(
+    Rcpp::Named("EL_new") = mosy_ptr->EL_new,
+    Rcpp::Named("EL_probs") = mosy_ptr->EL_probs,
+    Rcpp::Named("EL_transitions") = mosy_ptr->EL_transitions,
+    Rcpp::Named("LL_probs") = mosy_ptr->LL_probs,
+    Rcpp::Named("LL_transitions") = mosy_ptr->LL_transitions,
+    Rcpp::Named("PL_probs") = mosy_ptr->PL_probs,
+    Rcpp::Named("PL_transitions") = mosy_ptr->PL_transitions,
+    Rcpp::Named("SV_probs") = mosy_ptr->SV_probs,
+    Rcpp::Named("SV_transitions") = mosy_ptr->SV_transitions,
+    Rcpp::Named("EV_probs") = mosy_ptr->EV_probs,
+    Rcpp::Named("EV_transitions") = mosy_ptr->EV_transitions,
+    Rcpp::Named("IV_probs") = mosy_ptr->IV_probs,
+    Rcpp::Named("IV_transitions") = mosy_ptr->IV_transitions
+  );
+
+  /* state space */
+  Rcpp::NumericVector state_space = Rcpp::NumericVector::create(
+    Rcpp::Named("EL") = mosy_ptr->EL,
+    Rcpp::Named("LL") = mosy_ptr->LL,
+    Rcpp::Named("PL") = mosy_ptr->PL,
+    Rcpp::Named("SV") = mosy_ptr->SV,
+    Rcpp::Named("EV") = mosy_ptr->EV,
+    Rcpp::Named("IV") = mosy_ptr->IV
+  );
+
+  Rcpp::NumericVector pars = Rcpp::NumericVector::create(
+    Rcpp::Named("K") = mosy_ptr->K,
+    Rcpp::Named("W") = mosy_ptr->W,
+    Rcpp::Named("Z") = mosy_ptr->Z,
+    Rcpp::Named("f") = mosy_ptr->f,
+    Rcpp::Named("mu") = mosy_ptr->mu,
+    Rcpp::Named("p1") = mosy_ptr->p1,
+    Rcpp::Named("p2") = mosy_ptr->p2,
+    Rcpp::Named("Q") = mosy_ptr->Q,
+    Rcpp::Named("a") = mosy_ptr->a,
+    Rcpp::Named("lambdaV") = mosy_ptr->lambdaV,
+    Rcpp::Named("beta") = mosy_ptr->beta
+  );
+
+  return Rcpp::List::create(
+    Rcpp::Named("prob_trans") = prob_trans,
+    Rcpp::Named("state_space") = state_space,
+    Rcpp::Named("pars") = pars
+  );
 };
