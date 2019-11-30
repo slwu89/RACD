@@ -106,3 +106,4 @@ for(i in 1:1e3){
 }
 
 matplot(out,type="l",lty=1)
+rm(mosy_ptr);gc()
