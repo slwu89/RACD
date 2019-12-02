@@ -93,7 +93,7 @@ std::vector<double> feeding_cycle(SEXP mosy,
   double WW = bite_probs[0];
   double ZZ = bite_probs[1];
   double CC = bite_probs[2];
-
+  
   /* P(successful feed) */
   mosy_ptr->W = (1.0 - Q0) + (Q0*WW);
 

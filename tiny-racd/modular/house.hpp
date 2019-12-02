@@ -51,7 +51,8 @@ typedef struct house {
 
   // interventions
   bool                                    IRS;  // does my house have IRS
-  int                                     IRS_time_off;
+  int                                     IRS_deploy;
+  int                                     IRS_decay;
   int                                     cinc; // how many clinical cases happened today
 
   std::list<human_ptr>                    humans; // who lives here

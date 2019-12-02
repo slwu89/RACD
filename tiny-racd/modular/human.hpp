@@ -90,6 +90,8 @@ using human_ptr = std::unique_ptr<human>;
 #   track output
 ################################################################################ */
 
+Rcpp::NumericVector track_transmission(human const* const human_ptr);
+Rcpp::NumericVector track_immunity(human const* const human_ptr);
 Rcpp::List human_2list(human const* const human_ptr);
 
 #endif
