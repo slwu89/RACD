@@ -46,16 +46,21 @@ typedef struct house {
   double                                  Z;    // E[P(repelled without feeding)]
   double                                  C;    // E[P(a feed here will result in a mosquito infection)]
   int                                     n;    // number of people here
-  std::unordered_map<int,double>          pi;   // normalized PMF of who gets bitten
+
   double                                  EIR;  // the number of bites this house gets today
+
+  std::unordered_map<int,double>          pi;   // normalized PMF of who gets bitten (must sum to 1)
 
   // interventions
   bool                                    IRS;  // does my house have IRS
-  int                                     IRS_deploy;
-  int                                     IRS_decay;
+  int                                     IRS_deploy; // when was IRS deployed
+  int                                     IRS_decay; // when does IRS decay
   int                                     cinc; // how many clinical cases happened today
 
   std::list<human_ptr>                    humans; // who lives here
+
+  // shared pointer to parameters
+  std::shared_ptr<std::unordered_map<std::string,double>>   par_ptr;
 
   // constructor & destructor
   house();
@@ -90,10 +95,6 @@ Rcpp::XPtr<house_vector> init_houses(
 // returns bite_probs: vector of WW,ZZ,CC for mosquitoes
 std::vector<double> update_biting(house_vector& houses);
 
-// MOSY -> HUMAN (after running feeding_cycle)
-// EIR is the vector from mosquitoes
-void update_EIR(house_vector& houses, const std::vector<double>& EIR);
-
 // update C (net infectivity of this house to mosquitos)
 void update_C(house_ptr& hh);
 
@@ -105,6 +106,10 @@ void update_Z(house_ptr& hh);
 
 // normalize pi vector in a house
 void normalize_pi(house_ptr& hh);
+
+// MOSY -> HUMAN (after running feeding_cycle)
+// EIR is the vector from mosquitoes
+void update_EIR(house_vector& houses, const std::vector<double>& EIR);
 
 
 /* ################################################################################
@@ -118,7 +123,7 @@ void update_interventions_house(house_ptr& hh, const int tnow);
 void apply_IRS(house_ptr& hh, const int tnow);
 
 // give ITNs to everyone in the house
-void apply_ITN(house_ptr& hh);
+void apply_ITN(house_ptr& hh, const int tnow);
 
 // apply MDA; give drugs to everyone in the house indiscriminately
 void apply_MDA(house_ptr& hh);
