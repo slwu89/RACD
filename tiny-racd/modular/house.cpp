@@ -278,118 +278,117 @@ void one_day_deaths(house_vector& houses){
 };
 
 // the respawn point
-// void one_day_births(house_vector& houses){
-//
-//   // BIRTHS
-//   int hpop = std::accumulate( globals::instance().get_state_age_tnow().column(0).begin(),  globals::instance().get_state_age_tnow().column(0).end(),0);
-//   // size_t hpop = num_All.at(tnow);
-//   double mu = globals::instance().get_pmap().at("mu");
-//
-//   size_t nbirth = (size_t)R::rbinom((double)hpop, mu);
-//
-//   if(nbirth > 0){
-//
-//     double ICA18_22 = mean_ICA18_22(houses);
-//
-//     double sigma2 = globals::instance().get_pmap().at("sigma2");
-//
-//     double PM = globals::instance().get_pmap().at("PM");
-//
-//     double phi0 = globals::instance().get_pmap().at("phi0");
-//     double phi1 = globals::instance().get_pmap().at("phi1");
-//     double kappaC = globals::instance().get_pmap().at("kappaC");
-//     double IC0 = globals::instance().get_pmap().at("IC0");
-//
-//     for(size_t i=0; i<nbirth; i++){
-//
-//       // put newborns in the smallest houses for ... reasons
-//       size_t smallest_hh = std::distance(houses.begin(),std::min_element(houses.begin(), houses.end(), [](auto& hh1, auto& hh2) {
-//         return hh1->n < hh2->n;
-//       }));
-//
-//       // sample this person's biting heterogeneity
-//       double zeta = R::rlnorm(-sigma2/2., std::sqrt(sigma2));
-//
-//       // P(clinical disease | infection)
-//       double phi = phi0 * (phi1 + ((1. - phi1)/(1. + std::pow(PM*ICA18_22/IC0,kappaC))));
-//
-//       // put the human in their new home
-//       houses.at(smallest_hh)->humans.emplace_back(std::make_unique<human>(
-//         0.,
-//         houses.at(smallest_hh).get(),
-//         zeta,
-//         0.,
-//         0.,
-//         0.,
-//         (PM * ICA18_22),
-//         0.,
-//         0.,
-//         phi,
-//         1.,
-//         1.,
-//         1.,
-//         0.,
-//         "S"
-//       ));
-//
-//     }
-//
-//   }
-//
-//   // IMPORTATION
-//   double import_rate = globals::instance().get_pmap().at("import_rate");
-//   int import_case = (int)R::rpois(import_rate);
-//
-//   if(import_case > 0){
-//
-//     // grab the data we need to make humans
-//     double ICA18_22 = mean_ICA18_22(houses);
-//     double sigma2 = globals::instance().get_pmap().at("sigma2");
-//     double PM = globals::instance().get_pmap().at("PM");
-//     double phi0 = globals::instance().get_pmap().at("phi0");
-//     double phi1 = globals::instance().get_pmap().at("phi1");
-//     double kappaC = globals::instance().get_pmap().at("kappaC");
-//     double IC0 = globals::instance().get_pmap().at("IC0");
-//
-//     // fixed params
-//     double IB_imp = globals::instance().get_pmap().at("IB_imp");
-//     double ID_imp = globals::instance().get_pmap().at("ID_imp");
-//     double ICA_imp = globals::instance().get_pmap().at("ICA_imp");
-//
-//     // put each person in a house
-//     for(int i=0; i<import_case; i++){
-//
-//       // randomly sample destination
-//       int dest = globals::instance().sample_lookup();
-//
-//       // sample this person's biting heterogeneity
-//       double zeta = R::rlnorm(-sigma2/2., std::sqrt(sigma2));
-//
-//       // P(clinical disease | infection)
-//       double phi = phi0 * (phi1 + ((1. - phi1)/(1. + std::pow(PM*ICA18_22/IC0,kappaC))));
-//
-//       // put the infected human in their new home
-//       houses.at(dest)->humans.emplace_back(std::make_unique<human>(
-//         21,
-//         houses.at(dest).get(),
-//         zeta,
-//         IB_imp,
-//         ID_imp,
-//         ICA_imp,
-//         (PM * ICA18_22),
-//         0.,
-//         0.,
-//         phi,
-//         1.,
-//         1.,
-//         1.,
-//         0.,
-//         "D"
-//       ));
-//
-//     }
-//
-//
-//   }
-//
-// };
+void one_day_births(house_vector& houses){
+
+  // BIRTHS
+  int hpop = std::accumulate( globals::instance().get_state_age_tnow().column(0).begin(),  globals::instance().get_state_age_tnow().column(0).end(),0);
+  double mu = globals::instance().get_pmap().at("mu");
+
+  size_t nbirth = (size_t)R::rbinom((double)hpop, mu);
+
+  if(nbirth > 0){
+
+    double ICA18_22 = mean_ICA18_22(houses);
+
+    double sigma2 = globals::instance().get_pmap().at("sigma2");
+
+    double PM = globals::instance().get_pmap().at("PM");
+
+    double phi0 = globals::instance().get_pmap().at("phi0");
+    double phi1 = globals::instance().get_pmap().at("phi1");
+    double kappaC = globals::instance().get_pmap().at("kappaC");
+    double IC0 = globals::instance().get_pmap().at("IC0");
+
+    for(size_t i=0; i<nbirth; i++){
+
+      // put newborns in the smallest houses for ... reasons
+      size_t smallest_hh = std::distance(houses.begin(),std::min_element(houses.begin(), houses.end(), [](auto& hh1, auto& hh2) {
+        return hh1->n < hh2->n;
+      }));
+
+      // sample this person's biting heterogeneity
+      double zeta = R::rlnorm(-sigma2/2., std::sqrt(sigma2));
+
+      // P(clinical disease | infection)
+      double phi = phi0 * (phi1 + ((1. - phi1)/(1. + std::pow(PM*ICA18_22/IC0,kappaC))));
+
+      // put the human in their new home
+      houses.at(smallest_hh)->humans.emplace_back(std::make_unique<human>(
+        0.,
+        houses.at(smallest_hh).get(),
+        zeta,
+        0.,
+        0.,
+        0.,
+        (PM * ICA18_22),
+        0.,
+        0.,
+        phi,
+        1.,
+        1.,
+        1.,
+        0.,
+        "S"
+      ));
+
+    }
+
+  }
+
+  // IMPORTATION
+  double import_rate = globals::instance().get_pmap().at("import_rate");
+  int import_case = (int)R::rpois(import_rate);
+
+  if(import_case > 0){
+
+    // grab the data we need to make humans
+    double ICA18_22 = mean_ICA18_22(houses);
+    double sigma2 = globals::instance().get_pmap().at("sigma2");
+    double PM = globals::instance().get_pmap().at("PM");
+    double phi0 = globals::instance().get_pmap().at("phi0");
+    double phi1 = globals::instance().get_pmap().at("phi1");
+    double kappaC = globals::instance().get_pmap().at("kappaC");
+    double IC0 = globals::instance().get_pmap().at("IC0");
+
+    // fixed params
+    double IB_imp = globals::instance().get_pmap().at("IB_imp");
+    double ID_imp = globals::instance().get_pmap().at("ID_imp");
+    double ICA_imp = globals::instance().get_pmap().at("ICA_imp");
+
+    // put each person in a house
+    for(int i=0; i<import_case; i++){
+
+      // randomly sample destination
+      int dest = globals::instance().sample_lookup();
+
+      // sample this person's biting heterogeneity
+      double zeta = R::rlnorm(-sigma2/2., std::sqrt(sigma2));
+
+      // P(clinical disease | infection)
+      double phi = phi0 * (phi1 + ((1. - phi1)/(1. + std::pow(PM*ICA18_22/IC0,kappaC))));
+
+      // put the infected human in their new home
+      houses.at(dest)->humans.emplace_back(std::make_unique<human>(
+        21,
+        houses.at(dest).get(),
+        zeta,
+        IB_imp,
+        ID_imp,
+        ICA_imp,
+        (PM * ICA18_22),
+        0.,
+        0.,
+        phi,
+        1.,
+        1.,
+        1.,
+        0.,
+        "D"
+      ));
+
+    }
+
+
+  }
+
+};
