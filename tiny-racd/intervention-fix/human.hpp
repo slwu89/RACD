@@ -14,27 +14,21 @@
 #ifndef HUMAN_HPP
 #define HUMAN_HPP
 
+#include <Rcpp.h>
+
 #include <iostream>
 #include <memory>
 #include <unordered_map>
 
-#include <Rcpp.h>
 
-// forward declare house
+// forward declaration
 struct house;
-
-
-/* ################################################################################
-#   the human
-################################################################################ */
 
 // a person
 typedef struct human {
 
-  static int    global_id;
-
   // known on initialization
-  int           id;
+  size_t        id;
   double        age;
   bool          alive;
   house*        house_ptr;
@@ -53,12 +47,11 @@ typedef struct human {
   std::string   state;
 
   // other dynamic members
-  int           days_latent;
+  size_t         days_latent;
 
   // intervention
   bool           ITN;
-  int            ITN_given;
-  int            ITN_decay;
+  size_t         ITN_time_off;
 
   // constructor/destructor
   human(const double age_,
@@ -75,15 +68,20 @@ typedef struct human {
         const double prDetectAPCR_,
         const double prDetectUPCR_,
         const double c_,
-        const std::string state_
-      );
+        const std::string state_);
   ~human();
 } human;
 
-int human::global_id = 0;
-
 // the smart pointer for a human
 using human_ptr = std::unique_ptr<human>;
+
+
+/* ################################################################################
+#   individual level tracking
+################################################################################ */
+
+// track clinical incidence
+void track_cinc(const human_ptr& h);
 
 
 /* ################################################################################
@@ -205,7 +203,7 @@ void update_pi(human_ptr& human);
 #   Humans: daily update
 ################################################################################ */
 
-void one_day_update_human(human_ptr& human, const int tnow);
+void one_day_update_human(human_ptr& human);
 
 
 /* ################################################################################
@@ -213,17 +211,9 @@ void one_day_update_human(human_ptr& human, const int tnow);
 ################################################################################ */
 
 // called before exiting daily update; check if interventions expire
-void update_interventions_human(human_ptr& human, const int tnow);
+void update_interventions_human(human_ptr& human);
 
-void give_ITN(human_ptr& human, const int tnow);
+void give_ITN(human_ptr& human);
 
-
-// /* ################################################################################
-// #   track output
-// ################################################################################ */
-//
-// Rcpp::NumericVector track_transmission(human const* const human_ptr);
-// Rcpp::NumericVector track_immunity(human const* const human_ptr);
-// Rcpp::List human_2list(human const* const human_ptr);
 
 #endif

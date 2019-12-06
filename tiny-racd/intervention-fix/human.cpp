@@ -13,7 +13,11 @@
 
 #include "human.hpp"
 
+// other headers we need
 #include "house.hpp"
+#include "globals.hpp"
+#include "stats.hpp"
+#include "intervention.hpp"
 
 // for ageing
 static const double one_day = 1./365.;
@@ -37,9 +41,8 @@ human::human(const double age_,
       const double prDetectAPCR_,
       const double prDetectUPCR_,
       const double c_,
-      const std::string state_
-    ) :
-      id(global_id++),
+      const std::string state_) :
+      id(globals::instance().get_global_hid()),
       age(age_),
       alive(true),
       house_ptr(house_ptr_),
@@ -58,13 +61,11 @@ human::human(const double age_,
       state(state_),
       days_latent(0),
       ITN(false),
-      ITN_given(0),
-      ITN_decay(0)
+      ITN_time_off(0.)
 {
-  double rho = house_ptr->par_ptr->at("rho");
-  double a0 = house_ptr->par_ptr->at("a0");
-
   // add my biting to the hash table
+  double a0 = globals::instance().get_pmap().at("a0");
+  double rho = globals::instance().get_pmap().at("rho");
   double pi = zeta * (1. - rho * std::exp(-age/a0));
   house_ptr->pi.emplace(id,pi);
 
@@ -77,12 +78,47 @@ human::~human(){};
 
 
 /* ################################################################################
+#   individual level tracking
+################################################################################ */
+
+// track clinical incidence
+// this function does double duty as it also lets the
+// intervention manager know a case popped up
+void track_cinc(const human_ptr& h){
+
+  size_t j;
+
+  if((h->age >= 2.) && (h->age < 10.)){
+    globals::instance().push_cinc_2_10();
+  }
+
+  if(h->age < 5.) {
+    j = 2;
+  } else if((h->age >= 5.) && (h->age < 10.)){
+    j = 3;
+  } else if((h->age >= 10.) && (h->age < 15.)){
+    j = 4;
+  } else if(h->age >= 15.){
+    j = 5;
+  } else {
+    Rcpp::stop("invalid age for human");
+  }
+
+  globals::instance().push_cinc_age(j);
+
+  // let the intervention mgr know about this person's case
+  h->house_ptr->int_mgr->add_cinc(h->house_ptr->id);
+
+};
+
+
+/* ################################################################################
 #   State transitions for our little Markov humans
 ################################################################################ */
 
 void mortality(human_ptr& human){
   double randNum = R::runif(0.0,1.0);
-  double mu = human->house_ptr->par_ptr->at("mu");
+  double mu = globals::instance().get_pmap().at("mu");
   if(randNum <= mu){
     human->alive = false;
     human->house_ptr->n -= 1;
@@ -105,8 +141,8 @@ void S_compartment(human_ptr& human){
 /* E: latent period */
 void E_compartment(human_ptr& human){
 
-  double dE = human->house_ptr->par_ptr->at("dE");
-  double fT = human->house_ptr->par_ptr->at("fT");
+  double dE = globals::instance().get_pmap().at("dE");
+  double fT = globals::instance().get_pmap().at("fT");
 
   if(human->days_latent < dE){
     human->days_latent++;
@@ -120,7 +156,7 @@ void E_compartment(human_ptr& human){
       human->state = "T";
       human->days_latent = 0;
 
-      human->house_ptr->cinc += 1;
+      track_cinc(human);
     }
 
     // Untreated clinical infection (E -> D)
@@ -128,7 +164,7 @@ void E_compartment(human_ptr& human){
       human->state = "D";
       human->days_latent = 0;
 
-      human->house_ptr->cinc += 1;
+      track_cinc(human);
     }
 
     // Asymptomatic infection (E -> A)
@@ -142,7 +178,7 @@ void E_compartment(human_ptr& human){
 /* T: treated clinical disease */
 void T_compartment(human_ptr& human){
 
-  double dT = human->house_ptr->par_ptr->at("dT");
+  double dT = globals::instance().get_pmap().at("dT");
   double randNum = R::runif(0.0,1.0);
 
   if(randNum <= (1.0/dT)){
@@ -154,7 +190,7 @@ void T_compartment(human_ptr& human){
 /* D: untreated clinical disease */
 void D_compartment(human_ptr& human){
 
-  double dD = human->house_ptr->par_ptr->at("dD");
+  double dD = globals::instance().get_pmap().at("dD");
   double randNum = R::runif(0.0,1.0);
 
   if(randNum <= (1.0/dD)){
@@ -165,8 +201,8 @@ void D_compartment(human_ptr& human){
 /* A: asymptomatic patent (detectable by microscopy) infection */
 void A_compartment(human_ptr& human){
 
-  double fT = human->house_ptr->par_ptr->at("fT");
-  double dA = human->house_ptr->par_ptr->at("dA");
+  double fT = globals::instance().get_pmap().at("fT");
+  double dA = globals::instance().get_pmap().at("dA");
 
   double randNum = R::runif(0.0,1.0);
 
@@ -176,12 +212,14 @@ void A_compartment(human_ptr& human){
   // Treated clinical infection (A -> T)
   if(randNum <= phi*fT*lambda){
     human->state = "T";
-    human->house_ptr->cinc += 1;
+
+    track_cinc(human);
   }
   // Untreated clinical infection (A -> D)
   if((randNum > phi*fT*lambda) && (randNum <= phi*lambda)){
     human->state = "D";
-    human->house_ptr->cinc += 1;
+
+    track_cinc(human);
   }
   // Progression to asymptomatic sub-patent infection (A -> U):
   if((randNum > phi*lambda) && (randNum <= (phi*lambda + (1.0/dA)))) {
@@ -192,8 +230,8 @@ void A_compartment(human_ptr& human){
 /* U: asymptomatic sub-patent (not detectable by microscopy) infection */
 void U_compartment(human_ptr& human){
 
-  double fT = human->house_ptr->par_ptr->at("fT");
-  double dU = human->house_ptr->par_ptr->at("dU");
+  double fT = globals::instance().get_pmap().at("fT");
+  double dU = globals::instance().get_pmap().at("dU");
 
   double randNum = R::runif(0.0,1.0);
 
@@ -204,14 +242,14 @@ void U_compartment(human_ptr& human){
   if(randNum <= phi*fT*lambda){
     human->state = "T";
 
-    human->house_ptr->cinc += 1;
+    track_cinc(human);
   }
 
   // Untreated clinical infection (U -> D)
   if((randNum > phi*fT*lambda) && (randNum <= phi*lambda)){
     human->state = "D";
 
-    human->house_ptr->cinc += 1;
+    track_cinc(human);
   }
 
   // Asymptomatic infection (U -> A)
@@ -228,7 +266,7 @@ void U_compartment(human_ptr& human){
 /* P: protection due to chemoprophylaxis treatment */
 void P_compartment(human_ptr& human){
 
-  double dP = human->house_ptr->par_ptr->at("dP");
+  double dP = globals::instance().get_pmap().at("dP");
   double randNum = R::runif(0.0,1.0);
 
   if(randNum <= (1.0/dP)){
@@ -254,13 +292,13 @@ void P_compartment(human_ptr& human){
  */
 void update_immunity(human_ptr& human){
 
-  double uB = human->house_ptr->par_ptr->at("uB");
-  double uC = human->house_ptr->par_ptr->at("uC");
-  double uD = human->house_ptr->par_ptr->at("uD");
-  double dB = human->house_ptr->par_ptr->at("dB");
-  double dC = human->house_ptr->par_ptr->at("dC");
-  double dID = human->house_ptr->par_ptr->at("dID");
-  double dM = human->house_ptr->par_ptr->at("dM");
+  double uB = globals::instance().get_pmap().at("uB");
+  double uC = globals::instance().get_pmap().at("uC");
+  double uD = globals::instance().get_pmap().at("uD");
+  double dB = globals::instance().get_pmap().at("dB");
+  double dC = globals::instance().get_pmap().at("dC");
+  double dID = globals::instance().get_pmap().at("dID");
+  double dM = globals::instance().get_pmap().at("dM");
 
   double epsilon = human->epsilon;
   double lambda = human->lambda;
@@ -281,11 +319,18 @@ void update_immunity(human_ptr& human){
 // psi is the psi of my house
 void update_lambda(human_ptr& human){
 
-  double b0 = human->house_ptr->par_ptr->at("b0");
-  double b1 = human->house_ptr->par_ptr->at("b1");
-  double IB0 = human->house_ptr->par_ptr->at("IB0");
-  double kappaB = human->house_ptr->par_ptr->at("kappaB");
+  double b0 = globals::instance().get_pmap().at("b0");
+  double b1 = globals::instance().get_pmap().at("b1");
+  double IB0 = globals::instance().get_pmap().at("IB0");
+  double kappaB = globals::instance().get_pmap().at("kappaB");
   double IB = human->IB;
+
+  // // my EIR (house EIR * P(it bites me))
+  // double EIR_h = human->house_ptr->EIR * human->house_ptr->pi.at(human->id);
+  //
+  // human->epsilon = EIR_h * get_y(human); // term to account for possible effect of intervention
+  // double b = b0*(b1 + ((1.-b1)/(1. + std::pow((IB/IB0),kappaB))));
+  // human->lambda = EIR_h * b;
 
   /* epsilon is my personal EIR today */
   human->epsilon = human->house_ptr->EIR * ((human->house_ptr->pi.at(human->id) * get_y(human)) / human->house_ptr->W);
@@ -295,15 +340,21 @@ void update_lambda(human_ptr& human){
 
   /* lambda is my personal force of infection (my hazard) */
   human->lambda = human->epsilon * b;
+
+  // track EIR values
+  globals::instance().get_stats().at("EIR").Push(human->epsilon);
+
+  // track b values
+  globals::instance().get_stats().at("b").Push(b);
 };
 
 /* phi */
 void update_phi(human_ptr& human){
 
-  double phi0 = human->house_ptr->par_ptr->at("phi0");
-  double phi1 = human->house_ptr->par_ptr->at("phi1");
-  double IC0 = human->house_ptr->par_ptr->at("IC0");
-  double kappaC = human->house_ptr->par_ptr->at("kappaC");
+  double phi0 = globals::instance().get_pmap().at("phi0");
+  double phi1 = globals::instance().get_pmap().at("phi1");
+  double IC0 = globals::instance().get_pmap().at("IC0");
+  double kappaC = globals::instance().get_pmap().at("kappaC");
 
   double ICA = human->ICA;
   double ICM = human->ICM;
@@ -315,14 +366,14 @@ void update_phi(human_ptr& human){
 /* q (microscopy) */
 void update_q(human_ptr& human){
 
-  double fD0 = human->house_ptr->par_ptr->at("fD0");
-  double aD = human->house_ptr->par_ptr->at("aD");
-  double gammaD = human->house_ptr->par_ptr->at("gammaD");
-  double d1 = human->house_ptr->par_ptr->at("d1");
-  double ID0 = human->house_ptr->par_ptr->at("ID0");
-  double kappaD = human->house_ptr->par_ptr->at("kappaD");
-  double alphaA = human->house_ptr->par_ptr->at("alphaA");
-  double alphaU = human->house_ptr->par_ptr->at("alphaU");
+  double fD0 = globals::instance().get_pmap().at("fD0");
+  double aD = globals::instance().get_pmap().at("aD");
+  double gammaD = globals::instance().get_pmap().at("gammaD");
+  double d1 = globals::instance().get_pmap().at("d1");
+  double ID0 = globals::instance().get_pmap().at("ID0");
+  double kappaD = globals::instance().get_pmap().at("kappaD");
+  double alphaA = globals::instance().get_pmap().at("alphaA");
+  double alphaU = globals::instance().get_pmap().at("alphaU");
 
   double ID = human->ID;
   double age = human->age;
@@ -350,22 +401,22 @@ void infectiousness_E(human_ptr& human){
 };
 
 void infectiousness_T(human_ptr& human){
-  human->c = human->house_ptr->par_ptr->at("cT");
+  human->c = globals::instance().get_pmap().at("cT");
 };
 
 void infectiousness_D(human_ptr& human){
-  human->c = human->house_ptr->par_ptr->at("cD");
+  human->c = globals::instance().get_pmap().at("cD");
 };
 
 void infectiousness_A(human_ptr& human){
-  double cU = human->house_ptr->par_ptr->at("cU");
-  double cD = human->house_ptr->par_ptr->at("cD");
-  double gammaI = human->house_ptr->par_ptr->at("gammaI");
+  double cU = globals::instance().get_pmap().at("cU");
+  double cD = globals::instance().get_pmap().at("cD");
+  double gammaI = globals::instance().get_pmap().at("gammaI");
   human->c = cU + (cD - cU)*std::pow(human->prDetectAMic,gammaI);
 };
 
 void infectiousness_U(human_ptr& human){
-  human->c = human->house_ptr->par_ptr->at("cU");
+  human->c = globals::instance().get_pmap().at("cU");
 };
 
 void infectiousness_P(human_ptr& human){
@@ -389,27 +440,27 @@ double get_w(human_ptr& human){
   /* IRS only */
   } else if(IRS && !ITN){
 
-    double phiI = human->house_ptr->par_ptr->at("phiI");
-    double rS = human->house_ptr->par_ptr->at("rIRS");
-    double sS = human->house_ptr->par_ptr->at("sIRS");
+    double phiI = globals::instance().get_pmap().at("phiI");
+    double rS = globals::instance().get_pmap().at("rIRS");
+    double sS = globals::instance().get_pmap().at("sIRS");
 
     return (1. - phiI) + (phiI * (1. - rS) * sS);
   /* ITN only */
   } else if(!IRS && ITN){
 
-    double phiB = human->house_ptr->par_ptr->at("phiB");
-    double sN = human->house_ptr->par_ptr->at("sITN");
+    double phiB = globals::instance().get_pmap().at("phiB");
+    double sN = globals::instance().get_pmap().at("sITN");
 
     return (1. - phiB) + (phiB * sN);
   /* IRS and ITN */
   } else if(IRS && ITN){
 
-    double phiI = human->house_ptr->par_ptr->at("phiI");
-    double rS = human->house_ptr->par_ptr->at("rIRS");
-    double sS = human->house_ptr->par_ptr->at("sIRS");
+    double phiI = globals::instance().get_pmap().at("phiI");
+    double rS = globals::instance().get_pmap().at("rIRS");
+    double sS = globals::instance().get_pmap().at("sIRS");
 
-    double phiB = human->house_ptr->par_ptr->at("phiB");
-    double sN = human->house_ptr->par_ptr->at("sITN");
+    double phiB = globals::instance().get_pmap().at("phiB");
+    double sN = globals::instance().get_pmap().at("sITN");
 
     return (1. - phiI) + (phiB * (1. - rS) * sN * sS) + ((phiI - phiB) * (1. - rS) * sS);
   } else {
@@ -429,25 +480,25 @@ double get_y(human_ptr& human){
   /* IRS only */
   } else if(IRS && !ITN){
 
-    double phiI = human->house_ptr->par_ptr->at("phiI");
-    double rS = human->house_ptr->par_ptr->at("rIRS");
+    double phiI = globals::instance().get_pmap().at("phiI");
+    double rS = globals::instance().get_pmap().at("rIRS");
 
     return (1.0 - phiI) + (phiI * (1. - rS));
   /* ITN only */
   } else if(!IRS && ITN){
 
-    double phiB = human->house_ptr->par_ptr->at("phiB");
-    double sN = human->house_ptr->par_ptr->at("sITN");
+    double phiB = globals::instance().get_pmap().at("phiB");
+    double sN = globals::instance().get_pmap().at("sITN");
 
     return (1.0 - phiB) + (phiB * sN);
   /* IRS and ITN */
   } else if(IRS && ITN){
 
-    double phiI = human->house_ptr->par_ptr->at("phiI");
-    double rS = human->house_ptr->par_ptr->at("rIRS");
+    double phiI = globals::instance().get_pmap().at("phiI");
+    double rS = globals::instance().get_pmap().at("rIRS");
 
-    double phiB = human->house_ptr->par_ptr->at("phiB");
-    double sN = human->house_ptr->par_ptr->at("sITN");
+    double phiB = globals::instance().get_pmap().at("phiB");
+    double sN = globals::instance().get_pmap().at("sITN");
 
     return (1.0 - phiI) + (phiB * (1. - rS) * sN) + ((phiI - phiB) * (1. - rS) );
   } else {
@@ -467,25 +518,25 @@ double get_z(human_ptr& human){
   /* IRS only */
   } else if(IRS && !ITN){
 
-    double phiI = human->house_ptr->par_ptr->at("phiI");
-    double rS = human->house_ptr->par_ptr->at("rIRS");
+    double phiI = globals::instance().get_pmap().at("phiI");
+    double rS = globals::instance().get_pmap().at("rIRS");
 
     return phiI * rS;
   /* ITN only */
   } else if(!IRS && ITN){
 
-    double phiB = human->house_ptr->par_ptr->at("phiB");
-    double rN = human->house_ptr->par_ptr->at("rN");
+    double phiB = globals::instance().get_pmap().at("phiB");
+    double rN = globals::instance().get_pmap().at("rN");
 
     return phiB * rN;
   /* IRS and ITN */
   } else if(IRS && ITN){
 
-    double phiI = human->house_ptr->par_ptr->at("phiI");
-    double rS = human->house_ptr->par_ptr->at("rIRS");
+    double phiI = globals::instance().get_pmap().at("phiI");
+    double rS = globals::instance().get_pmap().at("rIRS");
 
-    double phiB = human->house_ptr->par_ptr->at("phiB");
-    double rN = human->house_ptr->par_ptr->at("rN");
+    double phiB = globals::instance().get_pmap().at("phiB");
+    double rN = globals::instance().get_pmap().at("rN");
 
     return (phiB * (1. - rS) * rN) + (phiI * rS);
   } else {
@@ -502,8 +553,8 @@ double get_z(human_ptr& human){
 // add my biting weight to the hash table
 void add_pi(human_ptr& human){
 
-  double a0 = human->house_ptr->par_ptr->at("a0");
-  double rho = human->house_ptr->par_ptr->at("rho");
+  double a0 = globals::instance().get_pmap().at("a0");
+  double rho = globals::instance().get_pmap().at("rho");
   double pi = human->zeta * (1. - rho * std::exp(-human->age/a0));
 
   // put it into the hash table
@@ -519,8 +570,8 @@ void remove_pi(human_ptr& human){
 // update pi (do this daily because I age)
 void update_pi(human_ptr& human){
 
-  double a0 = human->house_ptr->par_ptr->at("a0");
-  double rho = human->house_ptr->par_ptr->at("rho");
+  double a0 = globals::instance().get_pmap().at("a0");
+  double rho = globals::instance().get_pmap().at("rho");
   double pi = human->zeta * (1. - rho * std::exp(-human->age/a0));
 
   // update the hash table
@@ -533,7 +584,7 @@ void update_pi(human_ptr& human){
 #   Humans: daily update
 ################################################################################ */
 
-void one_day_update_human(human_ptr& human, const int tnow){
+void one_day_update_human(human_ptr& human){
 
   // mortality
   mortality(human);
@@ -566,7 +617,7 @@ void one_day_update_human(human_ptr& human, const int tnow){
     update_pi(human);
 
     // update interventions
-    update_interventions_human(human,tnow);
+    update_interventions_human(human);
 
   }
 
@@ -578,66 +629,19 @@ void one_day_update_human(human_ptr& human, const int tnow){
 ################################################################################ */
 
 // called before exiting daily update; check if interventions expire
-void update_interventions_human(human_ptr& human, const int tnow){
+void update_interventions_human(human_ptr& human){
 
-  if(human->ITN && tnow >= human->ITN_decay){
+  if(human->ITN && globals::instance().get_tnow() >= human->ITN_time_off){
     human->ITN = false;
   }
 
 };
 
-void give_ITN(human_ptr& human, const int tnow){
+void give_ITN(human_ptr& human){
 
-  double ITN_decay = human->house_ptr->par_ptr->at("ITN_decay");
+  double ITN_decay = globals::instance().get_pmap().at("ITN_decay");
 
   human->ITN = true;
-  human->ITN_given = tnow;
-  human->ITN_decay = tnow + R::rgeom(ITN_decay);
+  human->ITN_time_off = globals::instance().get_tnow() + R::rgeom(ITN_decay);
 
 };
-
-
-// /* ################################################################################
-// #   track output
-// ################################################################################ */
-//
-// Rcpp::NumericVector track_transmission(human const* const human_ptr){
-//   return Rcpp::NumericVector::create(
-//     Rcpp::Named("epsilon") = human_ptr->epsilon,
-//     Rcpp::Named("lambda") = human_ptr->lambda,
-//     Rcpp::Named("phi") = human_ptr->phi,
-//     Rcpp::Named("prDetectAMic") = human_ptr->prDetectAMic,
-//     Rcpp::Named("prDetectAPCR") = human_ptr->prDetectAPCR,
-//     Rcpp::Named("prDetectUPCR") = human_ptr->prDetectUPCR,
-//     Rcpp::Named("c") = human_ptr->c
-//   );
-// };
-//
-// Rcpp::NumericVector track_immunity(human const* const human_ptr){
-//   return Rcpp::NumericVector::create(
-//     Rcpp::Named("IB") = human_ptr->IB,
-//     Rcpp::Named("ID") = human_ptr->ID,
-//     Rcpp::Named("ICA") = human_ptr->ICA,
-//     Rcpp::Named("ICM") = human_ptr->ICM
-//   );
-// };
-//
-// Rcpp::List human_2list(human const* const human_ptr){
-//   return Rcpp::List::create(
-//     Rcpp::Named("id") = human_ptr->id,
-//     Rcpp::Named("age") = human_ptr->age,
-//     Rcpp::Named("zeta") = human_ptr->zeta,
-//     Rcpp::Named("IB") = human_ptr->IB,
-//     Rcpp::Named("ID") = human_ptr->ID,
-//     Rcpp::Named("ICA") = human_ptr->ICA,
-//     Rcpp::Named("ICM") = human_ptr->ICM,
-//     Rcpp::Named("epsilon") = human_ptr->epsilon,
-//     Rcpp::Named("lambda") = human_ptr->lambda,
-//     Rcpp::Named("phi") = human_ptr->phi,
-//     Rcpp::Named("prDetectAMic") = human_ptr->prDetectAMic,
-//     Rcpp::Named("prDetectAPCR") = human_ptr->prDetectAPCR,
-//     Rcpp::Named("prDetectUPCR") = human_ptr->prDetectUPCR,
-//     Rcpp::Named("c") = human_ptr->c,
-//     Rcpp::Named("state") = human_ptr->state
-//   );
-// };
