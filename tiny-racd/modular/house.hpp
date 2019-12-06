@@ -158,7 +158,7 @@ void one_day_births(house_vector& houses);
 void one_day_update_house(house_ptr& hh, const int tnow);
 
 // the update for all humans/dwellings
-void one_day_update(house_ptr& houses, const int tnow);
+void one_day_update(house_vector& houses, const int tnow);
 
 // exposed to R
 // runs one_day_update, one_day_births, one_day_deaths in that order
@@ -166,12 +166,13 @@ void one_day_step(SEXP houses, const int tnow);
 
 
 /* ################################################################################
-#   track output
+#   track output for all houses (export to R)
 ################################################################################ */
 
 Rcpp::DataFrame       track_state(SEXP houses, const int tnow);
 Rcpp::DataFrame       track_immunity(SEXP houses, const int tnow);
 Rcpp::DataFrame       track_transmission(SEXP houses, const int tnow);
+Rcpp::DataFrame       track_cinc(SEXP houses, const int tnow);
 
 
 #endif

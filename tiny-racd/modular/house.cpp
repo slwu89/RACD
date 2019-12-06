@@ -36,6 +36,7 @@ house::~house(){
 #   initialize houses and return to R
 ################################################################################ */
 
+// [[Rcpp::export]]
 Rcpp::XPtr<house_vector> init_houses(
   const Rcpp::List& humans_param,
   const Rcpp::List& house_param
@@ -281,8 +282,12 @@ void one_day_deaths(house_vector& houses){
 void one_day_births(house_vector& houses){
 
   // BIRTHS
-  int hpop = std::accumulate( globals::instance().get_state_age_tnow().column(0).begin(),  globals::instance().get_state_age_tnow().column(0).end(),0);
-  double mu = globals::instance().get_pmap().at("mu");
+  int hpop = 0;
+  for(auto& hh : houses){
+    hpop += hh->n;
+  }
+
+  double mu = houses[0]->par_ptr->at("mu");
 
   size_t nbirth = (size_t)R::rbinom((double)hpop, mu);
 
@@ -290,14 +295,14 @@ void one_day_births(house_vector& houses){
 
     double ICA18_22 = mean_ICA18_22(houses);
 
-    double sigma2 = globals::instance().get_pmap().at("sigma2");
+    double sigma2 = houses[0]->par_ptr->at("sigma2");
 
-    double PM = globals::instance().get_pmap().at("PM");
+    double PM = houses[0]->par_ptr->at("PM");
 
-    double phi0 = globals::instance().get_pmap().at("phi0");
-    double phi1 = globals::instance().get_pmap().at("phi1");
-    double kappaC = globals::instance().get_pmap().at("kappaC");
-    double IC0 = globals::instance().get_pmap().at("IC0");
+    double phi0 = houses[0]->par_ptr->at("phi0");
+    double phi1 = houses[0]->par_ptr->at("phi1");
+    double kappaC = houses[0]->par_ptr->at("kappaC");
+    double IC0 = houses[0]->par_ptr->at("IC0");
 
     for(size_t i=0; i<nbirth; i++){
 
@@ -336,30 +341,32 @@ void one_day_births(house_vector& houses){
   }
 
   // IMPORTATION
-  double import_rate = globals::instance().get_pmap().at("import_rate");
+  double import_rate = houses[0]->par_ptr->at("import_rate");
   int import_case = (int)R::rpois(import_rate);
 
   if(import_case > 0){
 
     // grab the data we need to make humans
     double ICA18_22 = mean_ICA18_22(houses);
-    double sigma2 = globals::instance().get_pmap().at("sigma2");
-    double PM = globals::instance().get_pmap().at("PM");
-    double phi0 = globals::instance().get_pmap().at("phi0");
-    double phi1 = globals::instance().get_pmap().at("phi1");
-    double kappaC = globals::instance().get_pmap().at("kappaC");
-    double IC0 = globals::instance().get_pmap().at("IC0");
+    double sigma2 = houses[0]->par_ptr->at("sigma2");
+    double PM = houses[0]->par_ptr->at("PM");
+    double phi0 = houses[0]->par_ptr->at("phi0");
+    double phi1 = houses[0]->par_ptr->at("phi1");
+    double kappaC = houses[0]->par_ptr->at("kappaC");
+    double IC0 = houses[0]->par_ptr->at("IC0");
 
     // fixed params
-    double IB_imp = globals::instance().get_pmap().at("IB_imp");
-    double ID_imp = globals::instance().get_pmap().at("ID_imp");
-    double ICA_imp = globals::instance().get_pmap().at("ICA_imp");
+    double IB_imp = houses[0]->par_ptr->at("IB_imp");
+    double ID_imp = houses[0]->par_ptr->at("ID_imp");
+    double ICA_imp = houses[0]->par_ptr->at("ICA_imp");
+
+    int nhouse = houses.size();
 
     // put each person in a house
     for(int i=0; i<import_case; i++){
 
       // randomly sample destination
-      int dest = globals::instance().sample_lookup();
+      int dest = (int)std::floor(nhouse * R::runif(0.,1.));
 
       // sample this person's biting heterogeneity
       double zeta = R::rlnorm(-sigma2/2., std::sqrt(sigma2));
@@ -369,7 +376,7 @@ void one_day_births(house_vector& houses){
 
       // put the infected human in their new home
       houses.at(dest)->humans.emplace_back(std::make_unique<human>(
-        21,
+        21.,
         houses.at(dest).get(),
         zeta,
         IB_imp,
@@ -388,7 +395,124 @@ void one_day_births(house_vector& houses){
 
     }
 
-
   }
+
+};
+
+
+/* ################################################################################
+#   daily simulation
+################################################################################ */
+
+// update the dynamics of a single dwelling
+void one_day_update_house(house_ptr& hh, const int tnow){
+
+  for(auto& h : hh->humans){
+    one_day_update_human(h,tnow);
+  }
+
+};
+
+// the update for all humans/dwellings
+void one_day_update(house_vector& houses, const int tnow){
+
+  for(auto& hh : houses){
+    /* simulate human dynamics */
+    one_day_update_house(hh,tnow);
+    /* update intervention status (IRS) */
+    update_interventions_house(hh,tnow);
+  }
+
+};
+
+// exposed to R
+// runs one_day_update, one_day_births, one_day_deaths in that order
+
+// [[Rcpp::export]]
+void one_day_step(SEXP houses, const int tnow){
+
+  // grab the pointer to houses
+  Rcpp::XPtr<house_vector> houses_ptr(houses);
+
+  /* simulation */
+  one_day_update(*houses_ptr,tnow);
+  one_day_births(*houses_ptr);
+  one_day_deaths(*houses_ptr);
+
+};
+
+
+/* ################################################################################
+#   track output
+################################################################################ */
+
+// [[Rcpp::export]]
+Rcpp::DataFrame       track_state(SEXP houses, const int tnow){
+
+  // grab the pointer to houses
+  Rcpp::XPtr<house_vector> houses_ptr(houses);
+
+  std::vector<std::string> state;
+  std::vector<double> age;
+
+  /* get state for all the humans */
+  for(auto& hh : *houses_ptr){
+    for(auto& h: hh->humans){
+      state.emplace_back(h->state);
+      age.emplace_back(h->age);
+    }
+  }
+
+  std::vector<int> time(state.size(),tnow);
+
+  return Rcpp::DataFrame::create(
+    Rcpp::Named("time") = time,
+    Rcpp::Named("age") = age,
+    Rcpp::Named("state") = state
+  );
+};
+
+// [[Rcpp::export]]
+Rcpp::DataFrame       track_immunity(SEXP houses, const int tnow){
+
+  // grab the pointer to houses
+  Rcpp::XPtr<house_vector> houses_ptr(houses);
+
+  std::vector<double> IB;
+  std::vector<double> ID;
+  std::vector<double> ICA;
+  std::vector<double> ICM;
+  std::vector<double> age;
+
+  /* get state for all the humans */
+  for(auto& hh : *houses_ptr){
+    for(auto& h: hh->humans){
+      IB.emplace_back(h->IB);
+      ID.emplace_back(h->ID);
+      ICA.emplace_back(h->ICA);
+      ICM.emplace_back(h->ICM);
+      age.emplace_back(h->age);
+    }
+  }
+
+  std::vector<int> time(age.size(),tnow);
+
+  return Rcpp::DataFrame::create(
+    Rcpp::Named("time") = time,
+    Rcpp::Named("age") = age,
+    Rcpp::Named("IB") = IB,
+    Rcpp::Named("ID") = ID,
+    Rcpp::Named("ICA") = ICA,
+    Rcpp::Named("ICM") = ICM
+  );
+};
+
+// [[Rcpp::export]]
+Rcpp::DataFrame       track_transmission(SEXP houses, const int tnow){
+
+};
+
+// [[Rcpp::export]]
+Rcpp::DataFrame       track_cinc(SEXP houses, const int tnow){
 
 };
