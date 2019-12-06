@@ -34,17 +34,17 @@ imm_import <- imported_immune(EIR = meanEIR,theta = RACD_theta)
 RACD_theta <- c(RACD_theta,imm_import,import_rate=0.01) 
 
 # compile the simulation
-sourceCpp(here::here("intervention-src/main.cpp"),rebuild = T)
+sourceCpp(here::here("intervention-fix/main.cpp"),rebuild = T)
 
 # run the simulation
 RACD_out <- tiny_racd(humans_param = RACD_init$humans,
                       house_param = RACD_init$houses,
                       mosy_param = RACD_init$mosy,
                       theta = RACD_theta,
-                      tmax = 365*5,
-                      int_type = -1,
+                      tmax = 365*10,
+                      int_type = 1,
                       tstart = 365*1,
-                      tend = 365*2,
+                      tend = 365*20,
                       tdelay = 5,
                       dmat = dmat_dwell,
                       radius = radius,
@@ -79,10 +79,10 @@ p_mosy <- ggplot(data = out_mosy) +
   geom_line(aes(x=day,y=count,color=state),alpha=0.75) +
   theme_bw()
 
-p_imm <- ggplot(data = out_eir_b) +
-  geom_line(aes(x=day,y=mean,color=par)) +
-  geom_linerange(aes(x=day,ymin=pmax(mean-sqrt(var),0),ymax=mean+sqrt(var),color=par),alpha=0.005) +
-  facet_wrap(. ~ par) +
-  theme_bw()
+# p_imm <- ggplot(data = out_eir_b) +
+#   geom_line(aes(x=day,y=mean,color=par)) +
+#   geom_linerange(aes(x=day,ymin=pmax(mean-sqrt(var),0),ymax=mean+sqrt(var),color=par),alpha=0.005) +
+#   facet_wrap(. ~ par) +
+#   theme_bw()
 
-grid.arrange(p_states,p_cinc,p_mosy,p_imm)
+grid.arrange(p_states,p_cinc,p_mosy)
