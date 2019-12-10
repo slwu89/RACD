@@ -237,6 +237,7 @@ landscape$regular$dwellings$psi <- psi_d[,1]/sum(psi_d[,1])
 # 
 # ggsave(filename = here::here("graphics/psi_surface_reg.pdf"),plot = gg_psi_reg,dpi = 320,width = 10,height = 8)
 
+# saveRDS(object = landscape,file = here("intervention-simulation/landscapes.rds"))
 
 ###############################################################################
 #
