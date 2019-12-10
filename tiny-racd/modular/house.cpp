@@ -39,11 +39,53 @@ house::~house(){
 // [[Rcpp::export]]
 Rcpp::XPtr<house_vector> init_houses(
   const Rcpp::List& humans_param,
-  const Rcpp::List& house_param
+  const int nhouse,
+  const Rcpp::NumericVector& pars
 ){
-  house_vector* houses_ptr = new house_vector();
 
-  // return the external pointer
+  /* put parameters in hash table */
+  std::shared_ptr<std::unordered_map<std::string,double>> param_ptr;
+  Rcpp::CharacterVector par_names = pars.names();
+  for(int i=0; i<pars.size(); i++){
+    param_ptr->emplace(par_names[i],pars[i]);
+  }
+
+  /* make houses */
+  house_vector* houses_ptr = new house_vector();
+  houses_ptr->reserve(nhouse);
+  for(int i=0; i<nhouse; i++){
+    houses_ptr->emplace_back(std::make_unique<house>());
+  }
+
+  /* make humans */
+  int nhum = humans_param.size();
+  for(int i=0; i<nhum; i++){
+
+    Rcpp::List hum_i = Rcpp::as<Rcpp::List>(humans_param[i]);
+    int house_id = Rcpp::as<int>(hum_i["house"]) - 1;
+
+    houses_ptr->at(house_id)->humans.emplace_back(
+      std::make_unique<human>(
+        Rcpp::as<double>(hum_i["age"]),
+        houses_ptr->at(house_id).get(),
+        Rcpp::as<double>(hum_i["zeta"]),
+        Rcpp::as<double>(hum_i["IB"]),
+        Rcpp::as<double>(hum_i["ID"]),
+        Rcpp::as<double>(hum_i["ICA"]),
+        Rcpp::as<double>(hum_i["ICM"]),
+        Rcpp::as<double>(hum_i["epsilon"]),
+        Rcpp::as<double>(hum_i["lambda"]),
+        Rcpp::as<double>(hum_i["phi"]),
+        Rcpp::as<double>(hum_i["prDetectAMic"]),
+        Rcpp::as<double>(hum_i["prDetectAPCR"]),
+        Rcpp::as<double>(hum_i["prDetectUPCR"]),
+        Rcpp::as<double>(hum_i["c"]),
+        Rcpp::as<std::string>(hum_i["state"])
+      )
+    );
+  }
+
+  /* return the external pointer */
   Rcpp::XPtr<house_vector> p(houses_ptr);
   return p;
 };
@@ -56,7 +98,7 @@ Rcpp::XPtr<house_vector> init_houses(
 // update global interface for mosquitos: THIS IS THE FUNCTION TO CALL (others are helpers)
 // HUMAN -> MOSY
 // returns bite_probs: vector of WW,ZZ,CC for mosquitoes
-std::vector<double> update_biting(house_vector& houses){
+std::vector<double> update_biting(house_vector& houses, const std::vector<double>& psi){
 
   std::vector<double> biting(3,0.); // WW,ZZ,CC
 
@@ -78,11 +120,12 @@ std::vector<double> update_biting(house_vector& houses){
     update_Z(hh);
 
     /* update output */
-    double psi = hh->psi;
+    int id = hh->id;
+    double psi_i = psi[id];
 
-    biting[0] += psi * hh->W;
-    biting[1] += psi * hh->C;
-    biting[2] += psi * hh->Z;
+    biting[0] += psi_i * hh->W;
+    biting[1] += psi_i * hh->C;
+    biting[2] += psi_i * hh->Z;
 
   }
 

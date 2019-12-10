@@ -40,7 +40,6 @@ typedef struct house {
 
   // data members
   int                                     id;
-  double                                  psi;  // P(a bite going anywhere goes here)
   double                                  W;    // E[P(feed and survive)]
   double                                  Y;    // E[P(feed)]
   double                                  Z;    // E[P(repelled without feeding)]
@@ -82,7 +81,8 @@ using house_vector = std::vector<house_ptr>;
 
 Rcpp::XPtr<house_vector> init_houses(
   const Rcpp::List& humans_param,
-  const Rcpp::List& house_param
+  const int nhouse,
+  const Rcpp::NumericVector& pars
 );
 
 
