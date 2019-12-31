@@ -15,13 +15,63 @@
 
 #include "house.hpp"
 
-// for ageing
+
+/* --------------------------------------------------------------------------------
+#   static (file-scope) things
+-------------------------------------------------------------------------------- */
+
+/* ageing */
 static const double one_day = 1./365.;
 
+/* sample (p1,p2,p3) discrete RV */
+static int trinomial(const double p1, const double p2, const double p3){
 
-/* ################################################################################
+  /* normalized probability array */
+  std::array<double,3> probs;
+  double sum = p1+p2+p3;
+  probs[0] = p1/sum;
+  probs[1] = p2/sum;
+  probs[2] = p3/sum;
+
+  /* sequential sampling */
+  double u = R::runif(0., 1.);
+  double p = probs[0];
+  int x = 0;
+  while(u > p){
+    x++;
+    p += probs[x];
+  }
+
+  return x;
+}
+
+/* sample (p1,p2,p3,p4) discrete RV */
+static int quadrinomial(const double p1, const double p2, const double p3, const double p4){
+
+  /* normalized probability array */
+  std::array<double,4> probs;
+  double sum = p1+p2+p3+p4;
+  probs[0] = p1/sum;
+  probs[1] = p2/sum;
+  probs[2] = p3/sum;
+  probs[3] = p4/sum;
+
+  /* sequential sampling */
+  double u = R::runif(0., 1.);
+  double p = probs[0];
+  int x = 0;
+  while(u > p){
+    x++;
+    p += probs[x];
+  }
+
+  return x;
+}
+
+
+/* --------------------------------------------------------------------------------
 #   constructor & destructor
-################################################################################ */
+-------------------------------------------------------------------------------- */
 
 human::human(const double age_,
       house* house_ptr_,
@@ -76,9 +126,9 @@ human::human(const double age_,
 human::~human(){};
 
 
-/* ################################################################################
+/* --------------------------------------------------------------------------------
 #   State transitions for our little Markov humans
-################################################################################ */
+-------------------------------------------------------------------------------- */
 
 void mortality(human_ptr& human){
   double randNum = R::runif(0.0,1.0);
@@ -237,9 +287,9 @@ void P_compartment(human_ptr& human){
 };
 
 
-/* ################################################################################
+/* --------------------------------------------------------------------------------
 #   Immunity Functions
-################################################################################ */
+-------------------------------------------------------------------------------- */
 
 /* immunity */
 /* Update values for:
@@ -337,9 +387,9 @@ void update_q(human_ptr& human){
 };
 
 
-/* ################################################################################
+/* --------------------------------------------------------------------------------
 #   Infectiousness to Mosquitoes
-################################################################################ */
+-------------------------------------------------------------------------------- */
 
 void infectiousness_S(human_ptr& human){
   human->c = 0.;
@@ -373,9 +423,9 @@ void infectiousness_P(human_ptr& human){
 };
 
 
-/* ################################################################################
+/* --------------------------------------------------------------------------------
 #   Mosquito Approch probabilities (what happens when a bloodsucker tries to bite me)
-################################################################################ */
+-------------------------------------------------------------------------------- */
 
 /* probability of successful biting */
 double get_w(human_ptr& human){
@@ -494,10 +544,10 @@ double get_z(human_ptr& human){
 };
 
 
-/* ################################################################################
+/* --------------------------------------------------------------------------------
 #   bookkeeping (bites and biting weights)
 #   these work on humans and houses
-################################################################################ */
+-------------------------------------------------------------------------------- */
 
 // add my biting weight to the hash table
 void add_pi(human_ptr& human){
@@ -529,9 +579,9 @@ void update_pi(human_ptr& human){
 };
 
 
-/* ################################################################################
+/* --------------------------------------------------------------------------------
 #   Humans: daily update
-################################################################################ */
+-------------------------------------------------------------------------------- */
 
 void one_day_update_human(human_ptr& human, const int tnow){
 
@@ -573,9 +623,9 @@ void one_day_update_human(human_ptr& human, const int tnow){
 };
 
 
-/* ################################################################################
+/* --------------------------------------------------------------------------------
 #   interventions
-################################################################################ */
+-------------------------------------------------------------------------------- */
 
 // called before exiting daily update; check if interventions expire
 void update_interventions_human(human_ptr& human, const int tnow){
@@ -595,49 +645,3 @@ void give_ITN(human_ptr& human, const int tnow){
   human->ITN_decay = tnow + R::rgeom(ITN_decay);
 
 };
-
-
-// /* ################################################################################
-// #   track output
-// ################################################################################ */
-//
-// Rcpp::NumericVector track_transmission(human const* const human_ptr){
-//   return Rcpp::NumericVector::create(
-//     Rcpp::Named("epsilon") = human_ptr->epsilon,
-//     Rcpp::Named("lambda") = human_ptr->lambda,
-//     Rcpp::Named("phi") = human_ptr->phi,
-//     Rcpp::Named("prDetectAMic") = human_ptr->prDetectAMic,
-//     Rcpp::Named("prDetectAPCR") = human_ptr->prDetectAPCR,
-//     Rcpp::Named("prDetectUPCR") = human_ptr->prDetectUPCR,
-//     Rcpp::Named("c") = human_ptr->c
-//   );
-// };
-//
-// Rcpp::NumericVector track_immunity(human const* const human_ptr){
-//   return Rcpp::NumericVector::create(
-//     Rcpp::Named("IB") = human_ptr->IB,
-//     Rcpp::Named("ID") = human_ptr->ID,
-//     Rcpp::Named("ICA") = human_ptr->ICA,
-//     Rcpp::Named("ICM") = human_ptr->ICM
-//   );
-// };
-//
-// Rcpp::List human_2list(human const* const human_ptr){
-//   return Rcpp::List::create(
-//     Rcpp::Named("id") = human_ptr->id,
-//     Rcpp::Named("age") = human_ptr->age,
-//     Rcpp::Named("zeta") = human_ptr->zeta,
-//     Rcpp::Named("IB") = human_ptr->IB,
-//     Rcpp::Named("ID") = human_ptr->ID,
-//     Rcpp::Named("ICA") = human_ptr->ICA,
-//     Rcpp::Named("ICM") = human_ptr->ICM,
-//     Rcpp::Named("epsilon") = human_ptr->epsilon,
-//     Rcpp::Named("lambda") = human_ptr->lambda,
-//     Rcpp::Named("phi") = human_ptr->phi,
-//     Rcpp::Named("prDetectAMic") = human_ptr->prDetectAMic,
-//     Rcpp::Named("prDetectAPCR") = human_ptr->prDetectAPCR,
-//     Rcpp::Named("prDetectUPCR") = human_ptr->prDetectUPCR,
-//     Rcpp::Named("c") = human_ptr->c,
-//     Rcpp::Named("state") = human_ptr->state
-//   );
-// };
