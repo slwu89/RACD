@@ -44,7 +44,7 @@ Rcpp::XPtr<house_vector> init_houses(
 ){
 
   /* put parameters in hash table */
-  std::shared_ptr<std::unordered_map<std::string,double>> param_ptr;
+  std::shared_ptr<std::unordered_map<std::string,double>> param_ptr = std::make_shared<std::unordered_map<std::string,double>>();
   Rcpp::CharacterVector par_names = pars.names();
   for(int i=0; i<pars.size(); i++){
     param_ptr->emplace(par_names[i],pars[i]);
