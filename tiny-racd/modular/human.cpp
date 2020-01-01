@@ -1,4 +1,4 @@
-/*
+/* --------------------------------------------------------------------------------
  #      ____  ___   __________
  #     / __ \/   | / ____/ __ \
  #    / /_/ / /| |/ /   / / / /
@@ -9,7 +9,7 @@
  #  April 2019
  #
  #  the human
-*/
+-------------------------------------------------------------------------------- */
 
 #include "human.hpp"
 
@@ -131,9 +131,11 @@ human::~human(){};
 -------------------------------------------------------------------------------- */
 
 void mortality(human_ptr& human){
-  double randNum = R::runif(0.0,1.0);
+
+  double u = R::runif(0.0,1.0);
   double mu = human->house_ptr->par_ptr->at("mu");
-  if(randNum <= mu){
+
+  if(u < mu){
     human->alive = false;
     human->house_ptr->n -= 1;
     remove_pi(human);
@@ -143,9 +145,9 @@ void mortality(human_ptr& human){
 /* S: susceptible */
 void S_compartment(human_ptr& human){
 
-  double randNum = R::runif(0.0,1.0);
+  double u = R::runif(0.0,1.0);
 
-  if(randNum <= human->lambda){
+  if(u < human->lambda){
     human->state = "E";
     human->days_latent = 0;
   }
@@ -156,36 +158,36 @@ void S_compartment(human_ptr& human){
 void E_compartment(human_ptr& human){
 
   double dE = human->house_ptr->par_ptr->at("dE");
-  double fT = human->house_ptr->par_ptr->at("fT");
 
   if(human->days_latent < dE){
-    human->days_latent++;
-  } else {
-    double randNum = R::runif(0.0,1.0);
 
+    human->days_latent++;
+
+  } else {
+
+    double fT = human->house_ptr->par_ptr->at("fT");
     double phi = human->phi;
 
-    // Treated clinical infection (E -> T)
-    if(randNum <= phi*fT){
+    /* transition probs */
+    double p1 = phi*fT;         // E->T
+    double p2 = phi*(1. - fT);  // E->D
+    double p3 = (1. - phi);     // E->A
+
+    /* sample state transition */
+    int x = trinomial(p1,p2,p3);
+    if(x == 0){
       human->state = "T";
       human->days_latent = 0;
-
       human->house_ptr->cinc += 1;
-    }
-
-    // Untreated clinical infection (E -> D)
-    if((randNum > phi*fT) && (randNum <= phi)){
+    } else if(x == 1){
       human->state = "D";
       human->days_latent = 0;
-
       human->house_ptr->cinc += 1;
-    }
-
-    // Asymptomatic infection (E -> A)
-    if(randNum > phi){
+    } else if(x == 2){
       human->state = "A";
       human->days_latent = 0;
     }
+
   }
 };
 
@@ -193,9 +195,9 @@ void E_compartment(human_ptr& human){
 void T_compartment(human_ptr& human){
 
   double dT = human->house_ptr->par_ptr->at("dT");
-  double randNum = R::runif(0.0,1.0);
+  double u = R::runif(0.0,1.0);
 
-  if(randNum <= (1.0/dT)){
+  if(u < (1./dT)){
     human->state = "P";
   }
 
@@ -205,11 +207,12 @@ void T_compartment(human_ptr& human){
 void D_compartment(human_ptr& human){
 
   double dD = human->house_ptr->par_ptr->at("dD");
-  double randNum = R::runif(0.0,1.0);
+  double u = R::runif(0.0,1.0);
 
-  if(randNum <= (1.0/dD)){
+  if(u < (1./dD)){
     human->state = "A";
   }
+
 };
 
 /* A: asymptomatic patent (detectable by microscopy) infection */
@@ -218,25 +221,26 @@ void A_compartment(human_ptr& human){
   double fT = human->house_ptr->par_ptr->at("fT");
   double dA = human->house_ptr->par_ptr->at("dA");
 
-  double randNum = R::runif(0.0,1.0);
-
   double phi = human->phi;
   double lambda = human->lambda;
 
-  // Treated clinical infection (A -> T)
-  if(randNum <= phi*fT*lambda){
+  /* transition probs */
+  double p1 = phi*lambda*fT;          // A->T
+  double p2 = phi*lambda*(1. - fT);   // A->D
+  double p3 = 1./dA;                  // A->U
+
+  /* sample state transition */
+  int x = trinomial(p1,p2,p3);
+  if(x == 0){
     human->state = "T";
     human->house_ptr->cinc += 1;
-  }
-  // Untreated clinical infection (A -> D)
-  if((randNum > phi*fT*lambda) && (randNum <= phi*lambda)){
+  } else if(x == 1){
     human->state = "D";
     human->house_ptr->cinc += 1;
-  }
-  // Progression to asymptomatic sub-patent infection (A -> U):
-  if((randNum > phi*lambda) && (randNum <= (phi*lambda + (1.0/dA)))) {
+  } else if(x == 2){
     human->state = "U";
   }
+
 };
 
 /* U: asymptomatic sub-patent (not detectable by microscopy) infection */
@@ -245,43 +249,38 @@ void U_compartment(human_ptr& human){
   double fT = human->house_ptr->par_ptr->at("fT");
   double dU = human->house_ptr->par_ptr->at("dU");
 
-  double randNum = R::runif(0.0,1.0);
-
   double phi = human->phi;
   double lambda = human->lambda;
 
-  // Treated clinical infection (U -> T):
-  if(randNum <= phi*fT*lambda){
+  /* transition probs */
+  double p1 = phi*lambda*fT;          // U->T
+  double p2 = phi*lambda*(1. - fT);   // U->D
+  double p3 = (1. - phi)*lambda;      // U->A
+  double p4 = 1./dU;                  // U->S
+
+  /* sample state transition */
+  int x = quadrinomial(p1,p2,p3,p4);
+  if(x == 0){
     human->state = "T";
-
     human->house_ptr->cinc += 1;
-  }
-
-  // Untreated clinical infection (U -> D)
-  if((randNum > phi*fT*lambda) && (randNum <= phi*lambda)){
+  } else if(x == 1){
     human->state = "D";
-
     human->house_ptr->cinc += 1;
-  }
-
-  // Asymptomatic infection (U -> A)
-  if((randNum > phi*lambda) && (randNum <= lambda)){
+  } else if(x == 2){
     human->state = "A";
-  }
-
-  // Recovery to susceptible (U -> S):
-  if((randNum > lambda) && (randNum <= (lambda + (1.0/dU)))){
+  } else if(x == 3){
     human->state = "S";
   }
+
 };
 
 /* P: protection due to chemoprophylaxis treatment */
 void P_compartment(human_ptr& human){
 
   double dP = human->house_ptr->par_ptr->at("dP");
-  double randNum = R::runif(0.0,1.0);
+  double u = R::runif(0.0,1.0);
 
-  if(randNum <= (1.0/dP)){
+  if(u < (1./dP)){
     human->state = "S";
   }
 };
