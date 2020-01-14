@@ -107,7 +107,11 @@ imported_immune <- function(EIR,theta){
 }
 
 
-pfsim_setup <- function(N, EIR_mean, xy_d, xy_a, theta, cores = 4){
+pfsim_setup <- function(N, EIR_mean, xy_d, xy_a, theta, cores = 4, parseed = NaN){
+
+	if(is.nan(parseed)){
+		stop("please enter a seed for 'parseed'")
+	}
 
 	# -------------------------------------------------------------------------------- #
 	#		Extract parameters
@@ -249,6 +253,7 @@ pfsim_setup <- function(N, EIR_mean, xy_d, xy_a, theta, cores = 4){
 	# set up parallel core; compile necessary C++ on them
 	cl <- makeCluster(cores)
 	registerDoParallel(cl)
+	clusterSetRNGStream(cl = cl, iseed = parseed)
 	clusterExport(cl = cl,varlist = c("path2ode"))
 	clusterEvalQ(cl,{
   	Rcpp::sourceCpp(path2ode)
