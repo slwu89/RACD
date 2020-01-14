@@ -134,7 +134,7 @@ pfsim_setup <- function(N, EIR_mean, xy_d, xy_a, theta, cores = 4){
 	rIRS  <- theta[["rIRS"]]
 	sIRS  <- theta[["sIRS"]]
 	delta <- theta[["delta"]]
-	eggOV <- theta[["eggO"]]
+	eggOV <- theta[["eggOV"]]
 
 	fT  <- theta[["fT"]]
 	dE  <- theta[["dE"]]
@@ -249,6 +249,7 @@ pfsim_setup <- function(N, EIR_mean, xy_d, xy_a, theta, cores = 4){
 	# set up parallel core; compile necessary C++ on them
 	cl <- makeCluster(cores)
 	registerDoParallel(cl)
+	clusterExport(cl = cl,varlist = c("path2ode"))
 	clusterEvalQ(cl,{
   	Rcpp::sourceCpp(path2ode)
 	})
@@ -286,7 +287,7 @@ pfsim_setup <- function(N, EIR_mean, xy_d, xy_a, theta, cores = 4){
 
 		# probability of detection
 		fD <- 1 - ((1 - theta[["fD0"]])/(1 + (a/theta[["aD"]])^theta[["gammaD"]]))
-		q <- theta[["d1"]] + ((1 - theta[["d1"]])/(1 + (theta[["fD"]]*(ID/theta[["ID0"]])^theta[["kappaD"]])*theta[["fD"]]))
+		q <- theta[["d1"]] + ((1 - theta[["d1"]])/(1 + (fD*(ID/theta[["ID0"]])^theta[["kappaD"]])*fD))
 		h_out$prDetectAMic <- q
 		h_out$prDetectAPCR <- q^theta[["alphaA"]]
 		h_out$prDetectUPCR <- q^theta[["alphaU"]]
@@ -355,7 +356,7 @@ pfsim_setup <- function(N, EIR_mean, xy_d, xy_a, theta, cores = 4){
 	# solve the mosquitos at equilibrium
 	cat("\n --- begin calculating equilibrium values for mosquito population --- \n")
 
-	mosy_eq <- RACD_mosq_equilibrium(theta = theta,dt = 1,IV = Iv_eq,lambdaV = lambda_v,cores=max(2,parallel::detectCores()-2))
+	mosy_eq <- RACD_mosq_equilibrium(theta = theta,dt = 1,IV = Iv_eq,lambdaV = lambda_v)
 	mosy_eq$lambda_v <- lambda_v
 
 	# assign some things to return
