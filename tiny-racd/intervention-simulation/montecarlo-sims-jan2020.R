@@ -31,11 +31,8 @@ set.seed(50)
 
 
 ###############################################################################
-# generate landscapes: Clustered (attractive)
+# generate landscape
 ###############################################################################
-
-landscape <- vector("list",3)
-names(landscape) <- c("clustered","CSR","regular")
 
 # bounding box is 2000 meters; standardize to this
 bbox <- 2e3
@@ -46,73 +43,6 @@ n_dwelling <- 2e2
 n_hab <- n_dwelling/dwellhab
 N <- n_dwelling * 5 # number of people
 
-# clustered (attraction)
-lscape_clust_d <- spatstat::rMatClust(kappa = 15,scale = 50/bbox,mu = n_dwelling/15,win = spatstat::square(r = 1))
-while(lscape_clust_d$n != n_dwelling){
-  lscape_clust_d <- spatstat::rMatClust(kappa = 15,scale = 50/bbox,mu = n_dwelling/15,win = spatstat::square(r = 1))
-}
-lscape_clust_h <- spatstat::rpoint(n = n_hab,win = spatstat::square(r = 1))
-
-dist_xy <- spatstat::crossdist(X = lscape_clust_h,Y = lscape_clust_d)
-sigma_a <- apply(dist_xy,1,min)
-
-landscape$clustered$dwellings <- data.frame(x=lscape_clust_d$x,y=lscape_clust_d$y)
-landscape$clustered$habitats <- data.frame(x=lscape_clust_h$x,y=lscape_clust_h$y,sigma=sigma_a)
-
-psi_d <- foreach(xy = iter(landscape$clustered$dwellings,by="row"),.combine = "rbind",.inorder = TRUE) %:%
-  foreach(hab = iter(landscape$clustered$habitats,by = "row"),.combine = "+") %do% {
-    dist <- as.matrix(dist(x = rbind(as.vector(xy),c(hab$x,hab$y))))[1,2]
-    psi <- dnorm(dist,mean=0,sd=hab$sigma)
-    psi
-  }
-
-landscape$clustered$dwellings$psi <- psi_d[,1]/sum(psi_d[,1])
-
-# # compute risk surface
-# grid_res <- 1/50
-# grid_clust <- expand.grid(x=seq(0-grid_res,1+grid_res,by=grid_res),y=seq(0-grid_res,1+grid_res,by=grid_res))
-# 
-# cl <- parallel::makeCluster(4)
-# doSNOW::registerDoSNOW(cl)
-# 
-# pb <- txtProgressBar(max = nrow(grid_clust)*nrow(landscape$clustered$habitats), style = 3)
-# progress <- function(n) setTxtProgressBar(pb, n)
-# opts <- list(progress = progress)
-# 
-# landscape$clustered$psi_surface <- foreach(xy = iter(grid_clust,by="row"),.combine = "rbind",.inorder = TRUE) %:%
-#   foreach(hab = iter(landscape$clustered$habitats,by = "row"),.combine = "+", .options.snow = opts) %dopar% {
-#     dist <- as.matrix(dist(x = rbind(as.vector(xy),c(hab$x,hab$y))))[1,2]
-#     psi <- dnorm(dist,mean=0,sd=hab$sigma)
-#     psi
-#   }
-# 
-# stopCluster(cl)
-# rm(cl);gc()
-# 
-# # plot the risk surface
-# surface <- as.data.frame(landscape$clustered$psi_surface)
-# 
-# grid_clust$psi <- surface$V1
-# 
-# # the surface
-# gg_psi_clust <- ggplot() +
-#   geom_raster(aes(x=x,y=y,fill=psi),data=grid_clust) +
-#   stat_contour(aes(x=x,y=y,z=psi),colour=grey(0.5,0.5),size=0.25,data = grid_clust,geom = "contour") +
-#   geom_point(aes(x=x,y=y,size=cut(psi,breaks=quantile(psi),include.lowest = T)),shape=17,colour=grey(0.9,0.9),data=landscape$clustered$dwellings) +
-#   geom_point(aes(x=x,y=y),shape=16,colour=grey(0.75,0.75),size=1.85,data=landscape$clustered$habitats) +
-#   scale_fill_viridis() +
-#   geom_contour() +
-#   theme_bw() +
-#   guides(size = FALSE) +
-#   theme(axis.title.x=element_blank(),axis.title.y=element_blank())
-# 
-# ggsave(filename = here::here("graphics/psi_surface_clust.pdf"),plot = gg_psi_clust,dpi = 320,width = 10,height = 8)
-
-
-###############################################################################
-# generate landscapes: CSR (Poisson)
-###############################################################################
-
 # CSR (Poisson)
 lscape_csr_d <- spatstat::rpoint(n = n_dwelling,win = spatstat::square(r = 1))
 lscape_csr_h <- spatstat::rpoint(n = n_hab,win = spatstat::square(r = 1))
@@ -120,30 +50,32 @@ lscape_csr_h <- spatstat::rpoint(n = n_hab,win = spatstat::square(r = 1))
 dist_xy <- spatstat::crossdist(X = lscape_csr_h,Y = lscape_csr_d)
 sigma_a <- apply(dist_xy,1,min)
 
-landscape$CSR$dwellings <- data.frame(x=lscape_csr_d$x,y=lscape_csr_d$y)
-landscape$CSR$habitats <- data.frame(x=lscape_csr_h$x,y=lscape_csr_h$y,sigma=sigma_a)
+landscape <- list()
+landscape$dwellings <- data.frame(x=lscape_csr_d$x,y=lscape_csr_d$y)
+landscape$habitats <- data.frame(x=lscape_csr_h$x,y=lscape_csr_h$y,sigma=sigma_a)
 
-psi_d <- foreach(xy = iter(landscape$CSR$dwellings,by="row"),.combine = "rbind",.inorder = TRUE) %:%
-  foreach(hab = iter(landscape$CSR$habitats,by = "row"),.combine = "+") %do% {
+psi_d <- foreach(xy = iter(landscape$dwellings,by="row"),.combine = "rbind",.inorder = TRUE) %:%
+  foreach(hab = iter(landscape$habitats,by = "row"),.combine = "+") %do% {
     dist <- as.matrix(dist(x = rbind(as.vector(xy),c(hab$x,hab$y))))[1,2]
     psi <- dnorm(dist,mean=0,sd=hab$sigma)
     psi
   }
 
-landscape$CSR$dwellings$psi <- psi_d[,1]/sum(psi_d[,1])
+landscape$dwellings$psi <- psi_d[,1]/sum(psi_d[,1])
 
 # # compute risk surface
-# grid_CSR <- expand.grid(x=seq(0-grid_res,1+grid_res,by=grid_res),y=seq(0-grid_res,1+grid_res,by=grid_res))
+# grid_res <- 1/50
+# grid <- expand.grid(x=seq(0-grid_res,1+grid_res,by=grid_res),y=seq(0-grid_res,1+grid_res,by=grid_res))
 # 
 # cl <- parallel::makeCluster(4)
 # doSNOW::registerDoSNOW(cl)
 # 
-# pb <- txtProgressBar(max = nrow(grid_CSR)*nrow(landscape$CSR$habitats), style = 3)
+# pb <- txtProgressBar(max = nrow(grid)*nrow(landscape$habitats), style = 3)
 # progress <- function(n) setTxtProgressBar(pb, n)
 # opts <- list(progress = progress)
 # 
-# landscape$CSR$psi_surface <- foreach(xy = iter(grid_CSR,by="row"),.combine = "rbind",.inorder = TRUE) %:%
-#   foreach(hab = iter(landscape$CSR$habitats,by = "row"),.combine = "+", .options.snow = opts) %dopar% {
+# landscape$psi_surface <- foreach(xy = iter(grid,by="row"),.combine = "rbind",.inorder = TRUE) %:%
+#   foreach(hab = iter(landscape$habitats,by = "row"),.combine = "+", .options.snow = opts) %dopar% {
 #     dist <- as.matrix(dist(x = rbind(as.vector(xy),c(hab$x,hab$y))))[1,2]
 #     psi <- dnorm(dist,mean=0,sd=hab$sigma)
 #     psi
@@ -153,91 +85,25 @@ landscape$CSR$dwellings$psi <- psi_d[,1]/sum(psi_d[,1])
 # rm(cl);gc()
 # 
 # # plot the risk surface
-# surface <- as.data.frame(landscape$CSR$psi_surface)
+# surface <- as.data.frame(landscape$psi_surface)
 # 
-# grid_CSR$psi <- surface$V1
+# grid$psi <- surface$V1
 # 
 # # the surface
 # gg_psi_CSR <- ggplot() +
-#   geom_raster(aes(x=x,y=y,fill=psi),data=grid_CSR) +
-#   stat_contour(aes(x=x,y=y,z=psi),colour=grey(0.5,0.5),size=0.25,data = grid_CSR,geom = "contour") +
-#   geom_point(aes(x=x,y=y,size=cut(psi,breaks=quantile(psi),include.lowest = T)),shape=17,colour=grey(0.9,0.9),data=landscape$CSR$dwellings) +
-#   geom_point(aes(x=x,y=y),shape=16,colour=grey(0.75,0.75),size=1.85,data=landscape$CSR$habitats) +
+#   geom_raster(aes(x=x,y=y,fill=psi),data=grid) +
+#   stat_contour(aes(x=x,y=y,z=psi),colour=grey(0.5,0.5),size=0.25,data = grid,geom = "contour") +
+#   geom_point(aes(x=x,y=y,size=cut(psi,breaks=quantile(psi),include.lowest = T)),shape=17,colour=grey(0.9,0.9),data=landscape$dwellings) +
+#   geom_point(aes(x=x,y=y),shape=16,colour=grey(0.75,0.75),size=1.85,data=landscape$habitats) +
 #   scale_fill_viridis() +
 #   geom_contour() +
 #   theme_bw() +
 #   guides(size = FALSE) +
 #   theme(axis.title.x=element_blank(),axis.title.y=element_blank())
 # 
-# ggsave(filename = here::here("graphics/psi_surface_CSR.pdf"),plot = gg_psi_CSR,dpi = 320,width = 10,height = 8)
+# ggsave(filename = here::here("graphics/psi_surface_CSR_jan2020.pdf"),plot = gg_psi_CSR,dpi = 320,width = 10,height = 8)
 
 
-###############################################################################
-# generate landscapes: Regular (repulsive)
-###############################################################################
-
-# regular (repulsion)
-mod <- spatstat::rmhmodel(cif="hardcore",par=list(beta=n_dwelling,hc=100/bbox),w=spatstat::square(r = 1))
-cont <- spatstat::rmhcontrol(p=1,nrep=1e6)
-
-lscape_reg_d <- spatstat::rmh(model=mod,start=list(n.start=n_dwelling), control=cont)
-lscape_reg_h <- spatstat::rpoint(n = n_hab,win = spatstat::square(r = 1))
-
-dist_xy <- spatstat::crossdist(X = lscape_reg_h,Y = lscape_reg_d)
-sigma_a <- apply(dist_xy,1,min)
-
-landscape$regular$dwellings <- data.frame(x=lscape_reg_d$x,y=lscape_reg_d$y)
-landscape$regular$habitats <- data.frame(x=lscape_reg_h$x,y=lscape_reg_h$y,sigma=sigma_a)
-
-psi_d <- foreach(xy = iter(landscape$regular$dwellings,by="row"),.combine = "rbind",.inorder = TRUE) %:%
-  foreach(hab = iter(landscape$regular$habitats,by = "row"),.combine = "+") %do% {
-    dist <- as.matrix(dist(x = rbind(as.vector(xy),c(hab$x,hab$y))))[1,2]
-    psi <- dnorm(dist,mean=0,sd=hab$sigma)
-    psi
-  }
-
-landscape$regular$dwellings$psi <- psi_d[,1]/sum(psi_d[,1])
-
-# # compute risk surface
-# grid_reg <- expand.grid(x=seq(0-grid_res,1+grid_res,by=grid_res),y=seq(0-grid_res,1+grid_res,by=grid_res))
-# 
-# cl <- parallel::makeCluster(4)
-# doSNOW::registerDoSNOW(cl)
-# 
-# pb <- txtProgressBar(max = nrow(grid_reg)*nrow(landscape$regular$habitats), style = 3)
-# progress <- function(n) setTxtProgressBar(pb, n)
-# opts <- list(progress = progress)
-# 
-# landscape$regular$psi_surface <- foreach(xy = iter(grid_reg,by="row"),.combine = "rbind",.inorder = TRUE) %:%
-#   foreach(hab = iter(landscape$regular$habitats,by = "row"),.combine = "+", .options.snow = opts) %dopar% {
-#     dist <- as.matrix(dist(x = rbind(as.vector(xy),c(hab$x,hab$y))))[1,2]
-#     psi <- dnorm(dist,mean=0,sd=hab$sigma)
-#     psi
-#   }
-# 
-# stopCluster(cl)
-# rm(cl);gc()
-# 
-# # plot the risk surface
-# surface <- as.data.frame(landscape$regular$psi_surface)
-# 
-# grid_reg$psi <- surface$V1
-# 
-# # the surface
-# gg_psi_reg <- ggplot() +
-#   geom_raster(aes(x=x,y=y,fill=psi),data=grid_reg) +
-#   stat_contour(aes(x=x,y=y,z=psi),colour=grey(0.5,0.5),size=0.25,data = grid_reg,geom = "contour") +
-#   geom_point(aes(x=x,y=y,size=cut(psi,breaks=quantile(psi),include.lowest = T)),shape=17,colour=grey(0.9,0.9),data=landscape$regular$dwellings) +
-#   geom_point(aes(x=x,y=y),shape=16,colour=grey(0.75,0.75),size=1.85,data=landscape$regular$habitats) +
-#   scale_fill_viridis() +
-#   geom_contour() +
-#   theme_bw() +
-#   guides(size = FALSE) +
-#   theme(axis.title.x=element_blank(),axis.title.y=element_blank())
-# 
-# ggsave(filename = here::here("graphics/psi_surface_reg.pdf"),plot = gg_psi_reg,dpi = 320,width = 10,height = 8)
-
-# saveRDS(object = landscape,file = here("intervention-simulation/landscapes.rds"))
 
 ###############################################################################
 #
@@ -245,201 +111,101 @@ landscape$regular$dwellings$psi <- psi_d[,1]/sum(psi_d[,1])
 #
 ###############################################################################
 
-out_folder <- "/Users/slwu89/Dropbox/racd_out/"
+out_folder <- "/Users/slwu89/Dropbox/racd_out/jan2020/"
+if(!dir.exists(out_folder)){
+  dir.create(out_folder)
+}
 
-EIR <- 0.003
+
 interventions <- c(control=-1,racd=2,rfmda=0,rfmda_rfvc=6,rfvc=1)
-p_ix <- p_n <- 0.85
-import <- (1/365)*5
 
+# the range of transmission intensity in which we'd consider RACD
+EIR_range <- 1:10/365
 
-###############################################################################
-# clustered
-###############################################################################
+# importation from 0:100 cases/1e3 person-yr
+import_range <- seq(0,100,by=10)/365
 
+# coverage is fixed for now.
+p_ix <- p_n <- 0.75
+
+# run the sims
 source(here::here("racd-setup.R"))
-lscape <- landscape$clustered
-
-dmat_dwell <- crossdist(X = as.ppp(lscape$dwellings[,1:2],square(r=1)),Y = as.ppp(lscape$dwellings[,1:2],square(r=1)))
-
-# calculate equilibrium
-RACD_init <- RACD_Setup(N = N,EIR_mean = EIR,xy_d = lscape$dwellings,xy_a = lscape$habitats,theta = RACD_theta)
-
-# calculate immunity parameters for imported cases
-imm_import <- imported_immune(EIR = EIR,theta = RACD_theta)
-RACD_theta <- c(RACD_theta,imm_import,import_rate=import)
+dmat_dwell <- crossdist(X = as.ppp(landscape$dwellings[,1:2],square(r=1)),Y = as.ppp(landscape$dwellings[,1:2],square(r=1)))
 
 # setup the cluster
-cl <- parallel::makeCluster(4)
-parallel::clusterSetRNGStream(cl = cl,iseed = 42L)
+cl <- parallel::makeCluster(5)
+parallel::clusterSetRNGStream(cl = cl,iseed = 95812142L)
 
 parallel::clusterEvalQ(cl,{
   Rcpp::sourceCpp(here::here("intervention-src/main.cpp"),rebuild = TRUE)
 })
 
-for(i in 1:length(interventions)){
+# run sims
+i=1
+niter <- length(EIR_range)*length(import_range)*length(interventions)
+for(eir_i in seq_along(EIR_range)){
+  for(import_i in seq_along(import_range)){
+    
+    eir <- EIR_range[eir_i]
+    import <- import_range[import_i]
+    
+    # calculate equilibrium
+    RACD_init <- RACD_Setup(N = N,EIR_mean = eir,xy_d = landscape$dwellings,xy_a = landscape$habitats,theta = RACD_theta)
+    
+    # calculate immunity parameters for imported cases
+    imm_import <- imported_immune(EIR = eir,theta = RACD_theta)
+    RACD_theta <- c(RACD_theta,imm_import,import_rate=import)
+    
+    for(int_i in seq_along(interventions)){
 
-  mc_iter <- paste0("landscape-clust_intervention-",names(interventions)[i])
-  int_type <- interventions[i]
-  parallel::clusterExport(cl = cl,varlist = c("RACD_init","RACD_theta","dmat_dwell","int_type","p_ix","p_n"))
+      int <- interventions[int_i]
+      mc_iter <- paste0("SIM_intervention-",names(interventions)[int_i],"_eir-",round(eir,3),"_import-",round(import,3))
 
-  # run simulations
-  mc_reps_cores <- parallel::clusterEvalQ(cl,{
-    mc_reps <- vector("list",25)
-    for(i in 1:25){
-      mc_reps[[i]] <- tiny_racd(humans_param = RACD_init$humans,
-                                house_param = RACD_init$houses,
-                                mosy_param = RACD_init$mosy,
-                                theta = RACD_theta,
-                                tmax = (365*2)+100,
-                                int_type = int_type,
-                                tstart = 101,
-                                tend = 100+365,
-                                tdelay = 30,
-                                dmat = dmat_dwell,
-                                radius = 500/2e3,
-                                p_index = p_ix,
-                                p_neighbor = p_n,
-                                prog_bar = FALSE)
+      parallel::clusterExport(cl = cl,varlist = c("RACD_init","RACD_theta","dmat_dwell","int","p_ix","p_n"))
+
+      # run simulations
+      # t_start <- Sys.time()
+      mc_reps_cores <- parallel::clusterEvalQ(cl,{
+        mc_reps <- vector("list",20)
+        for(i in 1:20){
+          mc_reps[[i]] <- tiny_racd(humans_param = RACD_init$humans,
+                                    house_param = RACD_init$houses,
+                                    mosy_param = RACD_init$mosy,
+                                    theta = RACD_theta,
+                                    tmax = (365*5)+100,
+                                    int_type = int,
+                                    tstart = 101,
+                                    tend = (365*5)+100,
+                                    tdelay = 30,
+                                    dmat = dmat_dwell,
+                                    radius = 500/2e3,
+                                    p_index = p_ix,
+                                    p_neighbor = p_n,
+                                    prog_bar = FALSE)
+        }
+        return(mc_reps)
+      })
+      # t_end <- Sys.time()
+
+      saveRDS(object = mc_reps_cores,file = paste0(out_folder,mc_iter,".rds"))
+      rm(mc_reps_cores);gc()
+
+      cat(" --- finished intervention cell ",i," of ",length(interventions)," --- \n")
+      i = i + 1
+
     }
-    return(mc_reps)
-  })
-
-  saveRDS(object = mc_reps_cores,file = paste0(out_folder,mc_iter,".rds"))
-  rm(mc_reps_cores);gc()
-
-  cat(" --- finished intervention cell ",i," of ",length(interventions)," --- \n")
-
+  }
 }
 
-stopCluster(cl)
-rm(cl,lscape,dmat_dwell,RACD_init,imm_import,RACD_theta);gc()
 
 
-###############################################################################
-# CSR
-###############################################################################
-
-source(here::here("racd-setup.R"))
-lscape <- landscape$CSR
-
-dmat_dwell <- crossdist(X = as.ppp(lscape$dwellings[,1:2],square(r=1)),Y = as.ppp(lscape$dwellings[,1:2],square(r=1)))
-
-# calculate equilibrium
-RACD_init <- RACD_Setup(N = N,EIR_mean = EIR,xy_d = lscape$dwellings,xy_a = lscape$habitats,theta = RACD_theta)
-
-# calculate immunity parameters for imported cases
-imm_import <- imported_immune(EIR = EIR,theta = RACD_theta)
-RACD_theta <- c(RACD_theta,imm_import,import_rate=import)
-
-# setup the cluster
-cl <- parallel::makeCluster(4)
-parallel::clusterSetRNGStream(cl = cl,iseed = 12142L)
-
-parallel::clusterEvalQ(cl,{
-  Rcpp::sourceCpp(here::here("intervention-src/main.cpp"),rebuild = TRUE)
-})
-
-for(i in 1:length(interventions)){
-
-  mc_iter <- paste0("landscape-CSR_intervention-",names(interventions)[i])
-  int_type <- interventions[i]
-  parallel::clusterExport(cl = cl,varlist = c("RACD_init","RACD_theta","dmat_dwell","int_type","p_ix","p_n"))
-
-  # run simulations
-  mc_reps_cores <- parallel::clusterEvalQ(cl,{
-    mc_reps <- vector("list",25)
-    for(i in 1:25){
-      mc_reps[[i]] <- tiny_racd(humans_param = RACD_init$humans,
-                                house_param = RACD_init$houses,
-                                mosy_param = RACD_init$mosy,
-                                theta = RACD_theta,
-                                tmax = (365*2)+100,
-                                int_type = int_type,
-                                tstart = 101,
-                                tend = 100+365,
-                                tdelay = 30,
-                                dmat = dmat_dwell,
-                                radius = 500/2e3,
-                                p_index = p_ix,
-                                p_neighbor = p_n,
-                                prog_bar = FALSE)
-    }
-    return(mc_reps)
-  })
-
-  saveRDS(object = mc_reps_cores,file = paste0(out_folder,mc_iter,".rds"))
-  rm(mc_reps_cores);gc()
-
-  cat(" --- finished intervention cell ",i," of ",length(interventions)," --- \n")
-
-}
-
-stopCluster(cl)
-rm(cl,lscape,dmat_dwell,RACD_init,imm_import,RACD_theta);gc()
 
 
-###############################################################################
-# regular
-###############################################################################
 
-source(here::here("racd-setup.R"))
-lscape <- landscape$regular
 
-dmat_dwell <- crossdist(X = as.ppp(lscape$dwellings[,1:2],square(r=1)),Y = as.ppp(lscape$dwellings[,1:2],square(r=1)))
 
-# calculate equilibrium
-RACD_init <- RACD_Setup(N = N,EIR_mean = EIR,xy_d = lscape$dwellings,xy_a = lscape$habitats,theta = RACD_theta)
 
-# calculate immunity parameters for imported cases
-imm_import <- imported_immune(EIR = EIR,theta = RACD_theta)
-RACD_theta <- c(RACD_theta,imm_import,import_rate=import)
 
-# setup the cluster
-cl <- parallel::makeCluster(4)
-parallel::clusterSetRNGStream(cl = cl,iseed = 324324L)
-
-parallel::clusterEvalQ(cl,{
-  Rcpp::sourceCpp(here::here("intervention-src/main.cpp"),rebuild = TRUE)
-})
-
-for(i in 1:length(interventions)){
-
-  mc_iter <- paste0("landscape-regular_intervention-",names(interventions)[i])
-  int_type <- interventions[i]
-  parallel::clusterExport(cl = cl,varlist = c("RACD_init","RACD_theta","dmat_dwell","int_type","p_ix","p_n"))
-
-  # run simulations
-  mc_reps_cores <- parallel::clusterEvalQ(cl,{
-    mc_reps <- vector("list",25)
-    for(i in 1:25){
-      mc_reps[[i]] <- tiny_racd(humans_param = RACD_init$humans,
-                                house_param = RACD_init$houses,
-                                mosy_param = RACD_init$mosy,
-                                theta = RACD_theta,
-                                tmax = (365*2)+100,
-                                int_type = int_type,
-                                tstart = 101,
-                                tend = 100+365,
-                                tdelay = 30,
-                                dmat = dmat_dwell,
-                                radius = 500/2e3,
-                                p_index = p_ix,
-                                p_neighbor = p_n,
-                                prog_bar = FALSE)
-    }
-    return(mc_reps)
-  })
-
-  saveRDS(object = mc_reps_cores,file = paste0(out_folder,mc_iter,".rds"))
-  rm(mc_reps_cores);gc()
-
-  cat(" --- finished intervention cell ",i," of ",length(interventions)," --- \n")
-
-}
-
-stopCluster(cl)
-rm(cl,lscape,dmat_dwell,RACD_init,imm_import,RACD_theta);gc()
 
 
 
@@ -698,12 +464,12 @@ colnames(cum_inc_all)[3:4] <- c("lo",'hi')
 gg_cum_inc_allages <- ggplot(data = cum_inc_all) +
   geom_point(aes(x=landscape,y=mean,color=landscape)) +
   geom_errorbar(aes(x=landscape,ymin=lo,ymax=hi,color=landscape)) +
-  facet_grid(. ~ intervention) + 
+  facet_grid(. ~ intervention) +
   theme_bw() +
   guides(color = FALSE)
 
 ggsave(filename = here::here("graphics/cuminc-allage.pdf"),plot = gg_cum_inc_allages,dpi = 320,width = 12,height = 6)
-  
+
 
 
 # ###############################################################################

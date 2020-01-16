@@ -252,7 +252,7 @@ pfsim_setup <- function(N, EIR_mean, xy_d, xy_a, theta, cores = 4, parseed = NaN
 
 	# set up parallel core; compile necessary C++ on them
 	cl <- makeCluster(cores)
-	registerDoParallel(cl)
+	doParallel::registerDoParallel(cl)
 	clusterSetRNGStream(cl = cl, iseed = parseed)
 	clusterExport(cl = cl,varlist = c("path2ode"))
 	clusterEvalQ(cl,{
@@ -308,12 +308,13 @@ pfsim_setup <- function(N, EIR_mean, xy_d, xy_a, theta, cores = 4, parseed = NaN
 		h_out
 	}
 
+	stopCluster(cl);rm(cl);gc()
+
 	# merge the results
 	humans <- mapply(function(h0,h1){
     c(h0,h1)
 	},h0=humans,h1=h_imm,SIMPLIFY = FALSE)
 
-	stopCluster(cl);rm(cl);gc()
 	cat(" --- done calculating immunity and state probabilities for population --- \n")
 
 
